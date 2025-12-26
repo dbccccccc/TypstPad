@@ -1,6 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
-import { compileTypst, DiagnosticInfo } from '../../services/typst'
+import { compileTypst, DiagnosticInfo, setLoadingProgressCallback } from '../../services/typst'
 import ErrorDisplay from '../ErrorDisplay'
+
+interface LoadingProgress {
+  phase: string
+  loaded?: number
+  total?: number
+}
 
 interface PreviewProps {
   code: string
@@ -11,10 +17,23 @@ function Preview({ code, onCompiled }: PreviewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [diagnostics, setDiagnostics] = useState<DiagnosticInfo[] | null>(null)
   const [svg, setSvg] = useState<string | null>(null)
+  const [loading, setLoading] = useState<LoadingProgress | null>(null)
+
+  useEffect(() => {
+    // Set up loading progress callback
+    setLoadingProgressCallback((progress) => {
+      setLoading(progress)
+    })
+
+    return () => {
+      setLoadingProgressCallback(null)
+    }
+  }, [])
 
   useEffect(() => {
     const compile = async () => {
       const result = await compileTypst(code)
+      setLoading(null) // Clear loading state after compilation
 
       if (result.success && result.svg) {
         setSvg(result.svg)
@@ -29,18 +48,36 @@ function Preview({ code, onCompiled }: PreviewProps) {
     compile()
   }, [code, onCompiled])
 
+  // Format bytes to human readable
+  const formatBytes = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+  }
+
   return (
     <div className="flex-1 flex items-center justify-center w-full min-w-0" ref={containerRef}>
-      {diagnostics && diagnostics.length > 0 && (
+      {/* Loading indicator */}
+      {loading && (
+        <div className="flex flex-col items-center gap-2 text-neutral-500">
+          <div className="text-sm">{loading.phase}</div>
+          {loading.loaded !== undefined && loading.total !== undefined && loading.total > 0 && (
+            <div className="text-xs tabular-nums">
+              {formatBytes(loading.loaded)} / {formatBytes(loading.total)} ({Math.round((loading.loaded / loading.total) * 100)}%)
+            </div>
+          )}
+        </div>
+      )}
+      {!loading && diagnostics && diagnostics.length > 0 && (
         <ErrorDisplay diagnostics={diagnostics} />
       )}
-      {!diagnostics && svg && (
+      {!loading && !diagnostics && svg && (
         <div
           className="flex items-center justify-center [&_svg]:block [&_svg]:w-auto [&_svg]:h-auto [&_svg]:text-[32px]"
           dangerouslySetInnerHTML={{ __html: svg }}
         />
       )}
-      {!diagnostics && !svg && (
+      {!loading && !diagnostics && !svg && (
         <div className="text-muted-foreground text-sm text-center">
           No preview content
         </div>

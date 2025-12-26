@@ -7,6 +7,7 @@ import Header from './components/Header/Header'
 import { useTheme } from './contexts/ThemeContext'
 import { downloadSVG, downloadPNG, downloadJPG, downloadText, copyToClipboard, copyPNGToClipboard } from './utils/export'
 import { generateShareUrl, getFormulaFromUrl } from './utils/share'
+import { preloadTypst } from './services/typst'
 import { Code, Image } from 'lucide-react'
 
 function App() {
@@ -21,6 +22,13 @@ function App() {
     return saved ? { ...defaultSettings, ...JSON.parse(saved) } : defaultSettings
   })
   const [settingsOpen, setSettingsOpen] = useState(false)
+
+  // Start preloading WASM in background (non-blocking)
+  useEffect(() => {
+    preloadTypst().catch((err) => {
+      console.error('Failed to preload typst:', err)
+    })
+  }, [])
 
   const handleCompiled = useCallback((newSvg: string | null, _diagnostics: unknown) => {
     setSvg(newSvg)
