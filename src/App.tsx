@@ -1,0 +1,114 @@
+import { useState, useCallback, useEffect } from 'react'
+import Editor from './components/Editor/Editor'
+import Preview from './components/Preview/Preview'
+import ExportPanel from './components/ExportPanel/ExportPanel'
+import SettingsDialog, { Settings, defaultSettings } from './components/SettingsDialog/SettingsDialog'
+import Header from './components/Header/Header'
+import { useTheme } from './contexts/ThemeContext'
+import { downloadSVG, downloadPNG, downloadJPG, downloadText, copyToClipboard, copyPNGToClipboard } from './utils/export'
+import { generateShareUrl, getFormulaFromUrl } from './utils/share'
+import { Code, Image } from 'lucide-react'
+
+function App() {
+  const { theme } = useTheme()
+  const [code, setCode] = useState(() => {
+    const urlFormula = getFormulaFromUrl()
+    return urlFormula || '$ sum_(i=1)^n i = (n(n+1))/2 $'
+  })
+  const [svg, setSvg] = useState<string | null>(null)
+  const [settings, setSettings] = useState<Settings>(() => {
+    const saved = localStorage.getItem('typst-editor-settings')
+    return saved ? { ...defaultSettings, ...JSON.parse(saved) } : defaultSettings
+  })
+  const [settingsOpen, setSettingsOpen] = useState(false)
+
+  const handleCompiled = useCallback((newSvg: string | null, _diagnostics: unknown) => {
+    setSvg(newSvg)
+  }, [])
+
+  useEffect(() => {
+    localStorage.setItem('typst-editor-settings', JSON.stringify(settings))
+  }, [settings])
+
+  return (
+    <div className="flex flex-col h-screen bg-background">
+      <Header onSettingsClick={() => setSettingsOpen(true)} />
+
+      <main className="flex-1 overflow-auto p-6">
+        <div className="max-w-6xl mx-auto space-y-6">
+          {/* Input Section */}
+          <section className="rounded-lg border bg-card shadow-sm">
+            <div className="flex items-center justify-between px-4 py-3 border-b bg-muted/50">
+              <h2 className="flex items-center gap-2 text-sm font-medium">
+                <Code className="h-4 w-4" />
+                Input
+              </h2>
+            </div>
+
+            {/* Editor */}
+            <div className="h-[300px]">
+              <Editor
+                value={code}
+                onChange={setCode}
+                fontSize={settings.fontSize}
+                theme={theme}
+                showLineNumbers={settings.showLineNumbers}
+              />
+            </div>
+          </section>
+
+          {/* Output Section */}
+          <section className="rounded-lg border bg-card shadow-sm">
+            <div className="flex items-center justify-between px-4 py-3 border-b bg-muted/50">
+              <h2 className="flex items-center gap-2 text-sm font-medium">
+                <Image className="h-4 w-4" />
+                Output
+              </h2>
+            </div>
+
+            <div className={`min-h-[300px] flex items-center justify-center p-8 bg-white ${
+              theme === 'dark' && settings.invertOutputInDark ? 'invert' : ''
+            }`}>
+              <Preview
+                code={code}
+                onCompiled={handleCompiled}
+              />
+            </div>
+
+            {/* Export buttons */}
+            <div className="flex justify-end gap-2 px-4 py-3 border-t">
+              <ExportPanel
+                svg={svg}
+                code={code}
+                pngScale={settings.pngScale}
+                onDownloadPNG={() => svg && downloadPNG(svg, 'formula.png', settings.pngScale)}
+                onDownloadJPG={() => svg && downloadJPG(svg, 'formula.jpg', settings.pngScale)}
+                onDownloadSVG={() => svg && downloadSVG(svg)}
+                onCopyPNG={() => svg && copyPNGToClipboard(svg, settings.pngScale)}
+                onCopyTypst={() => copyToClipboard(code)}
+                onDownloadTypst={() => downloadText(code, 'formula.typ')}
+                onCopySVG={() => svg && copyToClipboard(svg)}
+                onCopyHTML={() => svg && copyToClipboard(`<div class="formula">${svg}</div>`)}
+                onDownloadHTML={() => svg && downloadText(
+                  `<!DOCTYPE html>\n<html>\n<head><meta charset="UTF-8"><title>Formula</title></head>\n<body>\n<div class="formula">${svg}</div>\n</body>\n</html>`,
+                  'formula.html',
+                  'text/html'
+                )}
+                onCopyShareLink={() => copyToClipboard(generateShareUrl(code))}
+              />
+            </div>
+          </section>
+        </div>
+      </main>
+
+      <SettingsDialog
+        open={settingsOpen}
+        onOpenChange={setSettingsOpen}
+        settings={settings}
+        onSettingsChange={setSettings}
+      />
+    </div>
+  )
+}
+
+export default App
