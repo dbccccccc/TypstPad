@@ -131,7 +131,7 @@ docker-compose up -d
 
 - The Docker image includes Nginx with required CORS headers for SharedArrayBuffer support
 - Default port is 80 inside the container, map it to any host port you prefer
-- The image is multi-platform (linux/amd64, linux/arm64)
+- Currently supports linux/amd64 platform
 
 ## 🛠️ Tech Stack
 
