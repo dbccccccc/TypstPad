@@ -2,6 +2,9 @@
 
 A simple and elegant online Typst formula editor with real-time preview.
 
+<img width="1559" height="1127" alt="theme-comparison" src="https://github.com/user-attachments/assets/da236fd3-dcad-4064-a045-81bf7a52a9c9" />
+
+
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![ghcr pulls](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fghcr-badge.elias.eu.org%2Fapi%2Fdbccccccc%2FTypstPad%2FTypstPad&query=downloadCount&label=ghcr+pulls&logo=github)
 
