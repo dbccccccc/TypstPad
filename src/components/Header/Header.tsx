@@ -6,8 +6,8 @@ interface HeaderProps {
   onSettingsClick: () => void
 }
 
-// Import version from package.json
-const VERSION = '0.1.0'
+// Version injected by Vite from package.json
+declare const __APP_VERSION__: string
 
 function Header({ onSettingsClick }: HeaderProps) {
   const { mode, setMode } = useTheme()
@@ -21,7 +21,7 @@ function Header({ onSettingsClick }: HeaderProps) {
       <div className="flex items-center gap-2">
         <span className="text-lg font-semibold">
           TypstPad
-          <sub className="text-[10px] text-muted-foreground ml-1">v{VERSION}</sub>
+          <sub className="text-[10px] text-muted-foreground ml-1">v{__APP_VERSION__}</sub>
         </span>
       </div>
 
