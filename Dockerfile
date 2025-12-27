@@ -16,8 +16,8 @@ COPY . .
 # Build the application
 RUN npm run build
 
-# Stage 2: Production image with Nginx
-FROM nginx:alpine
+# Stage 2: Production image with Nginx (with Brotli support)
+FROM fholzer/nginx-brotli:latest
 
 # Copy built assets from builder stage
 COPY --from=builder /app/dist /usr/share/nginx/html
