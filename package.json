@@ -1,6 +1,6 @@
 {
   "name": "typstpad",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "type": "module",
   "description": "A simple and elegant online Typst formula editor with real-time preview",
   "scripts": {
