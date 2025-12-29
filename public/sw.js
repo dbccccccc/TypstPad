@@ -15,7 +15,7 @@ function shouldCache(url) {
 }
 
 // Install event - pre-cache nothing, use runtime caching
-self.addEventListener('install', (event) => {
+self.addEventListener('install', () => {
   self.skipWaiting()
 })
 

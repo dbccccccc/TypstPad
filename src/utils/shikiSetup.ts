@@ -1,5 +1,6 @@
 import { createHighlighter } from 'shiki'
 import { shikiToMonaco } from '@shikijs/monaco'
+import type { LanguageRegistration } from '@shikijs/types'
 import type * as Monaco from 'monaco-editor'
 import typstGrammar from '../grammars/typst.tmLanguage.json'
 
@@ -15,7 +16,7 @@ export async function setupShikiForMonaco(monaco: typeof Monaco) {
     })
 
     // Load custom Typst syntax
-    await highlighter.loadLanguage(typstGrammar as any)
+    await highlighter.loadLanguage(typstGrammar as unknown as LanguageRegistration)
 
     // Register typst language
     monaco.languages.register({ id: 'typst' })

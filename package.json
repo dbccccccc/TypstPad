@@ -1,8 +1,11 @@
 {
   "name": "typstpad",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "type": "module",
   "description": "A simple and elegant online Typst formula editor with real-time preview",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",

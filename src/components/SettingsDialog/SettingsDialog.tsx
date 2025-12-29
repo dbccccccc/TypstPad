@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
-import { Settings, Type, Download, RotateCcw } from 'lucide-react'
+import { Settings as SettingsIcon, Type, Download, RotateCcw } from 'lucide-react'
 
 export interface Settings {
   fontSize: number
@@ -54,7 +54,7 @@ function SettingsDialog({ open, onOpenChange, settings, onSettingsChange }: Sett
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Settings className="h-5 w-5" />
+            <SettingsIcon className="h-5 w-5" />
             Settings
           </DialogTitle>
         </DialogHeader>

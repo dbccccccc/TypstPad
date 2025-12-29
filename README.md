@@ -31,7 +31,7 @@ A simple and elegant online Typst formula editor with real-time preview.
 
 ### Prerequisites
 
-- Node.js 16+
+- Node.js 18+ (20+ recommended)
 - npm or yarn
 
 ### Installation

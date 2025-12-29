@@ -15,6 +15,7 @@ interface PreviewProps {
 
 function Preview({ code, onCompiled }: PreviewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
+  const compileIdRef = useRef(0)
   const [diagnostics, setDiagnostics] = useState<DiagnosticInfo[] | null>(null)
   const [svg, setSvg] = useState<string | null>(null)
   const [loading, setLoading] = useState<LoadingProgress | null>(null)
@@ -31,8 +32,15 @@ function Preview({ code, onCompiled }: PreviewProps) {
   }, [])
 
   useEffect(() => {
-    const compile = async () => {
+    const compileId = ++compileIdRef.current
+    const debounceMs = 200
+
+    const timeoutId = window.setTimeout(async () => {
+      setLoading({ phase: 'Compiling...' })
       const result = await compileTypst(code)
+
+      if (compileId !== compileIdRef.current) return
+
       setLoading(null) // Clear loading state after compilation
 
       if (result.success && result.svg) {
@@ -40,12 +48,15 @@ function Preview({ code, onCompiled }: PreviewProps) {
         setDiagnostics(null)
         onCompiled?.(result.svg, null)
       } else {
+        setSvg(null)
         setDiagnostics(result.diagnostics || null)
         onCompiled?.(null, result.diagnostics || null)
       }
-    }
+    }, debounceMs)
 
-    compile()
+    return () => {
+      window.clearTimeout(timeoutId)
+    }
   }, [code, onCompiled])
 
   // Format bytes to human readable

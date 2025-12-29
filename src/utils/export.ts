@@ -74,11 +74,12 @@ export function downloadPNG(svgString: string, filename = 'formula.png', scale =
     const { width, height } = getSvgDimensions(cleanSvg)
     const img = new Image()
 
-    // Load SVG using Data URL
-    const svgBase64 = btoa(unescape(encodeURIComponent(cleanSvg)))
-    const dataUrl = `data:image/svg+xml;base64,${svgBase64}`
+    // Load SVG using Object URL (avoids deprecated escape/unescape)
+    const svgBlob = new Blob([cleanSvg], { type: 'image/svg+xml;charset=utf-8' })
+    const objectUrl = URL.createObjectURL(svgBlob)
 
     img.onload = () => {
+      URL.revokeObjectURL(objectUrl)
       const canvas = document.createElement('canvas')
       canvas.width = width * scale
       canvas.height = height * scale
@@ -106,10 +107,11 @@ export function downloadPNG(svgString: string, filename = 'formula.png', scale =
     }
 
     img.onerror = () => {
+      URL.revokeObjectURL(objectUrl)
       reject(new Error('Failed to load SVG image'))
     }
 
-    img.src = dataUrl
+    img.src = objectUrl
   })
 }
 
@@ -122,10 +124,11 @@ function svgToPngBlob(svgString: string, scale = 2, backgroundColor?: string): P
     const { width, height } = getSvgDimensions(cleanSvg)
     const img = new Image()
 
-    const svgBase64 = btoa(unescape(encodeURIComponent(cleanSvg)))
-    const dataUrl = `data:image/svg+xml;base64,${svgBase64}`
+    const svgBlob = new Blob([cleanSvg], { type: 'image/svg+xml;charset=utf-8' })
+    const objectUrl = URL.createObjectURL(svgBlob)
 
     img.onload = () => {
+      URL.revokeObjectURL(objectUrl)
       const canvas = document.createElement('canvas')
       canvas.width = width * scale
       canvas.height = height * scale
@@ -153,8 +156,11 @@ function svgToPngBlob(svgString: string, scale = 2, backgroundColor?: string): P
       }, backgroundColor ? 'image/jpeg' : 'image/png', 0.95)
     }
 
-    img.onerror = () => reject(new Error('Failed to load SVG image'))
-    img.src = dataUrl
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl)
+      reject(new Error('Failed to load SVG image'))
+    }
+    img.src = objectUrl
   })
 }
 

@@ -1,9 +1,11 @@
+import { decodeBase64Utf8, encodeBase64Utf8 } from './base64'
+
 /**
  * Generate share URL
  */
 export function generateShareUrl(code: string): string {
-  const encoded = encodeURIComponent(btoa(unescape(encodeURIComponent(code))))
-  return `${window.location.origin}${window.location.pathname}?formula=${encoded}`
+  const base64 = encodeBase64Utf8(code)
+  return `${window.location.origin}${window.location.pathname}?formula=${encodeURIComponent(base64)}`
 }
 
 /**
@@ -12,12 +14,11 @@ export function generateShareUrl(code: string): string {
 export function getFormulaFromUrl(): string | null {
   const params = new URLSearchParams(window.location.search)
   const encoded = params.get('formula')
-  if (encoded) {
-    try {
-      return decodeURIComponent(escape(atob(decodeURIComponent(encoded))))
-    } catch {
-      return null
-    }
+  if (!encoded) return null
+
+  try {
+    return decodeBase64Utf8(encoded)
+  } catch {
+    return null
   }
-  return null
 }
