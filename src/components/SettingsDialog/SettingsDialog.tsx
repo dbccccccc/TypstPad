@@ -15,13 +15,14 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
-import { Settings as SettingsIcon, Type, Download, RotateCcw } from 'lucide-react'
+import { Settings as SettingsIcon, Type, Download, RotateCcw, Calculator } from 'lucide-react'
 
 export interface Settings {
   fontSize: number
   showLineNumbers: boolean
   pngScale: number
   invertOutputInDark: boolean
+  simplifiedFormulaMode: boolean
 }
 
 export const defaultSettings: Settings = {
@@ -29,6 +30,7 @@ export const defaultSettings: Settings = {
   showLineNumbers: true,
   pngScale: 2,
   invertOutputInDark: false,
+  simplifiedFormulaMode: true,
 }
 
 interface SettingsDialogProps {
@@ -136,6 +138,29 @@ function SettingsDialog({ open, onOpenChange, settings, onSettingsChange }: Sett
                 <Switch
                   checked={settings.invertOutputInDark}
                   onCheckedChange={(checked) => updateSetting('invertOutputInDark', checked)}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Formula Mode Settings */}
+          <div className="space-y-4">
+            <h3 className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+              <Calculator className="h-4 w-4" />
+              Formula Mode
+            </h3>
+
+            <div className="space-y-4 pl-6">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Simplified Formula Mode</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Automatically wrap content in $ ... $ for math mode
+                  </p>
+                </div>
+                <Switch
+                  checked={settings.simplifiedFormulaMode}
+                  onCheckedChange={(checked) => updateSetting('simplifiedFormulaMode', checked)}
                 />
               </div>
             </div>

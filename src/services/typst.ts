@@ -30,6 +30,9 @@ $typst.use(
   })
 )
 
+// Enable package registry for downloading Typst packages from https://packages.typst.org
+$typst.use(TypstSnippet.fetchPackageRegistry())
+
 export interface DiagnosticInfo {
   severity: 'error' | 'warning'
   message: string
@@ -222,15 +225,38 @@ function extractDiagnostics(error: unknown): DiagnosticInfo[] {
   }]
 }
 
-export async function compileTypst(code: string): Promise<CompileResult> {
+// Helper function to apply simplified formula mode
+function applySimplifiedFormulaMode(code: string): string {
+  const trimmed = code.trim()
+
+  // In simplified mode, escape all $ symbols to treat them as literal text
+  // This allows users to type $ without it being interpreted as math delimiter
+  const escapedCode = trimmed.replace(/\$/g, '\\$')
+
+  // Wrap content in math mode
+  return `$ ${escapedCode} $`
+}
+
+export async function compileTypst(
+  code: string,
+  options?: {
+    simplifiedFormulaMode?: boolean
+  }
+): Promise<CompileResult> {
   try {
     // Ensure typst.ts is initialized (uses cached promise if already loading)
     await preloadTypst()
 
+    // Apply simplified formula mode if enabled
+    let processedCode = code
+    if (options?.simplifiedFormulaMode && code.trim()) {
+      processedCode = applySimplifiedFormulaMode(code)
+    }
+
     // Wrap code with page settings for auto-sized output
     const wrappedCode = `#set page(width: auto, height: auto, margin: 0.5em)
 #set text(size: 24pt)
-${code}`
+${processedCode}`
 
     // Compile Typst code to SVG
     const svg = await $typst.svg({ mainContent: wrappedCode })

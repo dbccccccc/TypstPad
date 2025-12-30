@@ -16,7 +16,9 @@ function App() {
   const editorRef = useRef<EditorRef>(null)
   const [code, setCode] = useState(() => {
     const urlFormula = getFormulaFromUrl()
-    return urlFormula || '$ sum_(i=1)^n i = (n(n+1))/2 $'
+    return urlFormula || `sum_(i=1)^n i = (n(n+1))/2 \\
+integral_0^infinity e^(-x^2) dif x = sqrt(pi)/2 \\
+lim_(x->0) (sin x)/x = 1`
   })
   const [svg, setSvg] = useState<string | null>(null)
   const [settings, setSettings] = useState<Settings>(() => {
@@ -92,6 +94,7 @@ function App() {
               <Preview
                 code={code}
                 onCompiled={handleCompiled}
+                simplifiedFormulaMode={settings.simplifiedFormulaMode}
               />
             </div>
 

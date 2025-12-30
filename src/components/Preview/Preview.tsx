@@ -11,9 +11,10 @@ interface LoadingProgress {
 interface PreviewProps {
   code: string
   onCompiled?: (svg: string | null, diagnostics: DiagnosticInfo[] | null) => void
+  simplifiedFormulaMode?: boolean
 }
 
-function Preview({ code, onCompiled }: PreviewProps) {
+function Preview({ code, onCompiled, simplifiedFormulaMode }: PreviewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const compileIdRef = useRef(0)
   const [diagnostics, setDiagnostics] = useState<DiagnosticInfo[] | null>(null)
@@ -37,7 +38,9 @@ function Preview({ code, onCompiled }: PreviewProps) {
 
     const timeoutId = window.setTimeout(async () => {
       setLoading({ phase: 'Compiling...' })
-      const result = await compileTypst(code)
+      const result = await compileTypst(code, {
+        simplifiedFormulaMode
+      })
 
       if (compileId !== compileIdRef.current) return
 
@@ -57,7 +60,7 @@ function Preview({ code, onCompiled }: PreviewProps) {
     return () => {
       window.clearTimeout(timeoutId)
     }
-  }, [code, onCompiled])
+  }, [code, onCompiled, simplifiedFormulaMode])
 
   // Format bytes to human readable
   const formatBytes = (bytes: number) => {
