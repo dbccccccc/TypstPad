@@ -1,5 +1,6 @@
-import { useState, useCallback, useEffect } from 'react'
-import Editor from './components/Editor/Editor'
+import { useState, useCallback, useEffect, useRef } from 'react'
+import Editor, { EditorRef } from './components/Editor/Editor'
+import MathToolbar from './components/MathToolbar'
 import Preview from './components/Preview/Preview'
 import ExportPanel from './components/ExportPanel/ExportPanel'
 import SettingsDialog, { Settings, defaultSettings } from './components/SettingsDialog/SettingsDialog'
@@ -12,6 +13,7 @@ import { Code, Image } from 'lucide-react'
 
 function App() {
   const { theme } = useTheme()
+  const editorRef = useRef<EditorRef>(null)
   const [code, setCode] = useState(() => {
     const urlFormula = getFormulaFromUrl()
     return urlFormula || '$ sum_(i=1)^n i = (n(n+1))/2 $'
@@ -34,6 +36,10 @@ function App() {
     setSvg(newSvg)
   }, [])
 
+  const handleInsertSymbol = useCallback((code: string) => {
+    editorRef.current?.insertText(code)
+  }, [])
+
   useEffect(() => {
     localStorage.setItem('typst-editor-settings', JSON.stringify(settings))
   }, [settings])
@@ -53,9 +59,15 @@ function App() {
               </h2>
             </div>
 
+            {/* Math Symbol Toolbar */}
+            <div className="relative z-10">
+              <MathToolbar onInsertSymbol={handleInsertSymbol} />
+            </div>
+
             {/* Editor */}
-            <div className="h-[300px]">
+            <div className="h-[300px] relative z-0">
               <Editor
+                ref={editorRef}
                 value={code}
                 onChange={setCode}
                 fontSize={settings.fontSize}

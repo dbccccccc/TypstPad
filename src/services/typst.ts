@@ -246,3 +246,26 @@ ${code}`
     }
   }
 }
+
+// Symbol SVG cache
+const symbolCache = new Map<string, string>()
+
+// Compile a single math symbol to SVG
+export async function compileSymbol(code: string): Promise<string | null> {
+  // Check cache first
+  if (symbolCache.has(code)) {
+    return symbolCache.get(code)!
+  }
+
+  try {
+    await preloadTypst()
+    const wrappedCode = `#set page(width: auto, height: auto, margin: 0pt)
+#set text(size: 18pt)
+$ ${code} $`
+    const svg = await $typst.svg({ mainContent: wrappedCode })
+    symbolCache.set(code, svg)
+    return svg
+  } catch {
+    return null
+  }
+}
