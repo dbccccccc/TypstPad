@@ -19,8 +19,19 @@ function App() {
   const { theme } = useTheme()
   const editorRef = useRef<EditorRef>(null)
   const [code, setCode] = useState(() => {
+    // URL formula always takes priority
     const urlFormula = getFormulaFromUrl()
     if (urlFormula) return urlFormula
+
+    // Check startup behavior setting
+    const savedSettings = localStorage.getItem('typst-editor-settings')
+    const settings = savedSettings
+      ? { ...defaultSettings, ...JSON.parse(savedSettings) }
+      : defaultSettings
+
+    if (settings.startupBehavior === 'blank') {
+      return ''
+    }
     return loadFormulaStorage().currentDraft
   })
   const [svg, setSvg] = useState<string | null>(null)

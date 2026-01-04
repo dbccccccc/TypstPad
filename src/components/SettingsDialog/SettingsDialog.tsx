@@ -23,6 +23,7 @@ export interface Settings {
   pngScale: number
   invertOutputInDark: boolean
   simplifiedFormulaMode: boolean
+  startupBehavior: 'lastEdit' | 'blank'
 }
 
 export const defaultSettings: Settings = {
@@ -31,6 +32,7 @@ export const defaultSettings: Settings = {
   pngScale: 2,
   invertOutputInDark: false,
   simplifiedFormulaMode: true,
+  startupBehavior: 'lastEdit',
 }
 
 interface SettingsDialogProps {
@@ -97,6 +99,25 @@ function SettingsDialog({ open, onOpenChange, settings, onSettingsChange }: Sett
                   checked={settings.showLineNumbers}
                   onCheckedChange={(checked) => updateSetting('showLineNumbers', checked)}
                 />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Startup Behavior</Label>
+                  <p className="text-xs text-muted-foreground">Choose what to show when the app opens</p>
+                </div>
+                <Select
+                  value={settings.startupBehavior}
+                  onValueChange={(value: 'lastEdit' | 'blank') => updateSetting('startupBehavior', value)}
+                >
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="lastEdit">Last Edit</SelectItem>
+                    <SelectItem value="blank">Blank</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </div>
