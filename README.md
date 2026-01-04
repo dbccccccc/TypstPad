@@ -21,6 +21,9 @@ A simple and elegant online Typst formula editor with real-time preview.
   - Typst source code
 - 📋 **Clipboard Support** - Copy images and code directly to clipboard
 - 🔗 **Share Links** - Generate shareable URLs with encoded formulas
+- 💾 **Formula Library** - Save and manage your formulas locally
+  - Auto-save draft for seamless workflow
+  - Save, load, rename, and delete formulas
 - ⚙️ **Customizable Settings**
   - Adjustable font size
   - Line numbers toggle
@@ -233,7 +236,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🗺️ Roadmap
 
-- [ ] Template library for common formulas and expressions
+- [x] Formula library for saving and managing formulas
 - [ ] Multi-language support
 - [ ] More export format support
 

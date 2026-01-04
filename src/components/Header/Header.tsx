@@ -1,15 +1,16 @@
 import { useTheme, ThemeMode } from '../../contexts/ThemeContext'
 import { Button } from '@/components/ui/button'
-import { Sun, Moon, Monitor, Github, Settings } from 'lucide-react'
+import { Sun, Moon, Monitor, Github, Settings, Bookmark } from 'lucide-react'
 
 interface HeaderProps {
   onSettingsClick: () => void
+  onFormulasClick: () => void
 }
 
 // Version injected by Vite from package.json
 declare const __APP_VERSION__: string
 
-function Header({ onSettingsClick }: HeaderProps) {
+function Header({ onSettingsClick, onFormulasClick }: HeaderProps) {
   const { mode, setMode } = useTheme()
 
   const handleThemeChange = (newMode: ThemeMode) => {
@@ -67,6 +68,15 @@ function Header({ onSettingsClick }: HeaderProps) {
             <Moon className="h-4 w-4" />
           </Button>
         </div>
+
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onFormulasClick}
+          title="Saved Formulas"
+        >
+          <Bookmark className="h-5 w-5" />
+        </Button>
 
         <Button
           variant="ghost"

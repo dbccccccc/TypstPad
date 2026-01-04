@@ -1,0 +1,59 @@
+import { memo } from 'react'
+import { Button } from '@/components/ui/button'
+import { Trash2, Edit3, Download } from 'lucide-react'
+import type { SavedFormula } from '../../types/formula'
+
+interface FormulaCardProps {
+  formula: SavedFormula
+  onLoad: (content: string) => void
+  onDelete: (id: string) => void
+  onRename: (id: string, newName: string) => void
+}
+
+function FormulaCard({ formula, onLoad, onDelete, onRename }: FormulaCardProps) {
+  const handleRename = () => {
+    const newName = prompt('Enter new name:', formula.name)
+    if (newName && newName !== formula.name) {
+      onRename(formula.id, newName)
+    }
+  }
+
+  const handleDelete = () => {
+    if (confirm(`Delete "${formula.name}"?`)) {
+      onDelete(formula.id)
+    }
+  }
+
+  const formatDate = (timestamp: number) => {
+    return new Date(timestamp).toLocaleDateString()
+  }
+
+  return (
+    <div className="group rounded-lg border bg-card p-3 hover:border-primary/50 transition-colors">
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex-1 min-w-0 cursor-pointer" onClick={() => onLoad(formula.content)}>
+          <h4 className="font-medium truncate">{formula.name}</h4>
+          <p className="text-xs text-muted-foreground mt-1 line-clamp-2 font-mono">
+            {formula.content}
+          </p>
+          <p className="text-xs text-muted-foreground mt-2">
+            {formatDate(formula.createdAt)}
+          </p>
+        </div>
+        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onLoad(formula.content)} title="Load">
+            <Download className="h-3.5 w-3.5" />
+          </Button>
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleRename} title="Rename">
+            <Edit3 className="h-3.5 w-3.5" />
+          </Button>
+          <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={handleDelete} title="Delete">
+            <Trash2 className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default memo(FormulaCard)

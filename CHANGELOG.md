@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-01-04
+
+### Added
+- **Formula Library** - Save and manage your formulas locally in the browser
+  - Save button in Input section header for quick formula saving
+  - Saved Formulas dialog accessible from header (Bookmark icon)
+  - Load, rename, and delete saved formulas
+  - Clear All button to remove all saved formulas at once
+- **Auto-save Draft** - Automatically saves your current work to localStorage
+  - Restores last edited content when reopening the app
+  - No more losing work when accidentally closing the browser
+
+### Changed
+- Removed default example formulas - new users now start with a blank editor
+- Improved user experience for first-time users
+
 ## [0.3.0] - 2025-12-30
 
 ### Added

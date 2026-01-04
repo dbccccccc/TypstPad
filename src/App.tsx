@@ -8,17 +8,20 @@ import Header from './components/Header/Header'
 import { useTheme } from './contexts/ThemeContext'
 import { downloadSVG, downloadPNG, downloadJPG, downloadText, copyToClipboard, copyPNGToClipboard } from './utils/export'
 import { generateShareUrl, getFormulaFromUrl } from './utils/share'
+import { loadFormulaStorage, saveDraft, addFormula } from './utils/storage'
+import FormulasDialog from './components/FormulasDialog'
+import SaveFormulaDialog from './components/FormulasDialog/SaveFormulaDialog'
 import { preloadTypst } from './services/typst'
-import { Code, Image } from 'lucide-react'
+import { Code, Image, Bookmark } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 
 function App() {
   const { theme } = useTheme()
   const editorRef = useRef<EditorRef>(null)
   const [code, setCode] = useState(() => {
     const urlFormula = getFormulaFromUrl()
-    return urlFormula || `sum_(i=1)^n i = (n(n+1))/2 \\
-integral_0^infinity e^(-x^2) dif x = sqrt(pi)/2 \\
-lim_(x->0) (sin x)/x = 1`
+    if (urlFormula) return urlFormula
+    return loadFormulaStorage().currentDraft
   })
   const [svg, setSvg] = useState<string | null>(null)
   const [settings, setSettings] = useState<Settings>(() => {
@@ -26,6 +29,16 @@ lim_(x->0) (sin x)/x = 1`
     return saved ? { ...defaultSettings, ...JSON.parse(saved) } : defaultSettings
   })
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [formulasOpen, setFormulasOpen] = useState(false)
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false)
+
+  // Auto-save draft (debounced)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      saveDraft(code)
+    }, 500)
+    return () => clearTimeout(timer)
+  }, [code])
 
   // Start preloading WASM in background (non-blocking)
   useEffect(() => {
@@ -48,7 +61,7 @@ lim_(x->0) (sin x)/x = 1`
 
   return (
     <div className="flex flex-col h-screen bg-background">
-      <Header onSettingsClick={() => setSettingsOpen(true)} />
+      <Header onSettingsClick={() => setSettingsOpen(true)} onFormulasClick={() => setFormulasOpen(true)} />
 
       <main className="flex-1 overflow-auto p-6">
         <div className="max-w-6xl mx-auto space-y-6">
@@ -59,6 +72,16 @@ lim_(x->0) (sin x)/x = 1`
                 <Code className="h-4 w-4" />
                 Input
               </h2>
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={!code.trim()}
+                onClick={() => setSaveDialogOpen(true)}
+                className="gap-1.5 h-7"
+              >
+                <Bookmark className="h-3.5 w-3.5" />
+                Save
+              </Button>
             </div>
 
             {/* Math Symbol Toolbar */}
@@ -129,6 +152,18 @@ lim_(x->0) (sin x)/x = 1`
         onOpenChange={setSettingsOpen}
         settings={settings}
         onSettingsChange={setSettings}
+      />
+
+      <FormulasDialog
+        open={formulasOpen}
+        onOpenChange={setFormulasOpen}
+        onLoadFormula={setCode}
+      />
+
+      <SaveFormulaDialog
+        open={saveDialogOpen}
+        onOpenChange={setSaveDialogOpen}
+        onSave={(name) => addFormula(name, code)}
       />
     </div>
   )
