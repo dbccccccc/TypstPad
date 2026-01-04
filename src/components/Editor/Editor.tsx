@@ -11,6 +11,7 @@ interface EditorProps {
   fontSize?: number
   theme?: 'light' | 'dark'
   showLineNumbers?: boolean
+  enableAutoComplete?: boolean
 }
 
 export interface EditorRef {
@@ -36,7 +37,8 @@ const Editor = forwardRef<EditorRef, EditorProps>(({
   onChange,
   fontSize = 14,
   theme = 'light',
-  showLineNumbers = true
+  showLineNumbers = true,
+  enableAutoComplete = true
 }, ref) => {
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null)
   const monaco = useMonaco()
@@ -110,6 +112,9 @@ const Editor = forwardRef<EditorRef, EditorProps>(({
           scrollBeyondLastLine: false,
           wordWrap: 'on',
           automaticLayout: true,
+          quickSuggestions: enableAutoComplete,
+          suggestOnTriggerCharacters: enableAutoComplete,
+          wordBasedSuggestions: enableAutoComplete ? 'currentDocument' : 'off',
         }}
       />
     </div>

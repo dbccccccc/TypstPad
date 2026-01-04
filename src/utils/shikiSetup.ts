@@ -3,6 +3,7 @@ import { shikiToMonaco } from '@shikijs/monaco'
 import type { LanguageRegistration } from '@shikijs/types'
 import type * as Monaco from 'monaco-editor'
 import typstGrammar from '../grammars/typst.tmLanguage.json'
+import { registerTypstCompletions } from './typstCompletions'
 
 let initPromise: Promise<void> | null = null
 
@@ -20,6 +21,9 @@ export async function setupShikiForMonaco(monaco: typeof Monaco) {
 
     // Register typst language
     monaco.languages.register({ id: 'typst' })
+
+    // Register Typst completions
+    registerTypstCompletions(monaco)
 
     // Integrate Shiki into Monaco
     shikiToMonaco(highlighter, monaco)

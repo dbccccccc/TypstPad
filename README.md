@@ -12,6 +12,7 @@ A simple and elegant online Typst formula editor with real-time preview.
 
 - 🎨 **Real-time Preview** - See your Typst formulas rendered instantly
 - 📝 **Monaco Editor** - Professional code editing experience with syntax highlighting
+- 🔤 **Auto Complete** - Intelligent Typst symbol and function suggestions
 - 🌓 **Theme Support** - Light, dark, and system theme modes
 - 📤 **Multiple Export Formats**
   - PNG (transparent background)

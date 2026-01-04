@@ -24,6 +24,7 @@ export interface Settings {
   invertOutputInDark: boolean
   simplifiedFormulaMode: boolean
   startupBehavior: 'lastEdit' | 'blank'
+  enableAutoComplete: boolean
 }
 
 export const defaultSettings: Settings = {
@@ -33,6 +34,7 @@ export const defaultSettings: Settings = {
   invertOutputInDark: false,
   simplifiedFormulaMode: true,
   startupBehavior: 'lastEdit',
+  enableAutoComplete: true,
 }
 
 interface SettingsDialogProps {
@@ -118,6 +120,17 @@ function SettingsDialog({ open, onOpenChange, settings, onSettingsChange }: Sett
                     <SelectItem value="blank">Blank</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Auto Complete</Label>
+                  <p className="text-xs text-muted-foreground">Show Typst symbol suggestions while typing</p>
+                </div>
+                <Switch
+                  checked={settings.enableAutoComplete}
+                  onCheckedChange={(checked) => updateSetting('enableAutoComplete', checked)}
+                />
               </div>
             </div>
           </div>

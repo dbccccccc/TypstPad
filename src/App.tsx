@@ -109,6 +109,7 @@ function App() {
                 fontSize={settings.fontSize}
                 theme={theme}
                 showLineNumbers={settings.showLineNumbers}
+                enableAutoComplete={settings.enableAutoComplete}
               />
             </div>
           </section>
