@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2026-01-05
+
+### Added
+- **Layout Mode Setting** - Choose between vertical and side-by-side layouts
+  - Options: "Vertical" (default) or "Side by Side"
+  - Side-by-side mode displays input on the left and output on the right with 50/50 split
+  - Independent scrolling for each panel in side-by-side mode
+  - Responsive design: automatically switches to vertical layout on screens smaller than 1024px
+  - Accessible in Settings dialog under "Editor Settings" section
+
 ## [0.5.0] - 2026-01-04
 
 ### Added

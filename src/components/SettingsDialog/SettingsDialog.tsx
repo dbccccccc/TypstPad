@@ -25,6 +25,7 @@ export interface Settings {
   simplifiedFormulaMode: boolean
   startupBehavior: 'lastEdit' | 'blank'
   enableAutoComplete: boolean
+  layoutMode: 'vertical' | 'side-by-side'
 }
 
 export const defaultSettings: Settings = {
@@ -35,6 +36,7 @@ export const defaultSettings: Settings = {
   simplifiedFormulaMode: true,
   startupBehavior: 'lastEdit',
   enableAutoComplete: true,
+  layoutMode: 'vertical',
 }
 
 interface SettingsDialogProps {
@@ -131,6 +133,25 @@ function SettingsDialog({ open, onOpenChange, settings, onSettingsChange }: Sett
                   checked={settings.enableAutoComplete}
                   onCheckedChange={(checked) => updateSetting('enableAutoComplete', checked)}
                 />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Layout Mode</Label>
+                  <p className="text-xs text-muted-foreground">Choose how input and output are arranged</p>
+                </div>
+                <Select
+                  value={settings.layoutMode}
+                  onValueChange={(value: 'vertical' | 'side-by-side') => updateSetting('layoutMode', value)}
+                >
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="vertical">Vertical</SelectItem>
+                    <SelectItem value="side-by-side">Side by Side</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </div>

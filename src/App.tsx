@@ -75,9 +75,17 @@ function App() {
       <Header onSettingsClick={() => setSettingsOpen(true)} onFormulasClick={() => setFormulasOpen(true)} />
 
       <main className="flex-1 overflow-auto p-6">
-        <div className="max-w-6xl mx-auto space-y-6">
+        <div className={`mx-auto ${
+          settings.layoutMode === 'side-by-side'
+            ? 'max-w-full px-6 lg:flex lg:gap-6 lg:h-full space-y-6 lg:space-y-0'
+            : 'max-w-6xl space-y-6'
+        }`}>
           {/* Input Section */}
-          <section className="rounded-lg border bg-card shadow-sm">
+          <section className={`rounded-lg border bg-card shadow-sm ${
+            settings.layoutMode === 'side-by-side'
+              ? 'lg:flex-1 lg:flex lg:flex-col lg:overflow-hidden'
+              : ''
+          }`}>
             <div className="flex items-center justify-between px-4 py-3 border-b bg-muted/50">
               <h2 className="flex items-center gap-2 text-sm font-medium">
                 <Code className="h-4 w-4" />
@@ -101,7 +109,11 @@ function App() {
             </div>
 
             {/* Editor */}
-            <div className="h-[300px] relative z-0">
+            <div className={`relative z-0 ${
+              settings.layoutMode === 'side-by-side'
+                ? 'lg:flex-1 lg:overflow-auto'
+                : 'h-[300px]'
+            }`}>
               <Editor
                 ref={editorRef}
                 value={code}
@@ -115,7 +127,11 @@ function App() {
           </section>
 
           {/* Output Section */}
-          <section className="rounded-lg border bg-card shadow-sm">
+          <section className={`rounded-lg border bg-card shadow-sm ${
+            settings.layoutMode === 'side-by-side'
+              ? 'lg:flex-1 lg:flex lg:flex-col lg:overflow-hidden'
+              : ''
+          }`}>
             <div className="flex items-center justify-between px-4 py-3 border-b bg-muted/50">
               <h2 className="flex items-center gap-2 text-sm font-medium">
                 <Image className="h-4 w-4" />
@@ -123,8 +139,12 @@ function App() {
               </h2>
             </div>
 
-            <div className={`min-h-[300px] flex items-center justify-center p-8 bg-white ${
+            <div className={`flex items-center justify-center p-8 bg-white ${
               theme === 'dark' && settings.invertOutputInDark ? 'invert' : ''
+            } ${
+              settings.layoutMode === 'side-by-side'
+                ? 'lg:flex-1 lg:overflow-auto'
+                : 'min-h-[300px]'
             }`}>
               <Preview
                 code={code}
