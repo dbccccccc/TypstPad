@@ -74,12 +74,10 @@ export function downloadPNG(svgString: string, filename = 'formula.png', scale =
     const { width, height } = getSvgDimensions(cleanSvg)
     const img = new Image()
 
-    // Load SVG using Object URL (avoids deprecated escape/unescape)
-    const svgBlob = new Blob([cleanSvg], { type: 'image/svg+xml;charset=utf-8' })
-    const objectUrl = URL.createObjectURL(svgBlob)
+    // Load SVG using data URL to avoid CORS/COEP issues
+    const dataUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(cleanSvg)
 
     img.onload = () => {
-      URL.revokeObjectURL(objectUrl)
       const canvas = document.createElement('canvas')
       canvas.width = width * scale
       canvas.height = height * scale
@@ -107,11 +105,10 @@ export function downloadPNG(svgString: string, filename = 'formula.png', scale =
     }
 
     img.onerror = () => {
-      URL.revokeObjectURL(objectUrl)
       reject(new Error('Failed to load SVG image'))
     }
 
-    img.src = objectUrl
+    img.src = dataUrl
   })
 }
 
@@ -124,11 +121,10 @@ function svgToPngBlob(svgString: string, scale = 2, backgroundColor?: string): P
     const { width, height } = getSvgDimensions(cleanSvg)
     const img = new Image()
 
-    const svgBlob = new Blob([cleanSvg], { type: 'image/svg+xml;charset=utf-8' })
-    const objectUrl = URL.createObjectURL(svgBlob)
+    // Load SVG using data URL to avoid CORS/COEP issues
+    const dataUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(cleanSvg)
 
     img.onload = () => {
-      URL.revokeObjectURL(objectUrl)
       const canvas = document.createElement('canvas')
       canvas.width = width * scale
       canvas.height = height * scale
@@ -157,10 +153,10 @@ function svgToPngBlob(svgString: string, scale = 2, backgroundColor?: string): P
     }
 
     img.onerror = () => {
-      URL.revokeObjectURL(objectUrl)
       reject(new Error('Failed to load SVG image'))
     }
-    img.src = objectUrl
+
+    img.src = dataUrl
   })
 }
 
