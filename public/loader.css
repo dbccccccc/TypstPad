@@ -1,0 +1,42 @@
+/* Initial loader styles - loaded before main app */
+body { margin: 0; }
+#root { min-height: 100vh; }
+
+.initial-loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background: #fafafa;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: #71717a;
+}
+
+.dark .initial-loader {
+  background: #09090b;
+  color: #a1a1aa;
+}
+
+.loader-spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid #d4d4d8;
+  border-top-color: #71717a;
+  border-radius: 50%;
+  animation: loader-spin 0.8s linear infinite;
+}
+
+.dark .loader-spinner {
+  border-color: #3f3f46;
+  border-top-color: #a1a1aa;
+}
+
+@keyframes loader-spin {
+  to { transform: rotate(360deg); }
+}
+
+.loader-text {
+  margin-top: 12px;
+  font-size: 13px;
+}
