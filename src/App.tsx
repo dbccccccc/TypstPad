@@ -9,11 +9,25 @@ import { useTheme } from './contexts/ThemeContext'
 import { downloadSVG, downloadPNG, downloadJPG, downloadText, copyToClipboard, copyPNGToClipboard } from './utils/export'
 import { generateShareUrl, getFormulaFromUrl } from './utils/share'
 import { loadFormulaStorage, saveDraft, addFormula } from './utils/storage'
+import { svgToDataUri } from './utils/svg'
 import FormulasDialog from './components/FormulasDialog'
 import SaveFormulaDialog from './components/FormulasDialog/SaveFormulaDialog'
 import { preloadTypst } from './services/typst'
 import { Code, Image, Bookmark } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+
+function loadSettingsFromStorage(): Settings {
+  const saved = localStorage.getItem('typst-editor-settings')
+  if (!saved) return defaultSettings
+
+  try {
+    const parsed = JSON.parse(saved)
+    if (!parsed || typeof parsed !== 'object') return defaultSettings
+    return { ...defaultSettings, ...(parsed as Partial<Settings>) }
+  } catch {
+    return defaultSettings
+  }
+}
 
 function App() {
   const { theme } = useTheme()
@@ -24,10 +38,7 @@ function App() {
     if (urlFormula) return urlFormula
 
     // Check startup behavior setting
-    const savedSettings = localStorage.getItem('typst-editor-settings')
-    const settings = savedSettings
-      ? { ...defaultSettings, ...JSON.parse(savedSettings) }
-      : defaultSettings
+    const settings = loadSettingsFromStorage()
 
     if (settings.startupBehavior === 'blank') {
       return ''
@@ -36,8 +47,7 @@ function App() {
   })
   const [svg, setSvg] = useState<string | null>(null)
   const [settings, setSettings] = useState<Settings>(() => {
-    const saved = localStorage.getItem('typst-editor-settings')
-    return saved ? { ...defaultSettings, ...JSON.parse(saved) } : defaultSettings
+    return loadSettingsFromStorage()
   })
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [formulasOpen, setFormulasOpen] = useState(false)
@@ -166,9 +176,11 @@ function App() {
                 onCopyTypst={() => copyToClipboard(code)}
                 onDownloadTypst={() => downloadText(code, 'formula.typ')}
                 onCopySVG={() => svg && copyToClipboard(svg)}
-                onCopyHTML={() => svg && copyToClipboard(`<div class="formula">${svg}</div>`)}
+                onCopyHTML={() => svg && copyToClipboard(
+                  `<div class="formula"><img src="${svgToDataUri(svg)}" alt="Formula" /></div>`
+                )}
                 onDownloadHTML={() => svg && downloadText(
-                  `<!DOCTYPE html>\n<html>\n<head><meta charset="UTF-8"><title>Formula</title></head>\n<body>\n<div class="formula">${svg}</div>\n</body>\n</html>`,
+                  `<!DOCTYPE html>\n<html>\n<head><meta charset="UTF-8"><title>Formula</title></head>\n<body>\n<div class="formula"><img src="${svgToDataUri(svg)}" alt="Formula" /></div>\n</body>\n</html>`,
                   'formula.html',
                   'text/html'
                 )}

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { compileSymbol } from '@/services/typst'
 import { cn } from '@/lib/utils'
 import { useTheme } from '@/contexts/ThemeContext'
+import { svgToDataUri } from '@/utils/svg'
 
 interface SymbolPreviewProps {
   code: string
@@ -36,9 +37,17 @@ export default function SymbolPreview({ code, fallback, className }: SymbolPrevi
 
   return (
     <span
-      className={cn("inline-flex items-center justify-center rounded", className)}
-      style={{ filter: theme === 'dark' ? 'invert(1)' : 'none' }}
-      dangerouslySetInnerHTML={{ __html: svg }}
-    />
+      className={cn(
+        "inline-flex items-center justify-center rounded",
+        theme === 'dark' && 'invert',
+        className
+      )}
+    >
+      <img
+        src={svgToDataUri(svg)}
+        alt={fallback}
+        className="block w-auto h-auto max-w-full max-h-full"
+      />
+    </span>
   )
 }

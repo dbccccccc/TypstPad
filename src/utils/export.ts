@@ -1,3 +1,5 @@
+import { sanitizeSvgForXml } from './svg'
+
 /**
  * Download text file
  */
@@ -12,18 +14,10 @@ export function downloadText(content: string, filename: string, mimeType = 'text
 }
 
 /**
- * Sanitize SVG string to ensure valid XML
- */
-function sanitizeSvg(svgString: string): string {
-  // Convert unescaped & to &amp; (excluding existing entity references like &amp; &lt; &gt; &quot; &apos; &#xxx;)
-  return svgString.replace(/&(?!(amp|lt|gt|quot|apos|#\d+|#x[0-9a-fA-F]+);)/g, '&amp;')
-}
-
-/**
  * Download SVG file
  */
 export function downloadSVG(svgString: string, filename = 'formula.svg') {
-  const cleanSvg = sanitizeSvg(svgString)
+  const cleanSvg = sanitizeSvgForXml(svgString)
   const blob = new Blob([cleanSvg], { type: 'image/svg+xml' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
@@ -70,7 +64,7 @@ function getSvgDimensions(svgString: string): { width: number; height: number } 
 export function downloadPNG(svgString: string, filename = 'formula.png', scale = 2): Promise<void> {
   return new Promise((resolve, reject) => {
     // First sanitize SVG
-    const cleanSvg = sanitizeSvg(svgString)
+    const cleanSvg = sanitizeSvgForXml(svgString)
     const { width, height } = getSvgDimensions(cleanSvg)
     const img = new Image()
 
@@ -117,7 +111,7 @@ export function downloadPNG(svgString: string, filename = 'formula.png', scale =
  */
 function svgToPngBlob(svgString: string, scale = 2, backgroundColor?: string): Promise<Blob> {
   return new Promise((resolve, reject) => {
-    const cleanSvg = sanitizeSvg(svgString)
+    const cleanSvg = sanitizeSvgForXml(svgString)
     const { width, height } = getSvgDimensions(cleanSvg)
     const img = new Image()
 

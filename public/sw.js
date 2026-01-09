@@ -10,8 +10,8 @@ const CACHE_PATTERNS = [
 ]
 
 // Check if URL should be cached
-function shouldCache(url) {
-  return CACHE_PATTERNS.some(pattern => pattern.test(url))
+function shouldCache(pathname) {
+  return CACHE_PATTERNS.some(pattern => pattern.test(pathname))
 }
 
 // Install event - pre-cache nothing, use runtime caching
@@ -34,22 +34,34 @@ self.addEventListener('activate', (event) => {
 
 // Fetch event - cache-first strategy for large assets
 self.addEventListener('fetch', (event) => {
-  const url = event.request.url
+  const request = event.request
 
-  if (!shouldCache(url)) {
+  // Security: only handle GET requests
+  if (request.method !== 'GET') {
+    return
+  }
+
+  const requestUrl = new URL(request.url)
+
+  // Security: only handle same-origin requests
+  if (requestUrl.origin !== self.location.origin) {
+    return
+  }
+
+  if (!shouldCache(requestUrl.pathname)) {
     return // Let browser handle normally
   }
 
   event.respondWith(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.match(event.request).then((cachedResponse) => {
+      return cache.match(request).then((cachedResponse) => {
         if (cachedResponse) {
           return cachedResponse
         }
 
-        return fetch(event.request).then((networkResponse) => {
-          if (networkResponse.ok) {
-            cache.put(event.request, networkResponse.clone())
+        return fetch(request).then((networkResponse) => {
+          if (networkResponse.ok && networkResponse.status === 200) {
+            cache.put(request, networkResponse.clone())
           }
           return networkResponse
         })

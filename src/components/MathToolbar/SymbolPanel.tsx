@@ -36,9 +36,9 @@ const iconMap: Record<string, React.ReactNode> = {
 
 // Size classes for symbol buttons
 const sizeClasses = {
-  sm: "w-11 h-11 [&_svg]:max-w-[32px] [&_svg]:max-h-[32px]",
-  md: "w-14 h-14 [&_svg]:max-w-[44px] [&_svg]:max-h-[44px]",
-  lg: "w-20 h-20 [&_svg]:max-w-[64px] [&_svg]:max-h-[64px]",
+  sm: "w-11 h-11 [&_svg]:max-w-[32px] [&_svg]:max-h-[32px] [&_img]:max-w-[32px] [&_img]:max-h-[32px]",
+  md: "w-14 h-14 [&_svg]:max-w-[44px] [&_svg]:max-h-[44px] [&_img]:max-w-[44px] [&_img]:max-h-[44px]",
+  lg: "w-20 h-20 [&_svg]:max-w-[64px] [&_svg]:max-h-[64px] [&_img]:max-w-[64px] [&_img]:max-h-[64px]",
 }
 
 // Column classes for grid layout

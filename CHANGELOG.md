@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.3] - 2026-01-09
+
+### Security
+- **SVG Rendering Hardening** - Render preview/symbol SVG via data-URI `<img>` to avoid DOM injection
+- **Service Worker Validation** - Cache only same-origin GET requests with stricter response validation
+- **Security Headers** - Added CSP, Referrer-Policy, and Permissions-Policy; moved theme init script to an external file for CSP compatibility
+
+### Fixed
+- **Settings Storage Robustness** - Prevent crashes when saved settings JSON in localStorage is corrupted
+- **Linting Noise** - Excluded bundled Monaco Editor files from ESLint scanning
+
+### Changed
+- **HTML Export** - Exported HTML now embeds the formula as a data-URI image instead of inlining raw SVG
+- **Docker Reproducibility** - Pinned the production Nginx base image version (removed `:latest`)
+
 ## [0.6.2] - 2026-01-07
 
 ### Changed

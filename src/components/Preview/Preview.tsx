@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { compileTypst, DiagnosticInfo, setLoadingProgressCallback } from '../../services/typst'
+import { svgToDataUri } from '../../utils/svg'
 import ErrorDisplay from '../ErrorDisplay'
 
 interface LoadingProgress {
@@ -86,9 +87,10 @@ function Preview({ code, onCompiled, simplifiedFormulaMode }: PreviewProps) {
         <ErrorDisplay diagnostics={diagnostics} />
       )}
       {!loading && !diagnostics && svg && (
-        <div
-          className="flex items-center justify-center [&_svg]:block [&_svg]:w-auto [&_svg]:h-auto [&_svg]:text-[32px]"
-          dangerouslySetInnerHTML={{ __html: svg }}
+        <img
+          src={svgToDataUri(svg)}
+          alt="Typst formula preview"
+          className="block w-auto h-auto max-w-full max-h-full"
         />
       )}
       {!loading && !diagnostics && !svg && (

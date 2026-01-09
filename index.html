@@ -6,18 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>TypstPad - Online Typst Formula Editor</title>
     <link rel="stylesheet" href="/loader.css" />
-    <script>
-      // Apply theme immediately to prevent flash
-      (function() {
-        var mode = localStorage.getItem('theme-mode') || 'system';
-        var isDark = mode === 'dark' ||
-          (mode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-        if (isDark) {
-          document.documentElement.classList.add('dark');
-          document.documentElement.style.colorScheme = 'dark';
-        }
-      })();
-    </script>
+    <script src="/theme-init.js"></script>
   </head>
   <body>
     <div id="root">
