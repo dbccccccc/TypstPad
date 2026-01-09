@@ -15,6 +15,8 @@ import SaveFormulaDialog from './components/FormulasDialog/SaveFormulaDialog'
 import { preloadTypst } from './services/typst'
 import { Code, Image, Bookmark } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { useVersionCheck } from './hooks/useVersionCheck'
+import { UpdateNotification } from './components/UpdateNotification'
 
 function loadSettingsFromStorage(): Settings {
   const saved = localStorage.getItem('typst-editor-settings')
@@ -53,6 +55,10 @@ function App() {
   const [formulasOpen, setFormulasOpen] = useState(false)
   const [saveDialogOpen, setSaveDialogOpen] = useState(false)
 
+  // Version check
+  const { updateAvailable, versionInfo } = useVersionCheck()
+  const [showUpdateDialog, setShowUpdateDialog] = useState(false)
+
   // Auto-save draft (debounced)
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -79,6 +85,13 @@ function App() {
   useEffect(() => {
     localStorage.setItem('typst-editor-settings', JSON.stringify(settings))
   }, [settings])
+
+  // Show update dialog when update is available
+  useEffect(() => {
+    if (updateAvailable && versionInfo) {
+      setShowUpdateDialog(true)
+    }
+  }, [updateAvailable, versionInfo])
 
   return (
     <div className="flex flex-col h-screen bg-background">
@@ -209,6 +222,15 @@ function App() {
         onOpenChange={setSaveDialogOpen}
         onSave={(name) => addFormula(name, code)}
       />
+
+      {versionInfo && (
+        <UpdateNotification
+          open={showUpdateDialog}
+          onOpenChange={setShowUpdateDialog}
+          currentVersion={versionInfo.currentVersion}
+          newVersion={versionInfo.remoteVersion || ''}
+        />
+      )}
     </div>
   )
 }

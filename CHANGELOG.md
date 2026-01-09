@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.4] - 2026-01-09
+
+### Added
+- **Automatic Version Detection** - Detects when a new version is deployed and prompts users to update
+  - Checks for updates on app startup (after 5 seconds)
+  - Periodic checks every 30 minutes
+  - Checks when user returns to the tab (visibility change)
+  - Update notification dialog with "Update Now" and "Remind Later" options
+  - Auto-dismisses after 60 seconds if no action taken
+  - Automatically disabled in development environment
+  - Silent failure handling for network errors
+
 ## [0.6.3] - 2026-01-09
 
 ### Security
