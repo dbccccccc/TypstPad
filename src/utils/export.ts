@@ -61,49 +61,14 @@ function getSvgDimensions(svgString: string): { width: number; height: number } 
 /**
  * Download PNG file
  */
-export function downloadPNG(svgString: string, filename = 'formula.png', scale = 2): Promise<void> {
-  return new Promise((resolve, reject) => {
-    // First sanitize SVG
-    const cleanSvg = sanitizeSvgForXml(svgString)
-    const { width, height } = getSvgDimensions(cleanSvg)
-    const img = new Image()
-
-    // Load SVG using data URL to avoid CORS/COEP issues
-    const dataUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(cleanSvg)
-
-    img.onload = () => {
-      const canvas = document.createElement('canvas')
-      canvas.width = width * scale
-      canvas.height = height * scale
-      const ctx = canvas.getContext('2d')
-      if (!ctx) {
-        reject(new Error('Failed to get canvas context'))
-        return
-      }
-      ctx.scale(scale, scale)
-      ctx.drawImage(img, 0, 0, width, height)
-
-      canvas.toBlob((blob) => {
-        if (blob) {
-          const pngUrl = URL.createObjectURL(blob)
-          const a = document.createElement('a')
-          a.href = pngUrl
-          a.download = filename
-          a.click()
-          URL.revokeObjectURL(pngUrl)
-          resolve()
-        } else {
-          reject(new Error('Failed to create PNG blob'))
-        }
-      }, 'image/png')
-    }
-
-    img.onerror = () => {
-      reject(new Error('Failed to load SVG image'))
-    }
-
-    img.src = dataUrl
-  })
+export async function downloadPNG(svgString: string, filename = 'formula.png', scale = 2): Promise<void> {
+  const blob = await svgToPngBlob(svgString, scale)
+  const pngUrl = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = pngUrl
+  a.download = filename
+  a.click()
+  URL.revokeObjectURL(pngUrl)
 }
 
 /**
@@ -158,6 +123,13 @@ function svgToPngBlob(svgString: string, scale = 2, backgroundColor?: string): P
  * Copy PNG image to clipboard
  */
 export async function copyPNGToClipboard(svgString: string, scale = 2): Promise<boolean> {
+  if (
+    !navigator.clipboard ||
+    typeof navigator.clipboard.write !== 'function' ||
+    typeof ClipboardItem === 'undefined'
+  ) {
+    return false
+  }
   try {
     const blob = await svgToPngBlob(svgString, scale)
     await navigator.clipboard.write([

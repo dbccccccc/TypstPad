@@ -9,17 +9,77 @@ const defaultStorage: FormulaStorage = {
   version: CURRENT_VERSION,
 }
 
-export function loadFormulaStorage(): FormulaStorage {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY)
-    if (!saved) return defaultStorage
-    return { ...defaultStorage, ...JSON.parse(saved) }
-  } catch {
-    return defaultStorage
+function getDefaultStorage(): FormulaStorage {
+  return {
+    ...defaultStorage,
+    savedFormulas: [...defaultStorage.savedFormulas],
   }
 }
 
-export function saveFormulaStorage(storage: FormulaStorage): void {
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null
+}
+
+function isSavedFormula(value: unknown): value is SavedFormula {
+  if (!isRecord(value)) return false
+  return (
+    typeof value.id === 'string' &&
+    typeof value.name === 'string' &&
+    typeof value.content === 'string' &&
+    typeof value.createdAt === 'number' &&
+    typeof value.updatedAt === 'number'
+  )
+}
+
+function normalizeStorage(raw: unknown): { storage: FormulaStorage; didNormalize: boolean } {
+  const defaults = getDefaultStorage()
+  if (!isRecord(raw)) {
+    return { storage: defaults, didNormalize: true }
+  }
+
+  let didNormalize = false
+  const version = typeof raw.version === 'number' ? raw.version : 0
+  if (version !== CURRENT_VERSION) {
+    didNormalize = true
+  }
+
+  const storage: FormulaStorage = {
+    currentDraft: typeof raw.currentDraft === 'string' ? raw.currentDraft : defaults.currentDraft,
+    savedFormulas: Array.isArray(raw.savedFormulas)
+      ? raw.savedFormulas.filter(isSavedFormula)
+      : defaults.savedFormulas,
+    version: CURRENT_VERSION,
+  }
+
+  if (typeof raw.currentDraft !== 'string' && raw.currentDraft !== undefined) {
+    didNormalize = true
+  }
+  if (Array.isArray(raw.savedFormulas) && storage.savedFormulas.length !== raw.savedFormulas.length) {
+    didNormalize = true
+  }
+  if (!Array.isArray(raw.savedFormulas) && raw.savedFormulas !== undefined) {
+    didNormalize = true
+  }
+
+  return { storage, didNormalize }
+}
+
+export function loadFormulaStorage(): FormulaStorage {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY)
+    if (!saved) return getDefaultStorage()
+    const parsed = JSON.parse(saved)
+    const { storage, didNormalize } = normalizeStorage(parsed)
+    if (didNormalize) {
+      saveFormulaStorage(storage)
+    }
+    return storage
+  } catch {
+    return getDefaultStorage()
+  }
+}
+
+function saveFormulaStorage(storage: FormulaStorage): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(storage))
 }
 

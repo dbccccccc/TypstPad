@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.7] - 2026-01-16
+
+### Changed
+- **Typst Loading Progress** - Support multiple subscribers and fail fast on missing WASM assets
+- **Export Pipeline** - Reuse shared SVG-to-PNG conversion for downloads
+- **Settings Startup** - Avoid double-reading local settings on load
+- **HTML Export Helpers** - Centralized HTML snippet generation for copy/download
+
+### Fixed
+- **Formula Storage Validation** - Sanitize and migrate invalid localStorage payloads
+- **Clipboard PNG Copy** - Guard against unsupported clipboard image APIs
+
+### Removed
+- **Unused Tabs UI** - Dropped unused tabs component
+
 ## [0.6.6] - 2026-01-16
 
 ### Removed

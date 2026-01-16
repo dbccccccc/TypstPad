@@ -50,15 +50,13 @@ let initPromise: Promise<void> | null = null
 
 // Loading state for progress tracking
 type LoadingCallback = (progress: { phase: string; loaded?: number; total?: number }) => void
-let onLoadingProgress: LoadingCallback | null = null
+const loadingSubscribers = new Set<LoadingCallback>()
 
-export function setLoadingProgressCallback(callback: LoadingCallback | null) {
-  onLoadingProgress = callback
-}
-
-// Check if typst is ready
-export function isTypstReady(): boolean {
-  return isInitialized
+export function subscribeToLoadingProgress(callback: LoadingCallback): () => void {
+  loadingSubscribers.add(callback)
+  return () => {
+    loadingSubscribers.delete(callback)
+  }
 }
 
 // Preload WASM modules (call this early to start loading)
@@ -68,9 +66,18 @@ export function preloadTypst(): Promise<void> {
   return initPromise
 }
 
+function notifyLoadingProgress(progress: { phase: string; loaded?: number; total?: number }) {
+  for (const subscriber of loadingSubscribers) {
+    subscriber(progress)
+  }
+}
+
 // Fetch with progress tracking
 async function fetchWithProgress(url: string, phaseName: string): Promise<Response> {
   const response = await fetch(url)
+  if (!response.ok) {
+    throw new Error(`Failed to fetch ${phaseName} (${response.status} ${response.statusText})`)
+  }
 
   if (!response.body || !response.headers.get('content-length')) {
     // Fallback if streaming not supported
@@ -89,7 +96,7 @@ async function fetchWithProgress(url: string, phaseName: string): Promise<Respon
     chunks.push(value)
     loaded += value.length
 
-    onLoadingProgress?.({
+    notifyLoadingProgress({
       phase: phaseName,
       loaded,
       total: contentLength
@@ -105,7 +112,7 @@ async function initializeTypst() {
   if (isInitialized) return
 
   try {
-    onLoadingProgress?.({ phase: 'Loading compiler...' })
+    notifyLoadingProgress({ phase: 'Loading compiler...' })
 
     // Set compiler initialization options with streaming compilation
     $typst.setCompilerInitOptions({
@@ -126,18 +133,18 @@ async function initializeTypst() {
     // Set up font loading progress callback
     fontsLoaded = 0
     fontProgress.callback = (loaded, total) => {
-      onLoadingProgress?.({ phase: `Loading fonts (${loaded}/${total})` })
+      notifyLoadingProgress({ phase: `Loading fonts (${loaded}/${total})` })
     }
 
     // Trigger actual WASM loading by doing a simple compile
-    onLoadingProgress?.({ phase: 'Initializing...' })
+    notifyLoadingProgress({ phase: 'Initializing...' })
     await $typst.svg({ mainContent: '#set page(width: auto, height: auto)\n$ x $' })
 
     // Clear font callback
     fontProgress.callback = null
 
     isInitialized = true
-    onLoadingProgress?.({ phase: 'Ready' })
+    notifyLoadingProgress({ phase: 'Ready' })
   } catch (error) {
     console.error('Failed to initialize typst.ts:', error)
     throw error

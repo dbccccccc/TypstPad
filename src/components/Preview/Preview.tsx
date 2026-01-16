@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { compileTypst, DiagnosticInfo, setLoadingProgressCallback } from '../../services/typst'
+import { compileTypst, DiagnosticInfo, subscribeToLoadingProgress } from '../../services/typst'
 import { svgToDataUri } from '../../utils/svg'
 import ErrorDisplay from '../ErrorDisplay'
 
@@ -24,12 +24,12 @@ function Preview({ code, onCompiled, simplifiedFormulaMode }: PreviewProps) {
 
   useEffect(() => {
     // Set up loading progress callback
-    setLoadingProgressCallback((progress) => {
+    const unsubscribe = subscribeToLoadingProgress((progress) => {
       setLoading(progress)
     })
 
     return () => {
-      setLoadingProgressCallback(null)
+      unsubscribe()
     }
   }, [])
 

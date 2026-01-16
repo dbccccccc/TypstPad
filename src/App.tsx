@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react'
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import Editor, { EditorRef } from './components/Editor/Editor'
 import MathToolbar from './components/MathToolbar'
 import Preview from './components/Preview/Preview'
@@ -29,26 +29,31 @@ function loadSettingsFromStorage(): Settings {
   }
 }
 
+function buildFormulaImageHtml(svg: string): string {
+  return `<div class="formula"><img src="${svgToDataUri(svg)}" alt="Formula" /></div>`
+}
+
+function buildFormulaDocumentHtml(svg: string): string {
+  return `<!DOCTYPE html>\n<html>\n<head><meta charset="UTF-8"><title>Formula</title></head>\n<body>\n${buildFormulaImageHtml(svg)}\n</body>\n</html>`
+}
+
 function App() {
   const { theme } = useTheme()
   const editorRef = useRef<EditorRef>(null)
+  const initialSettings = useMemo(() => loadSettingsFromStorage(), [])
   const [code, setCode] = useState(() => {
     // URL formula always takes priority
     const urlFormula = getFormulaFromUrl()
     if (urlFormula) return urlFormula
 
     // Check startup behavior setting
-    const settings = loadSettingsFromStorage()
-
-    if (settings.startupBehavior === 'blank') {
+    if (initialSettings.startupBehavior === 'blank') {
       return ''
     }
     return loadFormulaStorage().currentDraft
   })
   const [svg, setSvg] = useState<string | null>(null)
-  const [settings, setSettings] = useState<Settings>(() => {
-    return loadSettingsFromStorage()
-  })
+  const [settings, setSettings] = useState<Settings>(initialSettings)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [formulasOpen, setFormulasOpen] = useState(false)
   const [saveDialogOpen, setSaveDialogOpen] = useState(false)
@@ -176,11 +181,9 @@ function App() {
                 onCopyTypst={() => copyToClipboard(code)}
                 onDownloadTypst={() => downloadText(code, 'formula.typ')}
                 onCopySVG={() => svg && copyToClipboard(svg)}
-                onCopyHTML={() => svg && copyToClipboard(
-                  `<div class="formula"><img src="${svgToDataUri(svg)}" alt="Formula" /></div>`
-                )}
+                onCopyHTML={() => svg && copyToClipboard(buildFormulaImageHtml(svg))}
                 onDownloadHTML={() => svg && downloadText(
-                  `<!DOCTYPE html>\n<html>\n<head><meta charset="UTF-8"><title>Formula</title></head>\n<body>\n<div class="formula"><img src="${svgToDataUri(svg)}" alt="Formula" /></div>\n</body>\n</html>`,
+                  buildFormulaDocumentHtml(svg),
                   'formula.html',
                   'text/html'
                 )}
