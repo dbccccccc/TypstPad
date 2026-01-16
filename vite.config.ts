@@ -1,7 +1,7 @@
 import { defineConfig, Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
-import { readFileSync, writeFileSync } from 'fs'
+import { readFileSync } from 'fs'
 
 // Read version from package.json
 const pkg = JSON.parse(readFileSync('./package.json', 'utf-8'))
@@ -35,28 +35,9 @@ function wasmPreloadPlugin(): Plugin {
   }
 }
 
-// Plugin to generate version.json file
-function versionFilePlugin(): Plugin {
-  return {
-    name: 'version-file-generator',
-    writeBundle() {
-      const versionInfo = {
-        version: APP_VERSION,
-        buildTime: new Date().toISOString()
-      }
-
-      const outDir = path.resolve(__dirname, 'dist')
-      const versionPath = path.join(outDir, 'version.json')
-
-      writeFileSync(versionPath, JSON.stringify(versionInfo, null, 2))
-      console.log(`✓ Generated version.json: ${APP_VERSION}`)
-    }
-  }
-}
-
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react(), wasmPreloadPlugin(), versionFilePlugin()],
+  plugins: [react(), wasmPreloadPlugin()],
   define: {
     __APP_VERSION__: JSON.stringify(APP_VERSION)
   },

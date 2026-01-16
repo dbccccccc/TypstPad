@@ -11,8 +11,6 @@ const CACHE_PATTERNS = [
 
 // Check if URL should be cached
 function shouldCache(pathname) {
-  // Don't cache version.json to ensure fresh version checks
-  if (pathname.includes('version.json')) return false
   return CACHE_PATTERNS.some(pattern => pattern.test(pathname))
 }
 
