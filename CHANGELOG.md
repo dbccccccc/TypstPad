@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.8] - 2026-01-16
+
+### Added
+- **Floating Menu Component** - Shared dropdown menu logic with hover/click support, outside-click dismissal, and collision-aware positioning
+
+### Changed
+- **Header Layout** - Keep title and actions on one line; move theme switcher into a dropdown menu
+- **Mobile Spacing** - Reduced paddings and panel heights on small screens for better fit
+- **Export Actions Layout** - Right-align export/share buttons across breakpoints and hide text labels on small screens
+- **Symbol Picker Layout** - Adjust grid columns on small screens and constrain menu height with scrolling
+- **Settings Dialog Layout** - Stack controls and use full-width selects/sliders on small screens
+- **Dialog Sizing** - Add max-height scrolling and smaller padding for better mobile usability
+- **Formula Card Actions** - Show action buttons on small screens without hover
+- **Viewport Height Handling** - Use dynamic viewport height to better handle mobile browser chrome
+
 ## [0.6.7] - 2026-01-16
 
 ### Changed

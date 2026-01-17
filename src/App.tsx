@@ -86,13 +86,13 @@ function App() {
   }, [settings])
 
   return (
-    <div className="flex flex-col h-screen bg-background">
+    <div className="flex flex-col h-screen h-[100dvh] bg-background">
       <Header onSettingsClick={() => setSettingsOpen(true)} onFormulasClick={() => setFormulasOpen(true)} />
 
-      <main className="flex-1 overflow-auto p-6">
+      <main className="flex-1 min-h-0 overflow-auto p-3 sm:p-6">
         <div className={`mx-auto ${
           settings.layoutMode === 'side-by-side'
-            ? 'max-w-full px-6 lg:flex lg:gap-6 lg:h-full space-y-6 lg:space-y-0'
+            ? 'max-w-full lg:flex lg:gap-6 lg:h-full space-y-6 lg:space-y-0'
             : 'max-w-6xl space-y-6'
         }`}>
           {/* Input Section */}
@@ -101,7 +101,7 @@ function App() {
               ? 'lg:flex-1 lg:flex lg:flex-col lg:overflow-hidden'
               : ''
           }`}>
-            <div className="flex items-center justify-between px-4 py-3 border-b bg-muted/50">
+            <div className="flex items-center justify-between px-3 py-2 sm:px-4 sm:py-3 border-b bg-muted/50">
               <h2 className="flex items-center gap-2 text-sm font-medium">
                 <Code className="h-4 w-4" />
                 Input
@@ -127,7 +127,7 @@ function App() {
             <div className={`relative z-0 ${
               settings.layoutMode === 'side-by-side'
                 ? 'lg:flex-1 lg:overflow-auto'
-                : 'h-[300px]'
+                : 'h-[240px] sm:h-[300px]'
             }`}>
               <Editor
                 ref={editorRef}
@@ -147,19 +147,19 @@ function App() {
               ? 'lg:flex-1 lg:flex lg:flex-col lg:overflow-hidden'
               : ''
           }`}>
-            <div className="flex items-center justify-between px-4 py-3 border-b bg-muted/50">
+            <div className="flex items-center justify-between px-3 py-2 sm:px-4 sm:py-3 border-b bg-muted/50">
               <h2 className="flex items-center gap-2 text-sm font-medium">
                 <Image className="h-4 w-4" />
                 Output
               </h2>
             </div>
 
-            <div className={`flex items-center justify-center p-8 bg-white ${
+            <div className={`flex items-center justify-center p-4 sm:p-8 bg-white ${
               theme === 'dark' && settings.invertOutputInDark ? 'invert' : ''
             } ${
               settings.layoutMode === 'side-by-side'
                 ? 'lg:flex-1 lg:overflow-auto'
-                : 'min-h-[300px]'
+                : 'min-h-[240px] sm:min-h-[300px]'
             }`}>
               <Preview
                 code={code}
@@ -169,7 +169,7 @@ function App() {
             </div>
 
             {/* Export buttons */}
-            <div className="flex justify-end gap-2 px-4 py-3 border-t">
+            <div className="flex flex-wrap justify-end gap-2 px-3 py-2 sm:px-4 sm:py-3 border-t">
               <ExportPanel
                 svg={svg}
                 code={code}

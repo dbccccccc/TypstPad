@@ -1,6 +1,7 @@
-import { useState, useRef, useCallback, useEffect, memo, createContext, useContext } from 'react'
+import { useState, useCallback, memo } from 'react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { FloatingMenu, MenuGroupProvider } from '@/components/ui/floating-menu'
 import {
   Image,
   Code,
@@ -49,19 +50,6 @@ interface MenuSection {
   items: MenuItem[]
 }
 
-// Context for managing which menu is open (prevents overlap)
-const MenuContext = createContext<{
-  activeMenu: string | null
-  isClosing: boolean
-  openMenu: (id: string) => void
-  closeMenu: () => void
-}>({
-  activeMenu: null,
-  isClosing: false,
-  openMenu: () => {},
-  closeMenu: () => {},
-})
-
 const MenuContent = memo(function MenuContent({
   sections,
   onItemClick,
@@ -102,59 +90,6 @@ const MenuContent = memo(function MenuContent({
   )
 })
 
-function HoverMenu({
-  menuId,
-  trigger,
-  sections,
-  disabled,
-}: {
-  menuId: string
-  trigger: React.ReactNode
-  sections: MenuSection[]
-  disabled?: boolean
-}) {
-  const { activeMenu, isClosing, openMenu, closeMenu } = useContext(MenuContext)
-  const containerRef = useRef<HTMLDivElement>(null)
-
-  const isOpen = activeMenu === menuId
-
-  const handleMouseEnter = useCallback(() => {
-    if (disabled) return
-    openMenu(menuId)
-  }, [disabled, menuId, openMenu])
-
-  const handleMouseLeave = useCallback(() => {
-    closeMenu()
-  }, [closeMenu])
-
-  const handleItemClick = useCallback((onClick: () => void) => {
-    onClick()
-    // Don't close menu on click, let mouse leave handle it
-  }, [])
-
-  return (
-    <div
-      ref={containerRef}
-      className="relative"
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-    >
-      {trigger}
-      {isOpen && (
-        <div
-          className={cn(
-            "absolute bottom-full right-0 mb-1 z-50",
-            "min-w-[14rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md",
-            isClosing ? "animate-menu-hide" : "animate-menu-show"
-          )}
-        >
-          <MenuContent sections={sections} onItemClick={handleItemClick} />
-        </div>
-      )}
-    </div>
-  )
-}
-
 export default function ExportPanel({
   svg,
   onDownloadPNG,
@@ -169,37 +104,7 @@ export default function ExportPanel({
   onCopyShareLink,
 }: ExportPanelProps) {
   const [copyState, setCopyState] = useState<CopyState>({})
-  const [activeMenu, setActiveMenu] = useState<string | null>(null)
-  const [isClosing, setIsClosing] = useState(false)
-  const closeTimeoutRef = useRef<ReturnType<typeof setTimeout>>()
-  const closingAnimationRef = useRef<ReturnType<typeof setTimeout>>()
   const isDisabled = !svg
-
-  // Cleanup timeouts on unmount
-  useEffect(() => {
-    return () => {
-      clearTimeout(closeTimeoutRef.current)
-      clearTimeout(closingAnimationRef.current)
-    }
-  }, [])
-
-  const openMenu = useCallback((id: string) => {
-    clearTimeout(closeTimeoutRef.current)
-    clearTimeout(closingAnimationRef.current)
-    setIsClosing(false)
-    setActiveMenu(id)
-  }, [])
-
-  const closeMenu = useCallback(() => {
-    clearTimeout(closeTimeoutRef.current)
-    closeTimeoutRef.current = setTimeout(() => {
-      setIsClosing(true)
-      closingAnimationRef.current = setTimeout(() => {
-        setActiveMenu(null)
-        setIsClosing(false)
-      }, 150) // Match animation duration
-    }, 80)
-  }, [])
 
   const handleCopy = useCallback((key: string, action: () => void) => {
     action()
@@ -207,6 +112,11 @@ export default function ExportPanel({
     setTimeout(() => {
       setCopyState(prev => ({ ...prev, [key]: false }))
     }, 2000)
+  }, [])
+
+  const handleItemClick = useCallback((onClick: () => void) => {
+    onClick()
+    // Don't close menu on click, let mouse leave handle it
   }, [])
 
   const imageSections: MenuSection[] = [
@@ -300,43 +210,51 @@ export default function ExportPanel({
   ]
 
   return (
-    <MenuContext.Provider value={{ activeMenu, isClosing, openMenu, closeMenu }}>
+    <MenuGroupProvider>
       <div className="flex items-center gap-2">
         {/* Export Image */}
-        <HoverMenu
+        <FloatingMenu
           menuId="image"
+          placement="top-end"
           disabled={isDisabled}
-          sections={imageSections}
-          trigger={
+          contentClassName="min-w-[14rem] max-w-[calc(100vw-2rem)] max-h-[70dvh] overflow-y-auto p-1"
+          trigger={({ triggerProps }) => (
             <Button
               variant="outline"
               size="sm"
               disabled={isDisabled}
               className="gap-2 transition-all duration-200 hover:shadow-md"
+              {...triggerProps}
             >
               <Image className="h-4 w-4" />
-              Export Image
+              <span className="sr-only sm:not-sr-only">Export Image</span>
             </Button>
-          }
-        />
+          )}
+        >
+          <MenuContent sections={imageSections} onItemClick={handleItemClick} />
+        </FloatingMenu>
 
         {/* Export Code */}
-        <HoverMenu
+        <FloatingMenu
           menuId="code"
+          placement="top-end"
           disabled={isDisabled}
-          sections={codeSections}
-          trigger={
+          contentClassName="min-w-[14rem] max-w-[calc(100vw-2rem)] max-h-[70dvh] overflow-y-auto p-1"
+          trigger={({ triggerProps }) => (
             <Button
               variant="outline"
               size="sm"
               disabled={isDisabled}
               className="gap-2 transition-all duration-200 hover:shadow-md"
+              {...triggerProps}
             >
               <Code className="h-4 w-4" />
-              Export Code
+              <span className="sr-only sm:not-sr-only">Export Code</span>
             </Button>
-          }
-        />
+          )}
+        >
+          <MenuContent sections={codeSections} onItemClick={handleItemClick} />
+        </FloatingMenu>
 
         {/* Share */}
         <Button
@@ -351,10 +269,12 @@ export default function ExportPanel({
           ) : (
             <Share2 className="h-4 w-4" />
           )}
-          {copyState['share'] ? 'Copied' : 'Share'}
-          <Link className="h-3.5 w-3.5 text-muted-foreground" />
+          <span className="sr-only sm:not-sr-only">
+            {copyState['share'] ? 'Copied' : 'Share'}
+          </span>
+          <Link className="hidden sm:inline-block h-3.5 w-3.5 text-muted-foreground" />
         </Button>
       </div>
-    </MenuContext.Provider>
+    </MenuGroupProvider>
   )
 }

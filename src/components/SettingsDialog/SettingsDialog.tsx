@@ -67,7 +67,7 @@ function SettingsDialog({ open, onOpenChange, settings, onSettingsChange }: Sett
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6 py-4">
+        <div className="space-y-5 sm:space-y-6 py-3 sm:py-4">
           {/* Editor Settings */}
           <div className="space-y-4">
             <h3 className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
@@ -75,13 +75,13 @@ function SettingsDialog({ open, onOpenChange, settings, onSettingsChange }: Sett
               Editor Settings
             </h3>
 
-            <div className="space-y-4 pl-6">
-              <div className="flex items-center justify-between">
+            <div className="space-y-4 pl-0 sm:pl-6">
+              <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div className="space-y-0.5">
                   <Label>Font Size</Label>
                   <p className="text-xs text-muted-foreground">Adjust editor font size</p>
                 </div>
-                <div className="flex items-center gap-3 w-[180px]">
+                <div className="flex w-full items-center gap-3 sm:w-[180px]">
                   <Slider
                     value={[settings.fontSize]}
                     onValueChange={([value]) => updateSetting('fontSize', value)}
@@ -94,7 +94,7 @@ function SettingsDialog({ open, onOpenChange, settings, onSettingsChange }: Sett
                 </div>
               </div>
 
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div className="space-y-0.5">
                   <Label>Show Line Numbers</Label>
                   <p className="text-xs text-muted-foreground">Display line numbers in editor</p>
@@ -105,7 +105,7 @@ function SettingsDialog({ open, onOpenChange, settings, onSettingsChange }: Sett
                 />
               </div>
 
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div className="space-y-0.5">
                   <Label>Startup Behavior</Label>
                   <p className="text-xs text-muted-foreground">Choose what to show when the app opens</p>
@@ -114,7 +114,7 @@ function SettingsDialog({ open, onOpenChange, settings, onSettingsChange }: Sett
                   value={settings.startupBehavior}
                   onValueChange={(value: 'lastEdit' | 'blank') => updateSetting('startupBehavior', value)}
                 >
-                  <SelectTrigger className="w-[140px]">
+                  <SelectTrigger className="w-full sm:w-[140px]">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -124,7 +124,7 @@ function SettingsDialog({ open, onOpenChange, settings, onSettingsChange }: Sett
                 </Select>
               </div>
 
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div className="space-y-0.5">
                   <Label>Auto Complete</Label>
                   <p className="text-xs text-muted-foreground">Show Typst symbol suggestions while typing</p>
@@ -135,7 +135,7 @@ function SettingsDialog({ open, onOpenChange, settings, onSettingsChange }: Sett
                 />
               </div>
 
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div className="space-y-0.5">
                   <Label>Layout Mode</Label>
                   <p className="text-xs text-muted-foreground">Choose how input and output are arranged</p>
@@ -144,7 +144,7 @@ function SettingsDialog({ open, onOpenChange, settings, onSettingsChange }: Sett
                   value={settings.layoutMode}
                   onValueChange={(value: 'vertical' | 'side-by-side') => updateSetting('layoutMode', value)}
                 >
-                  <SelectTrigger className="w-[140px]">
+                  <SelectTrigger className="w-full sm:w-[140px]">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -163,8 +163,8 @@ function SettingsDialog({ open, onOpenChange, settings, onSettingsChange }: Sett
               Output Settings
             </h3>
 
-            <div className="space-y-4 pl-6">
-              <div className="flex items-center justify-between">
+            <div className="space-y-4 pl-0 sm:pl-6">
+              <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div className="space-y-0.5">
                   <Label>PNG Export Scale</Label>
                   <p className="text-xs text-muted-foreground">Higher scale = sharper image</p>
@@ -173,7 +173,7 @@ function SettingsDialog({ open, onOpenChange, settings, onSettingsChange }: Sett
                   value={String(settings.pngScale)}
                   onValueChange={(value) => updateSetting('pngScale', Number(value))}
                 >
-                  <SelectTrigger className="w-[120px]">
+                  <SelectTrigger className="w-full sm:w-[120px]">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -185,7 +185,7 @@ function SettingsDialog({ open, onOpenChange, settings, onSettingsChange }: Sett
                 </Select>
               </div>
 
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div className="space-y-0.5">
                   <Label>Force Dark Preview Background</Label>
                   <p className="text-xs text-muted-foreground">Enable dark background for preview in dark mode. Formula colors will be inverted for readability.</p>
@@ -205,8 +205,8 @@ function SettingsDialog({ open, onOpenChange, settings, onSettingsChange }: Sett
               Formula Mode
             </h3>
 
-            <div className="space-y-4 pl-6">
-              <div className="flex items-center justify-between">
+            <div className="space-y-4 pl-0 sm:pl-6">
+              <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div className="space-y-0.5">
                   <Label>Simplified Formula Mode</Label>
                   <p className="text-xs text-muted-foreground">
