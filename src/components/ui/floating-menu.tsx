@@ -81,7 +81,7 @@ function useMenuGroup() {
 type MenuPlacement = "bottom-start" | "bottom-end" | "top-start" | "top-end"
 
 type FloatingMenuTriggerProps = {
-  onClick: (event: React.MouseEvent) => void
+  onClick: React.MouseEventHandler<HTMLElement>
   "aria-expanded": boolean
   "aria-haspopup": "menu"
 }
@@ -190,7 +190,7 @@ function FloatingMenu({
     }
   }, [isOpen, updatePosition])
 
-  const handleTriggerClick = React.useCallback((event: React.MouseEvent) => {
+  const handleTriggerClick = React.useCallback((event: React.MouseEvent<HTMLElement>) => {
     if (event.defaultPrevented) return
     if (disabled) return
     if (isOpen) {
@@ -201,7 +201,7 @@ function FloatingMenu({
     }
     openedByClickRef.current = true
     openMenu(menuId)
-  }, [isOpen, closeMenu, openMenu, menuId])
+  }, [isOpen, closeMenu, openMenu, menuId, disabled])
 
   const handleMouseEnter = React.useCallback(() => {
     if (!openOnHover || disabled) return
@@ -243,10 +243,10 @@ function FloatingMenu({
 
   const triggerElement = typeof trigger === "function"
     ? trigger({ isOpen, triggerProps })
-    : React.isValidElement(trigger)
+    : React.isValidElement<React.HTMLAttributes<HTMLElement>>(trigger)
       ? React.cloneElement(trigger, {
         ...triggerProps,
-        onClick: (event: React.MouseEvent) => {
+        onClick: (event: React.MouseEvent<HTMLElement>) => {
           trigger.props.onClick?.(event)
           if (event.defaultPrevented) return
           handleTriggerClick(event)
