@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import FormulaCard from './FormulaCard'
 import { loadFormulaStorage, deleteFormula, updateFormula, clearAllFormulas } from '../../utils/storage'
 import type { SavedFormula } from '../../types/formula'
+import { useI18n } from '@/i18n'
 
 interface FormulasDialogProps {
   open: boolean
@@ -19,6 +20,7 @@ interface FormulasDialogProps {
 
 function FormulasDialog({ open, onOpenChange, onLoadFormula }: FormulasDialogProps) {
   const [formulas, setFormulas] = useState<SavedFormula[]>([])
+  const { t } = useI18n()
 
   const refreshFormulas = useCallback(() => {
     setFormulas(loadFormulaStorage().savedFormulas)
@@ -46,11 +48,11 @@ function FormulasDialog({ open, onOpenChange, onLoadFormula }: FormulasDialogPro
   }, [refreshFormulas])
 
   const handleClearAll = useCallback(() => {
-    if (confirm('Are you sure you want to delete all saved formulas?')) {
+    if (confirm(t('formulas.clearAllConfirm'))) {
       clearAllFormulas()
       refreshFormulas()
     }
-  }, [refreshFormulas])
+  }, [refreshFormulas, t])
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -59,7 +61,7 @@ function FormulasDialog({ open, onOpenChange, onLoadFormula }: FormulasDialogPro
           <DialogTitle className="flex items-center justify-between">
             <span className="flex items-center gap-2">
               <Bookmark className="h-5 w-5" />
-              Saved Formulas
+              {t('formulas.title')}
             </span>
             {formulas.length > 0 && (
               <Button
@@ -69,7 +71,7 @@ function FormulasDialog({ open, onOpenChange, onLoadFormula }: FormulasDialogPro
                 className="text-destructive hover:text-destructive h-7 gap-1.5"
               >
                 <Trash2 className="h-3.5 w-3.5" />
-                Clear All
+                {t('formulas.clearAll')}
               </Button>
             )}
           </DialogTitle>
@@ -78,8 +80,10 @@ function FormulasDialog({ open, onOpenChange, onLoadFormula }: FormulasDialogPro
         {formulas.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             <Bookmark className="h-12 w-12 mx-auto mb-3 opacity-50" />
-            <p>No saved formulas yet</p>
-            <p className="text-sm mt-1">Use the "Save" button in the Input section to save formulas</p>
+            <p>{t('formulas.emptyTitle')}</p>
+            <p className="text-sm mt-1">
+              {t('formulas.emptyHint', { save: t('common.save'), input: t('common.input') })}
+            </p>
           </div>
         ) : (
           <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">

@@ -9,7 +9,7 @@ interface MathToolbarProps {
 export default function MathToolbar({ onInsertSymbol }: MathToolbarProps) {
   return (
     <MenuGroupProvider>
-      <div className="flex items-center gap-1 px-2 py-1.5 sm:px-3 sm:py-2 border-b bg-muted/30 overflow-x-auto">
+      <div className="flex flex-wrap items-center gap-1 px-2 py-1.5 sm:px-3 sm:py-2 border-b bg-muted/30">
         {mathSymbolCategories.map((category) => (
           <SymbolPanel
             key={category.id}

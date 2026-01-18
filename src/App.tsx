@@ -15,6 +15,7 @@ import SaveFormulaDialog from './components/FormulasDialog/SaveFormulaDialog'
 import { preloadTypst } from './services/typst'
 import { Code, Image, Bookmark } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { useI18n } from '@/i18n'
 
 function loadSettingsFromStorage(): Settings {
   const saved = localStorage.getItem('typst-editor-settings')
@@ -29,16 +30,9 @@ function loadSettingsFromStorage(): Settings {
   }
 }
 
-function buildFormulaImageHtml(svg: string): string {
-  return `<div class="formula"><img src="${svgToDataUri(svg)}" alt="Formula" /></div>`
-}
-
-function buildFormulaDocumentHtml(svg: string): string {
-  return `<!DOCTYPE html>\n<html>\n<head><meta charset="UTF-8"><title>Formula</title></head>\n<body>\n${buildFormulaImageHtml(svg)}\n</body>\n</html>`
-}
-
 function App() {
   const { theme } = useTheme()
+  const { t } = useI18n()
   const editorRef = useRef<EditorRef>(null)
   const initialSettings = useMemo(() => loadSettingsFromStorage(), [])
   const [code, setCode] = useState(() => {
@@ -85,6 +79,14 @@ function App() {
     localStorage.setItem('typst-editor-settings', JSON.stringify(settings))
   }, [settings])
 
+  const buildFormulaImageHtml = useCallback((svg: string): string => {
+    return `<div class="formula"><img src="${svgToDataUri(svg)}" alt="${t('common.formula')}" /></div>`
+  }, [t])
+
+  const buildFormulaDocumentHtml = useCallback((svg: string): string => {
+    return `<!DOCTYPE html>\n<html>\n<head><meta charset="UTF-8"><title>${t('common.formula')}</title></head>\n<body>\n${buildFormulaImageHtml(svg)}\n</body>\n</html>`
+  }, [buildFormulaImageHtml, t])
+
   return (
     <div className="flex flex-col h-screen h-[100dvh] bg-background">
       <Header onSettingsClick={() => setSettingsOpen(true)} onFormulasClick={() => setFormulasOpen(true)} />
@@ -104,7 +106,7 @@ function App() {
             <div className="flex items-center justify-between px-3 py-2 sm:px-4 sm:py-3 border-b bg-muted/50">
               <h2 className="flex items-center gap-2 text-sm font-medium">
                 <Code className="h-4 w-4" />
-                Input
+                {t('common.input')}
               </h2>
               <Button
                 variant="ghost"
@@ -114,7 +116,7 @@ function App() {
                 className="gap-1.5 h-7"
               >
                 <Bookmark className="h-3.5 w-3.5" />
-                Save
+                {t('common.save')}
               </Button>
             </div>
 
@@ -150,7 +152,7 @@ function App() {
             <div className="flex items-center justify-between px-3 py-2 sm:px-4 sm:py-3 border-b bg-muted/50">
               <h2 className="flex items-center gap-2 text-sm font-medium">
                 <Image className="h-4 w-4" />
-                Output
+                {t('common.output')}
               </h2>
             </div>
 
@@ -210,7 +212,7 @@ function App() {
       <SaveFormulaDialog
         open={saveDialogOpen}
         onOpenChange={setSaveDialogOpen}
-        onSave={(name) => addFormula(name, code)}
+        onSave={(name) => addFormula(name, code, { fallbackName: t('formulas.untitled') })}
       />
 
     </div>

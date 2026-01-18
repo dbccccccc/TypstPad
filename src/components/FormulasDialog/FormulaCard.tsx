@@ -2,6 +2,7 @@ import { memo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Trash2, Edit3, Download } from 'lucide-react'
 import type { SavedFormula } from '../../types/formula'
+import { useI18n } from '@/i18n'
 
 interface FormulaCardProps {
   formula: SavedFormula
@@ -11,21 +12,19 @@ interface FormulaCardProps {
 }
 
 function FormulaCard({ formula, onLoad, onDelete, onRename }: FormulaCardProps) {
+  const { t, formatDate } = useI18n()
+
   const handleRename = () => {
-    const newName = prompt('Enter new name:', formula.name)
+    const newName = prompt(t('formulas.renamePrompt'), formula.name)
     if (newName && newName !== formula.name) {
       onRename(formula.id, newName)
     }
   }
 
   const handleDelete = () => {
-    if (confirm(`Delete "${formula.name}"?`)) {
+    if (confirm(t('formulas.deleteConfirm', { name: formula.name }))) {
       onDelete(formula.id)
     }
-  }
-
-  const formatDate = (timestamp: number) => {
-    return new Date(timestamp).toLocaleDateString()
   }
 
   return (
@@ -41,13 +40,13 @@ function FormulaCard({ formula, onLoad, onDelete, onRename }: FormulaCardProps) 
           </p>
         </div>
         <div className="flex gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity shrink-0">
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onLoad(formula.content)} title="Load">
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onLoad(formula.content)} title={t('formulas.action.load')}>
             <Download className="h-3.5 w-3.5" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleRename} title="Rename">
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleRename} title={t('formulas.action.rename')}>
             <Edit3 className="h-3.5 w-3.5" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={handleDelete} title="Delete">
+          <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={handleDelete} title={t('formulas.action.delete')}>
             <Trash2 className="h-3.5 w-3.5" />
           </Button>
         </div>

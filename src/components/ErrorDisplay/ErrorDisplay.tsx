@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { AlertCircle, ChevronLeft, ChevronRight, ArrowRight, ExternalLink } from 'lucide-react'
 import { DiagnosticInfo } from '../../services/typst'
 import { Button } from '../ui/button'
+import { useI18n } from '@/i18n'
 
 interface ErrorDisplayProps {
   diagnostics: DiagnosticInfo[]
@@ -28,6 +29,7 @@ function renderHintWithCode(hint: string) {
 
 function ErrorDisplay({ diagnostics }: ErrorDisplayProps) {
   const [currentIndex, setCurrentIndex] = useState(0)
+  const { t } = useI18n()
 
   if (diagnostics.length === 0) return null
 
@@ -49,7 +51,7 @@ function ErrorDisplay({ diagnostics }: ErrorDisplayProps) {
         <div className="flex items-center gap-2">
           <AlertCircle className="h-4 w-4 text-red-500" />
           <span className="text-sm font-medium text-red-700">
-            Fix Issue
+            {t('error.title')}
           </span>
           {hasMultiple && (
             <span className="text-xs text-red-500 bg-red-100 px-1.5 py-0.5 rounded">
@@ -84,7 +86,7 @@ function ErrorDisplay({ diagnostics }: ErrorDisplayProps) {
         {/* Error Message */}
         <div>
           <div className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5">
-            Error Message
+            {t('error.messageLabel')}
           </div>
           <div className="text-sm text-slate-800 leading-relaxed">
             {current.message}
@@ -95,7 +97,7 @@ function ErrorDisplay({ diagnostics }: ErrorDisplayProps) {
         {current.hints.length > 0 && (
           <div>
             <div className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">
-              How to Fix
+              {t('error.howToFix')}
             </div>
             <div className="space-y-2.5">
               {current.hints.map((hint, index) => (
@@ -119,7 +121,7 @@ function ErrorDisplay({ diagnostics }: ErrorDisplayProps) {
             className="inline-flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700 hover:underline transition-colors"
           >
             <ExternalLink className="h-3.5 w-3.5" />
-            View Typst Documentation
+            {t('error.documentation')}
           </a>
         </div>
       </div>

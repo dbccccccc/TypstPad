@@ -9,6 +9,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Bookmark } from 'lucide-react'
+import { useI18n } from '@/i18n'
 
 interface SaveFormulaDialogProps {
   open: boolean
@@ -18,6 +19,7 @@ interface SaveFormulaDialogProps {
 
 function SaveFormulaDialog({ open, onOpenChange, onSave }: SaveFormulaDialogProps) {
   const [name, setName] = useState('')
+  const { t } = useI18n()
 
   const handleSave = () => {
     onSave(name)
@@ -36,17 +38,17 @@ function SaveFormulaDialog({ open, onOpenChange, onSave }: SaveFormulaDialogProp
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Bookmark className="h-5 w-5" />
-            Save Formula
+            {t('saveFormula.title')}
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-2">
           <div className="space-y-2">
-            <Label htmlFor="save-formula-name">Name (optional)</Label>
+            <Label htmlFor="save-formula-name">{t('saveFormula.nameLabel')}</Label>
             <input
               id="save-formula-name"
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              placeholder="Enter a name for this formula"
+              placeholder={t('saveFormula.placeholder')}
               value={name}
               onChange={(e) => setName(e.target.value)}
               autoFocus
@@ -59,10 +61,10 @@ function SaveFormulaDialog({ open, onOpenChange, onSave }: SaveFormulaDialogProp
 
         <DialogFooter>
           <Button variant="outline" onClick={handleCancel}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button onClick={handleSave}>
-            Save
+            {t('common.save')}
           </Button>
         </DialogFooter>
       </DialogContent>

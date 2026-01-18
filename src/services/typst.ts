@@ -45,11 +45,18 @@ export interface CompileResult {
   diagnostics?: DiagnosticInfo[]
 }
 
+export type LoadingPhase =
+  | 'loadingCompiler'
+  | 'loadingRenderer'
+  | 'loadingFonts'
+  | 'initializing'
+  | 'ready'
+
 let isInitialized = false
 let initPromise: Promise<void> | null = null
 
 // Loading state for progress tracking
-type LoadingCallback = (progress: { phase: string; loaded?: number; total?: number }) => void
+type LoadingCallback = (progress: { phase: LoadingPhase; loaded?: number; total?: number }) => void
 const loadingSubscribers = new Set<LoadingCallback>()
 
 export function subscribeToLoadingProgress(callback: LoadingCallback): () => void {
@@ -66,14 +73,14 @@ export function preloadTypst(): Promise<void> {
   return initPromise
 }
 
-function notifyLoadingProgress(progress: { phase: string; loaded?: number; total?: number }) {
+function notifyLoadingProgress(progress: { phase: LoadingPhase; loaded?: number; total?: number }) {
   for (const subscriber of loadingSubscribers) {
     subscriber(progress)
   }
 }
 
 // Fetch with progress tracking
-async function fetchWithProgress(url: string, phaseName: string): Promise<Response> {
+async function fetchWithProgress(url: string, phaseName: LoadingPhase): Promise<Response> {
   const response = await fetch(url)
   if (!response.ok) {
     throw new Error(`Failed to fetch ${phaseName} (${response.status} ${response.statusText})`)
@@ -112,12 +119,12 @@ async function initializeTypst() {
   if (isInitialized) return
 
   try {
-    notifyLoadingProgress({ phase: 'Loading compiler...' })
+    notifyLoadingProgress({ phase: 'loadingCompiler' })
 
     // Set compiler initialization options with streaming compilation
     $typst.setCompilerInitOptions({
       getModule: () => {
-        const response = fetchWithProgress(compilerWasm, 'Loading compiler')
+        const response = fetchWithProgress(compilerWasm, 'loadingCompiler')
         return response.then(r => WebAssembly.compileStreaming(r))
       },
     })
@@ -125,7 +132,7 @@ async function initializeTypst() {
     // Set renderer initialization options with streaming compilation
     $typst.setRendererInitOptions({
       getModule: () => {
-        const response = fetchWithProgress(rendererWasm, 'Loading renderer')
+        const response = fetchWithProgress(rendererWasm, 'loadingRenderer')
         return response.then(r => WebAssembly.compileStreaming(r))
       },
     })
@@ -133,18 +140,18 @@ async function initializeTypst() {
     // Set up font loading progress callback
     fontsLoaded = 0
     fontProgress.callback = (loaded, total) => {
-      notifyLoadingProgress({ phase: `Loading fonts (${loaded}/${total})` })
+      notifyLoadingProgress({ phase: 'loadingFonts', loaded, total })
     }
 
     // Trigger actual WASM loading by doing a simple compile
-    notifyLoadingProgress({ phase: 'Initializing...' })
+    notifyLoadingProgress({ phase: 'initializing' })
     await $typst.svg({ mainContent: '#set page(width: auto, height: auto)\n$ x $' })
 
     // Clear font callback
     fontProgress.callback = null
 
     isInitialized = true
-    notifyLoadingProgress({ phase: 'Ready' })
+    notifyLoadingProgress({ phase: 'ready' })
   } catch (error) {
     console.error('Failed to initialize typst.ts:', error)
     throw error

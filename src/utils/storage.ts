@@ -89,11 +89,15 @@ export function saveDraft(content: string): void {
   saveFormulaStorage(storage)
 }
 
-export function addFormula(name: string, content: string): SavedFormula {
+export function addFormula(
+  name: string,
+  content: string,
+  options?: { fallbackName?: string }
+): SavedFormula {
   const storage = loadFormulaStorage()
   const formula: SavedFormula = {
     id: crypto.randomUUID(),
-    name: name || generateDefaultName(content),
+    name: name || generateDefaultName(content, options?.fallbackName),
     content,
     createdAt: Date.now(),
     updatedAt: Date.now(),
@@ -128,7 +132,7 @@ export function updateFormula(id: string, updates: Partial<Pick<SavedFormula, 'n
   }
 }
 
-function generateDefaultName(content: string): string {
+function generateDefaultName(content: string, fallbackName = 'Untitled'): string {
   const trimmed = content.trim().replace(/\s+/g, ' ')
-  return trimmed.length > 20 ? trimmed.slice(0, 20) + '...' : trimmed || 'Untitled'
+  return trimmed.length > 20 ? trimmed.slice(0, 20) + '...' : trimmed || fallbackName
 }

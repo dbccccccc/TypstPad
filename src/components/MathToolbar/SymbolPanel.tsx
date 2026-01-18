@@ -4,6 +4,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { FloatingMenu } from '@/components/ui/floating-menu'
 import type { MathSymbol, SymbolCategory } from '@/data/mathSymbols'
 import SymbolPreview from './SymbolPreview'
+import { useI18n } from '@/i18n'
+import { translateMathTooltip } from '@/i18n/mathTooltips'
 import {
   Plus,
   Languages,
@@ -54,9 +56,12 @@ interface SymbolPanelProps {
 }
 
 export default function SymbolPanel({ category, onInsertSymbol }: SymbolPanelProps) {
+  const { t, locale } = useI18n()
   const handleSymbolClick = useCallback((symbol: MathSymbol) => {
     onInsertSymbol(symbol.code)
   }, [onInsertSymbol])
+
+  const categoryLabel = t(`math.category.${category.id}`)
 
   return (
     <FloatingMenu
@@ -78,7 +83,7 @@ export default function SymbolPanel({ category, onInsertSymbol }: SymbolPanelPro
           )}
         >
           {iconMap[category.icon]}
-          <span>{category.name}</span>
+          <span>{categoryLabel}</span>
           <ChevronDown
             className={cn(
               "h-3 w-3 transition-transform",
@@ -90,7 +95,7 @@ export default function SymbolPanel({ category, onInsertSymbol }: SymbolPanelPro
     >
       {/* Category Title */}
       <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground border-b mb-2">
-        {category.name}
+        {categoryLabel}
       </div>
 
       {/* Symbol Grid */}
@@ -112,7 +117,7 @@ export default function SymbolPanel({ category, onInsertSymbol }: SymbolPanelPro
                 </button>
               </TooltipTrigger>
               <TooltipContent side="bottom" className="text-xs">
-                <p>{symbol.tooltip}</p>
+                <p>{translateMathTooltip(locale, symbol.tooltip)}</p>
                 <p className="text-muted-foreground font-mono">{symbol.code}</p>
               </TooltipContent>
             </Tooltip>

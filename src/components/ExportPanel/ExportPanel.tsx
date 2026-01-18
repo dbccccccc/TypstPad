@@ -15,6 +15,7 @@ import {
   FileType,
   Globe,
 } from 'lucide-react'
+import { useI18n } from '@/i18n'
 
 interface ExportPanelProps {
   svg: string | null
@@ -105,6 +106,7 @@ export default function ExportPanel({
 }: ExportPanelProps) {
   const [copyState, setCopyState] = useState<CopyState>({})
   const isDisabled = !svg
+  const { t } = useI18n()
 
   const handleCopy = useCallback((key: string, action: () => void) => {
     action()
@@ -122,11 +124,11 @@ export default function ExportPanel({
   const imageSections: MenuSection[] = [
     {
       icon: <Copy className="h-3.5 w-3.5" />,
-      title: 'Copy to Clipboard',
+      title: t('export.section.copy'),
       items: [
         {
           icon: <FileImage className="h-4 w-4 text-blue-500" />,
-          label: 'Copy PNG Image',
+          label: t('export.copy.png'),
           onClick: () => handleCopy('png-copy', onCopyPNG),
           showCheck: copyState['png-copy'],
         },
@@ -134,24 +136,24 @@ export default function ExportPanel({
     },
     {
       icon: <Download className="h-3.5 w-3.5" />,
-      title: 'Download File',
+      title: t('export.section.download'),
       items: [
         {
           icon: <FileImage className="h-4 w-4 text-blue-500" />,
-          label: 'PNG Format',
-          suffix: 'Transparent',
+          label: t('export.download.png'),
+          suffix: t('export.download.transparent'),
           onClick: onDownloadPNG,
         },
         {
           icon: <FileImage className="h-4 w-4 text-orange-500" />,
-          label: 'JPG Format',
-          suffix: 'White BG',
+          label: t('export.download.jpg'),
+          suffix: t('export.download.whiteBg'),
           onClick: onDownloadJPG,
         },
         {
           icon: <FileType className="h-4 w-4 text-purple-500" />,
-          label: 'SVG Format',
-          suffix: 'Vector',
+          label: t('export.download.svg'),
+          suffix: t('export.download.vector'),
           onClick: onDownloadSVG,
         },
       ],
@@ -161,23 +163,23 @@ export default function ExportPanel({
   const codeSections: MenuSection[] = [
     {
       icon: <Copy className="h-3.5 w-3.5" />,
-      title: 'Copy to Clipboard',
+      title: t('export.section.copy'),
       items: [
         {
           icon: <FileCode className="h-4 w-4 text-cyan-500" />,
-          label: 'Typst Code',
+          label: t('export.copy.typst'),
           onClick: () => handleCopy('typst-copy', onCopyTypst),
           showCheck: copyState['typst-copy'],
         },
         {
           icon: <FileType className="h-4 w-4 text-purple-500" />,
-          label: 'SVG Code',
+          label: t('export.copy.svg'),
           onClick: () => handleCopy('svg-copy', onCopySVG),
           showCheck: copyState['svg-copy'],
         },
         {
           icon: <Globe className="h-4 w-4 text-orange-500" />,
-          label: 'HTML Code',
+          label: t('export.copy.html'),
           onClick: () => handleCopy('html-copy', onCopyHTML),
           showCheck: copyState['html-copy'],
         },
@@ -185,23 +187,23 @@ export default function ExportPanel({
     },
     {
       icon: <Download className="h-3.5 w-3.5" />,
-      title: 'Download File',
+      title: t('export.section.download'),
       items: [
         {
           icon: <FileCode className="h-4 w-4 text-cyan-500" />,
-          label: 'Typst File',
+          label: t('export.download.typst'),
           suffix: '.typ',
           onClick: onDownloadTypst,
         },
         {
           icon: <FileType className="h-4 w-4 text-purple-500" />,
-          label: 'SVG File',
+          label: t('export.download.svgFile'),
           suffix: '.svg',
           onClick: onDownloadSVG,
         },
         {
           icon: <Globe className="h-4 w-4 text-orange-500" />,
-          label: 'HTML File',
+          label: t('export.download.html'),
           suffix: '.html',
           onClick: onDownloadHTML,
         },
@@ -227,7 +229,7 @@ export default function ExportPanel({
               {...triggerProps}
             >
               <Image className="h-4 w-4" />
-              <span className="sr-only sm:not-sr-only">Export Image</span>
+              <span className="sr-only sm:not-sr-only">{t('export.button.image')}</span>
             </Button>
           )}
         >
@@ -249,7 +251,7 @@ export default function ExportPanel({
               {...triggerProps}
             >
               <Code className="h-4 w-4" />
-              <span className="sr-only sm:not-sr-only">Export Code</span>
+              <span className="sr-only sm:not-sr-only">{t('export.button.code')}</span>
             </Button>
           )}
         >
@@ -270,7 +272,7 @@ export default function ExportPanel({
             <Share2 className="h-4 w-4" />
           )}
           <span className="sr-only sm:not-sr-only">
-            {copyState['share'] ? 'Copied' : 'Share'}
+            {copyState['share'] ? t('export.button.copied') : t('export.button.share')}
           </span>
           <Link className="hidden sm:inline-block h-3.5 w-3.5 text-muted-foreground" />
         </Button>

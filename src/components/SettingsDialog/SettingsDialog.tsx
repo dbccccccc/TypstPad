@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
 import { Settings as SettingsIcon, Type, Download, RotateCcw, Calculator } from 'lucide-react'
+import { useI18n } from '@/i18n'
 
 export interface Settings {
   fontSize: number
@@ -47,12 +48,14 @@ interface SettingsDialogProps {
 }
 
 function SettingsDialog({ open, onOpenChange, settings, onSettingsChange }: SettingsDialogProps) {
+  const { t } = useI18n()
+
   const updateSetting = <K extends keyof Settings>(key: K, value: Settings[K]) => {
     onSettingsChange({ ...settings, [key]: value })
   }
 
   const handleReset = () => {
-    if (confirm('Are you sure you want to reset all settings?')) {
+    if (confirm(t('settings.reset.confirm'))) {
       onSettingsChange(defaultSettings)
     }
   }
@@ -63,7 +66,7 @@ function SettingsDialog({ open, onOpenChange, settings, onSettingsChange }: Sett
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <SettingsIcon className="h-5 w-5" />
-            Settings
+            {t('settings.title')}
           </DialogTitle>
         </DialogHeader>
 
@@ -72,14 +75,14 @@ function SettingsDialog({ open, onOpenChange, settings, onSettingsChange }: Sett
           <div className="space-y-4">
             <h3 className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
               <Type className="h-4 w-4" />
-              Editor Settings
+              {t('settings.section.editor')}
             </h3>
 
             <div className="space-y-4 pl-0 sm:pl-6">
               <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div className="space-y-0.5">
-                  <Label>Font Size</Label>
-                  <p className="text-xs text-muted-foreground">Adjust editor font size</p>
+                  <Label>{t('settings.fontSize.label')}</Label>
+                  <p className="text-xs text-muted-foreground">{t('settings.fontSize.help')}</p>
                 </div>
                 <div className="flex w-full items-center gap-3 sm:w-[180px]">
                   <Slider
@@ -96,8 +99,8 @@ function SettingsDialog({ open, onOpenChange, settings, onSettingsChange }: Sett
 
               <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div className="space-y-0.5">
-                  <Label>Show Line Numbers</Label>
-                  <p className="text-xs text-muted-foreground">Display line numbers in editor</p>
+                  <Label>{t('settings.lineNumbers.label')}</Label>
+                  <p className="text-xs text-muted-foreground">{t('settings.lineNumbers.help')}</p>
                 </div>
                 <Switch
                   checked={settings.showLineNumbers}
@@ -107,8 +110,8 @@ function SettingsDialog({ open, onOpenChange, settings, onSettingsChange }: Sett
 
               <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div className="space-y-0.5">
-                  <Label>Startup Behavior</Label>
-                  <p className="text-xs text-muted-foreground">Choose what to show when the app opens</p>
+                  <Label>{t('settings.startupBehavior.label')}</Label>
+                  <p className="text-xs text-muted-foreground">{t('settings.startupBehavior.help')}</p>
                 </div>
                 <Select
                   value={settings.startupBehavior}
@@ -118,16 +121,16 @@ function SettingsDialog({ open, onOpenChange, settings, onSettingsChange }: Sett
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="lastEdit">Last Edit</SelectItem>
-                    <SelectItem value="blank">Blank</SelectItem>
+                    <SelectItem value="lastEdit">{t('settings.startupBehavior.lastEdit')}</SelectItem>
+                    <SelectItem value="blank">{t('settings.startupBehavior.blank')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div className="space-y-0.5">
-                  <Label>Auto Complete</Label>
-                  <p className="text-xs text-muted-foreground">Show Typst symbol suggestions while typing</p>
+                  <Label>{t('settings.autoComplete.label')}</Label>
+                  <p className="text-xs text-muted-foreground">{t('settings.autoComplete.help')}</p>
                 </div>
                 <Switch
                   checked={settings.enableAutoComplete}
@@ -137,8 +140,8 @@ function SettingsDialog({ open, onOpenChange, settings, onSettingsChange }: Sett
 
               <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div className="space-y-0.5">
-                  <Label>Layout Mode</Label>
-                  <p className="text-xs text-muted-foreground">Choose how input and output are arranged</p>
+                  <Label>{t('settings.layoutMode.label')}</Label>
+                  <p className="text-xs text-muted-foreground">{t('settings.layoutMode.help')}</p>
                 </div>
                 <Select
                   value={settings.layoutMode}
@@ -148,8 +151,8 @@ function SettingsDialog({ open, onOpenChange, settings, onSettingsChange }: Sett
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="vertical">Vertical</SelectItem>
-                    <SelectItem value="side-by-side">Side by Side</SelectItem>
+                    <SelectItem value="vertical">{t('settings.layoutMode.vertical')}</SelectItem>
+                    <SelectItem value="side-by-side">{t('settings.layoutMode.sideBySide')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -160,14 +163,14 @@ function SettingsDialog({ open, onOpenChange, settings, onSettingsChange }: Sett
           <div className="space-y-4">
             <h3 className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
               <Download className="h-4 w-4" />
-              Output Settings
+              {t('settings.section.output')}
             </h3>
 
             <div className="space-y-4 pl-0 sm:pl-6">
               <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div className="space-y-0.5">
-                  <Label>PNG Export Scale</Label>
-                  <p className="text-xs text-muted-foreground">Higher scale = sharper image</p>
+                  <Label>{t('settings.pngScale.label')}</Label>
+                  <p className="text-xs text-muted-foreground">{t('settings.pngScale.help')}</p>
                 </div>
                 <Select
                   value={String(settings.pngScale)}
@@ -177,18 +180,18 @@ function SettingsDialog({ open, onOpenChange, settings, onSettingsChange }: Sett
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="1">1x</SelectItem>
-                    <SelectItem value="2">2x (Recommended)</SelectItem>
-                    <SelectItem value="3">3x</SelectItem>
-                    <SelectItem value="4">4x</SelectItem>
+                    <SelectItem value="1">{t('settings.pngScale.option1')}</SelectItem>
+                    <SelectItem value="2">{t('settings.pngScale.option2')}</SelectItem>
+                    <SelectItem value="3">{t('settings.pngScale.option3')}</SelectItem>
+                    <SelectItem value="4">{t('settings.pngScale.option4')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div className="space-y-0.5">
-                  <Label>Force Dark Preview Background</Label>
-                  <p className="text-xs text-muted-foreground">Enable dark background for preview in dark mode. Formula colors will be inverted for readability.</p>
+                  <Label>{t('settings.darkPreview.label')}</Label>
+                  <p className="text-xs text-muted-foreground">{t('settings.darkPreview.help')}</p>
                 </div>
                 <Switch
                   checked={settings.invertOutputInDark}
@@ -202,15 +205,15 @@ function SettingsDialog({ open, onOpenChange, settings, onSettingsChange }: Sett
           <div className="space-y-4">
             <h3 className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
               <Calculator className="h-4 w-4" />
-              Formula Mode
+              {t('settings.section.formula')}
             </h3>
 
             <div className="space-y-4 pl-0 sm:pl-6">
               <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div className="space-y-0.5">
-                  <Label>Simplified Formula Mode</Label>
+                  <Label>{t('settings.simplifiedMode.label')}</Label>
                   <p className="text-xs text-muted-foreground">
-                    Automatically wrap content in $ ... $ for math mode
+                    {t('settings.simplifiedMode.help')}
                   </p>
                 </div>
                 <Switch
@@ -225,7 +228,7 @@ function SettingsDialog({ open, onOpenChange, settings, onSettingsChange }: Sett
           <div className="pt-4 border-t">
             <Button variant="outline" onClick={handleReset} className="w-full">
               <RotateCcw className="h-4 w-4 mr-2" />
-              Reset All Settings
+              {t('settings.reset.button')}
             </Button>
           </div>
         </div>

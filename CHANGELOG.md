@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2026-01-18
+
+### Added
+- **Internationalization** - English and Simplified Chinese UI translations with locale detection and persistence
+- **Language Switcher** - Header language menu with system locale suffix when supported
+
+### Changed
+- **Header Actions Spacing** - Tighter spacing between header buttons
+- **Math Toolbar Layout** - Allow wrapping to avoid horizontal scrollbar on narrow widths
+
 ## [0.6.8] - 2026-01-16
 
 ### Added
