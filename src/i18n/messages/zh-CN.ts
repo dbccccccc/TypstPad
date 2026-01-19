@@ -139,7 +139,7 @@ const messages: MessageSchema = {
     bundledTitle: '内置字体',
     uploadedTitle: '已上传字体',
     upload: '上传字体',
-    uploadHelp: '支持 .otf 和 .ttf。上传字体会保存在当前浏览器中。',
+    uploadHelp: '支持 .otf 和 .ttf。重复字体将被忽略。上传字体会保存在当前浏览器中。',
     uploadError: '上传字体失败，请重试。',
     uploadedEmpty: '暂无上传字体。',
     install: '安装',

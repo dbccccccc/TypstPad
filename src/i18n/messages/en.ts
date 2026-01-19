@@ -137,7 +137,7 @@ export const messages = {
     bundledTitle: 'Bundled Fonts',
     uploadedTitle: 'Uploaded Fonts',
     upload: 'Upload Fonts',
-    uploadHelp: 'Supports .otf and .ttf. Uploaded fonts are stored locally in this browser.',
+    uploadHelp: 'Supports .otf and .ttf. Duplicate fonts are ignored. Uploaded fonts are stored locally in this browser.',
     uploadError: 'Failed to upload fonts. Please try again.',
     uploadedEmpty: 'No uploaded fonts yet.',
     install: 'Install',

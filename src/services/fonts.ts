@@ -20,6 +20,7 @@ export interface UploadedFont {
   style?: string
   weight?: number
   addedAt: number
+  fingerprint?: string
 }
 
 const BUNDLED_FONTS: BundledFont[] = [
@@ -307,6 +308,51 @@ async function extractFontMetadata(data: Uint8Array): Promise<{
   }
 }
 
+function fallbackFontFingerprint(bytes: Uint8Array): string {
+  let hash = 2166136261
+  for (const byte of bytes) {
+    hash ^= byte
+    hash = Math.imul(hash, 16777619)
+  }
+  const hex = (hash >>> 0).toString(16).padStart(8, '0')
+  return `${hex}-${bytes.length}`
+}
+
+async function createFontFingerprint(data: ArrayBuffer): Promise<string> {
+  if (crypto.subtle?.digest) {
+    const digest = await crypto.subtle.digest('SHA-256', data)
+    return Array.from(new Uint8Array(digest))
+      .map(value => value.toString(16).padStart(2, '0'))
+      .join('')
+  }
+  return fallbackFontFingerprint(new Uint8Array(data))
+}
+
+async function ensureUploadedFontFingerprint(font: UploadedFont): Promise<string> {
+  if (font.fingerprint) return font.fingerprint
+  const fingerprint = await createFontFingerprint(font.data)
+  font.fingerprint = fingerprint
+  return fingerprint
+}
+
+async function dedupeUploadedFonts(fonts: UploadedFont[]): Promise<UploadedFont[]> {
+  const seen = new Set<string>()
+  const unique: UploadedFont[] = []
+  for (const font of fonts) {
+    const fingerprint = await ensureUploadedFontFingerprint(font)
+    if (seen.has(fingerprint)) {
+      try {
+        await deleteUploadedFont(font.id)
+      } catch {
+      }
+      continue
+    }
+    seen.add(fingerprint)
+    unique.push(font)
+  }
+  return unique
+}
+
 async function loadFontState(): Promise<FontState> {
   if (fontState) return fontState
   if (!fontStatePromise) {
@@ -316,6 +362,7 @@ async function loadFontState(): Promise<FontState> {
       try {
         uploadedFonts = await getAllUploadedFonts()
         uploadedFonts.sort((a, b) => b.addedAt - a.addedAt)
+        uploadedFonts = await dedupeUploadedFonts(uploadedFonts)
       } catch (error) {
         console.error('Failed to load uploaded fonts:', error)
       }
@@ -350,8 +397,16 @@ export async function getUploadedFonts(): Promise<UploadedFont[]> {
 export async function addUploadedFonts(files: File[]): Promise<UploadedFont[]> {
   const state = await loadFontState()
   const added: UploadedFont[] = []
+  const existingFingerprints = new Set<string>()
+  for (const font of state.uploadedFonts) {
+    existingFingerprints.add(await ensureUploadedFontFingerprint(font))
+  }
   for (const file of files) {
     const buffer = await file.arrayBuffer()
+    const fingerprint = await createFontFingerprint(buffer)
+    if (existingFingerprints.has(fingerprint)) {
+      continue
+    }
     const data = new Uint8Array(buffer)
     const meta = await extractFontMetadata(data)
     const font: UploadedFont = {
@@ -361,11 +416,13 @@ export async function addUploadedFonts(files: File[]): Promise<UploadedFont[]> {
       data: buffer,
       style: meta.style,
       weight: meta.weight,
+      fingerprint,
       addedAt: Date.now(),
     }
     await saveUploadedFont(font)
     state.uploadedFonts = [font, ...state.uploadedFonts]
     added.push(font)
+    existingFingerprints.add(fingerprint)
   }
   return added
 }

@@ -33,12 +33,23 @@ type FontGroup = {
   fonts: BundledFont[]
 }
 
+type UploadedFontGroup = {
+  family: string
+  fonts: UploadedFont[]
+  latestAddedAt: number
+}
+
 function formatWeightLabel(weight?: number) {
   if (!weight) return ''
-  if (weight >= 700) return 'Bold'
+  if (weight <= 100) return 'Thin'
+  if (weight <= 200) return 'Extra Light'
   if (weight <= 300) return 'Light'
-  if (weight >= 600) return 'Semibold'
-  return ''
+  if (weight <= 400) return 'Regular'
+  if (weight <= 500) return 'Medium'
+  if (weight <= 600) return 'Semibold'
+  if (weight <= 700) return 'Bold'
+  if (weight <= 800) return 'Extra Bold'
+  return 'Black'
 }
 
 function getUploadedFontLabel(font: UploadedFont) {
@@ -49,6 +60,18 @@ function getUploadedFontLabel(font: UploadedFont) {
     parts.push(font.style[0]?.toUpperCase() + font.style.slice(1))
   }
   return parts.join(' ') || font.fileName
+}
+
+function getUploadedFamilyKey(family: string) {
+  return family.trim().toLowerCase()
+}
+
+function getUploadedVariantSortKey(font: UploadedFont) {
+  return {
+    weight: font.weight ?? 400,
+    style: font.style ?? '',
+    fileName: font.fileName,
+  }
 }
 
 function FontManagerDialog({ open, onOpenChange, onFontsChanged }: FontManagerDialogProps) {
@@ -81,6 +104,39 @@ function FontManagerDialog({ open, onOpenChange, onFontsChanged }: FontManagerDi
       return a.family.localeCompare(b.family)
     })
   }, [bundledFonts])
+
+  const groupedUploadedFonts = useMemo<UploadedFontGroup[]>(() => {
+    const map = new Map<string, UploadedFontGroup>()
+    for (const font of uploadedFonts) {
+      const key = getUploadedFamilyKey(font.family)
+      const existing = map.get(key)
+      if (existing) {
+        existing.fonts.push(font)
+        if (font.addedAt > existing.latestAddedAt) {
+          existing.latestAddedAt = font.addedAt
+        }
+      } else {
+        map.set(key, {
+          family: font.family,
+          fonts: [font],
+          latestAddedAt: font.addedAt,
+        })
+      }
+    }
+    for (const group of map.values()) {
+      group.fonts.sort((a, b) => {
+        const aKey = getUploadedVariantSortKey(a)
+        const bKey = getUploadedVariantSortKey(b)
+        if (aKey.weight !== bKey.weight) return aKey.weight - bKey.weight
+        if (aKey.style !== bKey.style) return aKey.style.localeCompare(bKey.style)
+        return aKey.fileName.localeCompare(bKey.fileName)
+      })
+    }
+    return Array.from(map.values()).sort((a, b) => {
+      if (a.latestAddedAt !== b.latestAddedAt) return b.latestAddedAt - a.latestAddedAt
+      return a.family.localeCompare(b.family)
+    })
+  }, [uploadedFonts])
 
   useEffect(() => {
     if (!open) return
@@ -178,24 +234,22 @@ function FontManagerDialog({ open, onOpenChange, onFontsChanged }: FontManagerDi
             </h3>
             {groupedFonts.map(group => (
               <div key={group.family} className="rounded-lg border bg-card p-3 space-y-2">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-sm font-medium">{group.family}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {t(`fontManager.category.${group.category}`)}
-                    </div>
-                  </div>
+                <div className="flex items-center gap-2">
+                  <div className="text-sm font-medium">{group.family}</div>
+                  <span className="text-xs text-muted-foreground">
+                    {t(`fontManager.category.${group.category}`)}
+                  </span>
                 </div>
-                <div className="space-y-2">
+                <div className="grid gap-2 sm:grid-cols-2">
                   {group.fonts.map(font => {
                     const installed = installedBundledIds.includes(font.id)
                     const pending = pendingIds.has(font.id)
                     return (
-                      <div key={font.id} className="flex items-center justify-between text-sm">
-                        <div className="flex items-center gap-2">
-                          <span>{font.label}</span>
+                      <div key={font.id} className="flex items-center justify-between gap-2 rounded-md border px-2 py-1 text-xs sm:text-sm">
+                        <div className="flex min-w-0 items-center gap-2">
+                          <span className="truncate">{font.label}</span>
                           {font.isDefault && (
-                            <span className="text-[10px] uppercase tracking-wide text-emerald-700 bg-emerald-100 border border-emerald-200 rounded px-1.5 py-0.5">
+                            <span className="shrink-0 rounded border border-emerald-200 bg-emerald-100 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-emerald-700">
                               {t('fontManager.defaultTag')}
                             </span>
                           )}
@@ -205,6 +259,7 @@ function FontManagerDialog({ open, onOpenChange, onFontsChanged }: FontManagerDi
                           size="sm"
                           disabled={pending}
                           onClick={() => handleBundledToggle(font.id, !installed)}
+                          className="h-7 shrink-0 px-2 text-xs"
                         >
                           {installed ? t('fontManager.remove') : t('fontManager.install')}
                         </Button>
@@ -246,35 +301,44 @@ function FontManagerDialog({ open, onOpenChange, onFontsChanged }: FontManagerDi
               {t('fontManager.uploadHelp')}
             </p>
 
-            {uploadedFonts.length === 0 ? (
+            {groupedUploadedFonts.length === 0 ? (
               <div className="text-sm text-muted-foreground">
                 {t('fontManager.uploadedEmpty')}
               </div>
             ) : (
-              <div className="space-y-2">
-                {uploadedFonts.map(font => {
-                  const pending = pendingIds.has(font.id)
-                  return (
-                    <div key={font.id} className="flex items-center justify-between rounded-lg border bg-card px-3 py-2 text-sm">
-                      <div>
-                        <div className="font-medium">{font.family}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {getUploadedFontLabel(font)}
-                        </div>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        disabled={pending}
-                        onClick={() => handleRemoveUploaded(font.id)}
-                        className="text-destructive hover:text-destructive gap-1.5"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                        {t('fontManager.remove')}
-                      </Button>
+              <div className="space-y-3">
+                {groupedUploadedFonts.map(group => (
+                  <div key={group.family} className="rounded-lg border bg-card p-3 space-y-2">
+                    <div className="text-sm font-medium">{group.family}</div>
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {group.fonts.map(font => {
+                        const pending = pendingIds.has(font.id)
+                        const label = getUploadedFontLabel(font)
+                        const showFileName = label !== font.fileName
+                        return (
+                          <div key={font.id} className="flex items-center justify-between gap-2 rounded-md border px-2 py-1 text-xs sm:text-sm">
+                            <div className="min-w-0">
+                              <div className="truncate font-medium">{label}</div>
+                              {showFileName && (
+                                <div className="truncate text-[11px] text-muted-foreground">{font.fileName}</div>
+                              )}
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              disabled={pending}
+                              onClick={() => handleRemoveUploaded(font.id)}
+                              className="h-7 shrink-0 gap-1.5 px-2 text-xs text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                              {t('fontManager.remove')}
+                            </Button>
+                          </div>
+                        )
+                      })}
                     </div>
-                  )
-                })}
+                  </div>
+                ))}
               </div>
             )}
           </section>
