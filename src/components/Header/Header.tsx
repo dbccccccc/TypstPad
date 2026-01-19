@@ -2,12 +2,11 @@ import { useTheme, ThemeMode } from '../../contexts/ThemeContext'
 import { Button } from '@/components/ui/button'
 import { FloatingMenu, MenuGroupProvider, useMenuGroup } from '@/components/ui/floating-menu'
 import { cn } from '@/lib/utils'
-import { Sun, Moon, Monitor, Github, Settings, Bookmark, Check, Languages } from 'lucide-react'
+import { Sun, Moon, Monitor, Github, Settings, Check, Languages } from 'lucide-react'
 import { useI18n, type Locale } from '@/i18n'
 
 interface HeaderProps {
   onSettingsClick: () => void
-  onFormulasClick: () => void
 }
 
 const themeOptions: Array<{
@@ -66,7 +65,7 @@ function ThemeMenu({
 // Version injected by Vite from package.json
 declare const __APP_VERSION__: string
 
-function Header({ onSettingsClick, onFormulasClick }: HeaderProps) {
+function Header({ onSettingsClick }: HeaderProps) {
   const { mode, setMode } = useTheme()
   const { t, locale, setLocale, systemLocale } = useI18n()
 
@@ -124,16 +123,6 @@ function Header({ onSettingsClick, onFormulasClick }: HeaderProps) {
           >
             <ThemeMenu mode={mode} onChange={handleThemeChange} />
           </FloatingMenu>
-
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-9 w-9 sm:h-10 sm:w-10"
-            onClick={onFormulasClick}
-            title={t('header.savedFormulas')}
-          >
-            <Bookmark className="h-5 w-5" />
-          </Button>
 
           <FloatingMenu
             menuId="language"

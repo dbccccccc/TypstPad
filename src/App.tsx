@@ -96,7 +96,7 @@ function App() {
 
   return (
     <div className="flex flex-col h-screen h-[100dvh] bg-background">
-      <Header onSettingsClick={() => setSettingsOpen(true)} onFormulasClick={() => setFormulasOpen(true)} />
+      <Header onSettingsClick={() => setSettingsOpen(true)} />
 
       <main className="flex-1 min-h-0 overflow-auto p-3 sm:p-6">
         <div className={`mx-auto ${
@@ -125,6 +125,15 @@ function App() {
                 >
                   <Bookmark className="h-3.5 w-3.5" />
                   {t('common.save')}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setFormulasOpen(true)}
+                  className="gap-1.5 h-7"
+                >
+                  <Bookmark className="h-3.5 w-3.5" />
+                  {t('common.load')}
                 </Button>
                 <Button
                   variant="ghost"

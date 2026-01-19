@@ -9,6 +9,7 @@ const messages: MessageSchema = {
     input: '输入',
     output: '输出',
     save: '保存',
+    load: '加载',
     cancel: '取消',
     formula: '公式',
     fonts: '字体',

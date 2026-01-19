@@ -7,6 +7,7 @@ export const messages = {
     input: 'Input',
     output: 'Output',
     save: 'Save',
+    load: 'Load',
     cancel: 'Cancel',
     formula: 'Formula',
     fonts: 'Fonts',
