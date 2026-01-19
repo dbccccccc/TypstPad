@@ -129,8 +129,12 @@ export const messages = {
   },
   saveFormula: {
     title: 'Save Formula',
+    description: 'Give it a name, or leave it blank to auto-generate one.',
     nameLabel: 'Name (optional)',
     placeholder: 'Enter a name for this formula',
+    autoName: 'Auto name: "{name}"',
+    previewLabel: 'Preview',
+    previewEmpty: 'No content to preview.',
   },
   fontManager: {
     title: 'Font Manager',

@@ -343,7 +343,8 @@ async function dedupeUploadedFonts(fonts: UploadedFont[]): Promise<UploadedFont[
     if (seen.has(fingerprint)) {
       try {
         await deleteUploadedFont(font.id)
-      } catch {
+      } catch (error) {
+        console.warn('Failed to delete duplicate uploaded font:', error)
       }
       continue
     }

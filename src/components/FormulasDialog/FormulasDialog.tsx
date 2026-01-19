@@ -56,13 +56,13 @@ function FormulasDialog({ open, onOpenChange, onLoadFormula }: FormulasDialogPro
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle className="flex items-center justify-between">
-            <span className="flex items-center gap-2">
+      <DialogContent className="sm:max-w-[720px]">
+        <DialogHeader className="space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            <DialogTitle className="flex items-center gap-2">
               <Bookmark className="h-5 w-5" />
               {t('formulas.title')}
-            </span>
+            </DialogTitle>
             {formulas.length > 0 && (
               <Button
                 variant="ghost"
@@ -74,7 +74,7 @@ function FormulasDialog({ open, onOpenChange, onLoadFormula }: FormulasDialogPro
                 {t('formulas.clearAll')}
               </Button>
             )}
-          </DialogTitle>
+          </div>
         </DialogHeader>
 
         {formulas.length === 0 ? (
@@ -86,7 +86,7 @@ function FormulasDialog({ open, onOpenChange, onLoadFormula }: FormulasDialogPro
             </p>
           </div>
         ) : (
-          <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
+          <div className="grid gap-3 sm:grid-cols-2 max-h-[420px] overflow-y-auto pr-2">
             {formulas.map(formula => (
               <FormulaCard
                 key={formula.id}

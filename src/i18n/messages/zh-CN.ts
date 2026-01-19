@@ -131,8 +131,12 @@ const messages: MessageSchema = {
   },
   saveFormula: {
     title: '保存公式',
+    description: '可以输入名称，也可以留空自动生成。',
     nameLabel: '名称（可选）',
     placeholder: '输入公式名称',
+    autoName: '自动名称：“{name}”',
+    previewLabel: '预览',
+    previewEmpty: '暂无可预览内容。',
   },
   fontManager: {
     title: '字体管理',

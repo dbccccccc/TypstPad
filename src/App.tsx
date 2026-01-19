@@ -240,6 +240,7 @@ function App() {
       <SaveFormulaDialog
         open={saveDialogOpen}
         onOpenChange={setSaveDialogOpen}
+        content={code}
         onSave={(name) => addFormula(name, code, { fallbackName: t('formulas.untitled') })}
       />
 
