@@ -1,11 +1,15 @@
 // Typst compilation service using typst.ts
-import { $typst, TypstSnippet } from '@myriaddreamin/typst.ts/dist/esm/contrib/snippet.mjs'
+import { TypstSnippet } from '@myriaddreamin/typst.ts/dist/esm/contrib/snippet.mjs'
+import { loadFonts } from '@myriaddreamin/typst.ts/dist/esm/options.init.mjs'
 import compilerWasm from '@myriaddreamin/typst-ts-web-compiler/pkg/typst_ts_web_compiler_bg.wasm?url'
 import rendererWasm from '@myriaddreamin/typst-ts-renderer/pkg/typst_ts_renderer_bg.wasm?url'
+import { getFontSources } from './fonts'
+
+let typstInstance: TypstSnippet | null = null
 
 // Font loading progress tracking
-const TOTAL_FONTS = 17 // Number of text fonts
 let fontsLoaded = 0
+let fontsTotal = 0
 
 // Store font callback in an object to avoid TypeScript narrowing issues
 const fontProgress = {
@@ -17,21 +21,9 @@ const fontFetcher: typeof fetch = async (input, init) => {
   const response = await fetch(input, init)
   fontsLoaded++
   const cb = fontProgress.callback
-  if (cb) cb(fontsLoaded, TOTAL_FONTS)
+  if (cb) cb(fontsLoaded, fontsTotal)
   return response
 }
-
-// Configure fonts to load from local server instead of jsdelivr CDN
-$typst.use(
-  TypstSnippet.preloadFontAssets({
-    assets: ['text'], // Only load text fonts (includes math fonts)
-    assetUrlPrefix: '/fonts/', // Load from local /fonts/ directory
-    fetcher: fontFetcher,
-  })
-)
-
-// Enable package registry for downloading Typst packages from https://packages.typst.org
-$typst.use(TypstSnippet.fetchPackageRegistry())
 
 export interface DiagnosticInfo {
   severity: 'error' | 'warning'
@@ -54,6 +46,7 @@ export type LoadingPhase =
 
 let isInitialized = false
 let initPromise: Promise<void> | null = null
+let initVersion = 0
 
 // Loading state for progress tracking
 type LoadingCallback = (progress: { phase: LoadingPhase; loaded?: number; total?: number }) => void
@@ -73,14 +66,18 @@ export function preloadTypst(): Promise<void> {
   return initPromise
 }
 
-function notifyLoadingProgress(progress: { phase: LoadingPhase; loaded?: number; total?: number }) {
+function notifyLoadingProgress(
+  progress: { phase: LoadingPhase; loaded?: number; total?: number },
+  version = initVersion
+) {
+  if (version !== initVersion) return
   for (const subscriber of loadingSubscribers) {
     subscriber(progress)
   }
 }
 
 // Fetch with progress tracking
-async function fetchWithProgress(url: string, phaseName: LoadingPhase): Promise<Response> {
+async function fetchWithProgress(url: string, phaseName: LoadingPhase, version: number): Promise<Response> {
   const response = await fetch(url)
   if (!response.ok) {
     throw new Error(`Failed to fetch ${phaseName} (${response.status} ${response.statusText})`)
@@ -103,15 +100,62 @@ async function fetchWithProgress(url: string, phaseName: LoadingPhase): Promise<
     chunks.push(value)
     loaded += value.length
 
-    notifyLoadingProgress({
-      phase: phaseName,
-      loaded,
-      total: contentLength
-    })
+    if (version === initVersion) {
+      notifyLoadingProgress({
+        phase: phaseName,
+        loaded,
+        total: contentLength
+      }, version)
+    }
   }
 
   const blob = new Blob(chunks as BlobPart[])
   return new Response(blob, { headers: response.headers })
+}
+
+async function createTypstInstance(version: number) {
+  const { urls, data } = await getFontSources()
+  fontsTotal = urls.length + data.length
+  fontsLoaded = data.length
+
+  const instance = new TypstSnippet()
+  instance.use({
+    key: 'managed-fonts',
+    forRoles: ['compiler'],
+    provides: [loadFonts([...urls, ...data], { assets: false, fetcher: fontFetcher })],
+  })
+  instance.use(TypstSnippet.fetchPackageRegistry())
+  instance.setCompilerInitOptions({
+    getModule: () => {
+      const response = fetchWithProgress(compilerWasm, 'loadingCompiler', version)
+      return response.then(r => WebAssembly.compileStreaming(r))
+    },
+  })
+  instance.setRendererInitOptions({
+    getModule: () => {
+      const response = fetchWithProgress(rendererWasm, 'loadingRenderer', version)
+      return response.then(r => WebAssembly.compileStreaming(r))
+    },
+  })
+  return instance
+}
+
+async function getTypstInstance(version = initVersion) {
+  if (!typstInstance) {
+    typstInstance = await createTypstInstance(version)
+  }
+  return typstInstance
+}
+
+export function refreshTypstFonts(): void {
+  initVersion += 1
+  typstInstance = null
+  isInitialized = false
+  initPromise = null
+  fontsLoaded = 0
+  fontsTotal = 0
+  fontProgress.callback = null
+  symbolCache.clear()
 }
 
 // Initialize typst.ts with WASM modules
@@ -119,39 +163,27 @@ async function initializeTypst() {
   if (isInitialized) return
 
   try {
-    notifyLoadingProgress({ phase: 'loadingCompiler' })
+    const version = initVersion
+    notifyLoadingProgress({ phase: 'loadingCompiler' }, version)
 
-    // Set compiler initialization options with streaming compilation
-    $typst.setCompilerInitOptions({
-      getModule: () => {
-        const response = fetchWithProgress(compilerWasm, 'loadingCompiler')
-        return response.then(r => WebAssembly.compileStreaming(r))
-      },
-    })
-
-    // Set renderer initialization options with streaming compilation
-    $typst.setRendererInitOptions({
-      getModule: () => {
-        const response = fetchWithProgress(rendererWasm, 'loadingRenderer')
-        return response.then(r => WebAssembly.compileStreaming(r))
-      },
-    })
+    const typst = await getTypstInstance(version)
 
     // Set up font loading progress callback
-    fontsLoaded = 0
     fontProgress.callback = (loaded, total) => {
-      notifyLoadingProgress({ phase: 'loadingFonts', loaded, total })
+      if (version !== initVersion) return
+      notifyLoadingProgress({ phase: 'loadingFonts', loaded, total }, version)
     }
 
     // Trigger actual WASM loading by doing a simple compile
-    notifyLoadingProgress({ phase: 'initializing' })
-    await $typst.svg({ mainContent: '#set page(width: auto, height: auto)\n$ x $' })
+    notifyLoadingProgress({ phase: 'initializing' }, version)
+    await typst.svg({ mainContent: '#set page(width: auto, height: auto)\n$ x $' })
+    if (version !== initVersion) return
 
     // Clear font callback
     fontProgress.callback = null
 
     isInitialized = true
-    notifyLoadingProgress({ phase: 'ready' })
+    notifyLoadingProgress({ phase: 'ready' }, version)
   } catch (error) {
     console.error('Failed to initialize typst.ts:', error)
     throw error
@@ -260,6 +292,7 @@ export async function compileTypst(
   try {
     // Ensure typst.ts is initialized (uses cached promise if already loading)
     await preloadTypst()
+    const typst = await getTypstInstance()
 
     // Apply simplified formula mode if enabled
     let processedCode = code
@@ -273,7 +306,7 @@ export async function compileTypst(
 ${processedCode}`
 
     // Compile Typst code to SVG
-    const svg = await $typst.svg({ mainContent: wrappedCode })
+    const svg = await typst.svg({ mainContent: wrappedCode })
 
     return {
       success: true,
@@ -299,10 +332,11 @@ export async function compileSymbol(code: string): Promise<string | null> {
 
   try {
     await preloadTypst()
+    const typst = await getTypstInstance()
     const wrappedCode = `#set page(width: auto, height: auto, margin: 0pt)
 #set text(size: 18pt)
 $ ${code} $`
-    const svg = await $typst.svg({ mainContent: wrappedCode })
+    const svg = await typst.svg({ mainContent: wrappedCode })
     symbolCache.set(code, svg)
     return svg
   } catch {

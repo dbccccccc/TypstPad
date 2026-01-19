@@ -11,6 +11,7 @@ const messages: MessageSchema = {
     save: '保存',
     cancel: '取消',
     formula: '公式',
+    fonts: '字体',
   },
   header: {
     github: 'GitHub',
@@ -131,6 +132,24 @@ const messages: MessageSchema = {
     title: '保存公式',
     nameLabel: '名称（可选）',
     placeholder: '输入公式名称',
+  },
+  fontManager: {
+    title: '字体管理',
+    description: '只安装你需要的字体。默认字体可移除并可稍后恢复。',
+    bundledTitle: '内置字体',
+    uploadedTitle: '已上传字体',
+    upload: '上传字体',
+    uploadHelp: '支持 .otf 和 .ttf。上传字体会保存在当前浏览器中。',
+    uploadError: '上传字体失败，请重试。',
+    uploadedEmpty: '暂无上传字体。',
+    install: '安装',
+    remove: '移除',
+    defaultTag: '默认',
+    category: {
+      text: '正文',
+      math: '数学',
+      mono: '等宽',
+    },
   },
   preview: {
     loading: {

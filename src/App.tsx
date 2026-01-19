@@ -12,8 +12,9 @@ import { loadFormulaStorage, saveDraft, addFormula } from './utils/storage'
 import { svgToDataUri } from './utils/svg'
 import FormulasDialog from './components/FormulasDialog'
 import SaveFormulaDialog from './components/FormulasDialog/SaveFormulaDialog'
+import FontManagerDialog from './components/FontManagerDialog'
 import { preloadTypst } from './services/typst'
-import { Code, Image, Bookmark } from 'lucide-react'
+import { Code, Image, Bookmark, Type } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useI18n } from '@/i18n'
 
@@ -51,6 +52,8 @@ function App() {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [formulasOpen, setFormulasOpen] = useState(false)
   const [saveDialogOpen, setSaveDialogOpen] = useState(false)
+  const [fontManagerOpen, setFontManagerOpen] = useState(false)
+  const [fontRevision, setFontRevision] = useState(0)
 
   // Auto-save draft (debounced)
   useEffect(() => {
@@ -73,6 +76,10 @@ function App() {
 
   const handleInsertSymbol = useCallback((code: string) => {
     editorRef.current?.insertText(code)
+  }, [])
+
+  const handleFontsChanged = useCallback(() => {
+    setFontRevision((prev) => prev + 1)
   }, [])
 
   useEffect(() => {
@@ -108,16 +115,27 @@ function App() {
                 <Code className="h-4 w-4" />
                 {t('common.input')}
               </h2>
-              <Button
-                variant="ghost"
-                size="sm"
-                disabled={!code.trim()}
-                onClick={() => setSaveDialogOpen(true)}
-                className="gap-1.5 h-7"
-              >
-                <Bookmark className="h-3.5 w-3.5" />
-                {t('common.save')}
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={!code.trim()}
+                  onClick={() => setSaveDialogOpen(true)}
+                  className="gap-1.5 h-7"
+                >
+                  <Bookmark className="h-3.5 w-3.5" />
+                  {t('common.save')}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setFontManagerOpen(true)}
+                  className="gap-1.5 h-7"
+                >
+                  <Type className="h-3.5 w-3.5" />
+                  {t('common.fonts')}
+                </Button>
+              </div>
             </div>
 
             {/* Math Symbol Toolbar */}
@@ -167,6 +185,7 @@ function App() {
                 code={code}
                 onCompiled={handleCompiled}
                 simplifiedFormulaMode={settings.simplifiedFormulaMode}
+                fontRevision={fontRevision}
               />
             </div>
 
@@ -213,6 +232,12 @@ function App() {
         open={saveDialogOpen}
         onOpenChange={setSaveDialogOpen}
         onSave={(name) => addFormula(name, code, { fallbackName: t('formulas.untitled') })}
+      />
+
+      <FontManagerDialog
+        open={fontManagerOpen}
+        onOpenChange={setFontManagerOpen}
+        onFontsChanged={handleFontsChanged}
       />
 
     </div>

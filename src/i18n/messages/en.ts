@@ -9,6 +9,7 @@ export const messages = {
     save: 'Save',
     cancel: 'Cancel',
     formula: 'Formula',
+    fonts: 'Fonts',
   },
   header: {
     github: 'GitHub',
@@ -129,6 +130,24 @@ export const messages = {
     title: 'Save Formula',
     nameLabel: 'Name (optional)',
     placeholder: 'Enter a name for this formula',
+  },
+  fontManager: {
+    title: 'Font Manager',
+    description: 'Install only the fonts you need. Default fonts can be removed and restored later.',
+    bundledTitle: 'Bundled Fonts',
+    uploadedTitle: 'Uploaded Fonts',
+    upload: 'Upload Fonts',
+    uploadHelp: 'Supports .otf and .ttf. Uploaded fonts are stored locally in this browser.',
+    uploadError: 'Failed to upload fonts. Please try again.',
+    uploadedEmpty: 'No uploaded fonts yet.',
+    install: 'Install',
+    remove: 'Remove',
+    defaultTag: 'Default',
+    category: {
+      text: 'Text',
+      math: 'Math',
+      mono: 'Monospace',
+    },
   },
   preview: {
     loading: {

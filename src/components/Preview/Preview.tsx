@@ -16,9 +16,10 @@ interface PreviewProps {
   code: string
   onCompiled?: (svg: string | null, diagnostics: DiagnosticInfo[] | null) => void
   simplifiedFormulaMode?: boolean
+  fontRevision?: number
 }
 
-function Preview({ code, onCompiled, simplifiedFormulaMode }: PreviewProps) {
+function Preview({ code, onCompiled, simplifiedFormulaMode, fontRevision }: PreviewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const compileIdRef = useRef(0)
   const [diagnostics, setDiagnostics] = useState<DiagnosticInfo[] | null>(null)
@@ -65,7 +66,7 @@ function Preview({ code, onCompiled, simplifiedFormulaMode }: PreviewProps) {
     return () => {
       window.clearTimeout(timeoutId)
     }
-  }, [code, onCompiled, simplifiedFormulaMode])
+  }, [code, onCompiled, simplifiedFormulaMode, fontRevision, t])
 
   // Format bytes to human readable
   const formatBytes = (bytes: number) => {
@@ -101,8 +102,11 @@ function Preview({ code, onCompiled, simplifiedFormulaMode }: PreviewProps) {
     }
   }
 
+  const errorDiagnostics = diagnostics?.filter(diagnostic => diagnostic.severity === 'error') ?? []
+  const hasErrors = errorDiagnostics.length > 0
+
   return (
-    <div className="flex-1 flex items-center justify-center w-full min-w-0" ref={containerRef}>
+    <div className="flex-1 flex flex-col items-center justify-center w-full min-w-0 gap-3" ref={containerRef}>
       {/* Loading indicator */}
       {loading && (
         <div className="flex flex-col items-center gap-2 text-neutral-500">
@@ -114,17 +118,17 @@ function Preview({ code, onCompiled, simplifiedFormulaMode }: PreviewProps) {
           )}
         </div>
       )}
-      {!loading && diagnostics && diagnostics.length > 0 && (
-        <ErrorDisplay diagnostics={diagnostics} />
+      {!loading && hasErrors && (
+        <ErrorDisplay diagnostics={errorDiagnostics} />
       )}
-      {!loading && !diagnostics && svg && (
+      {!loading && !hasErrors && svg && (
         <img
           src={svgToDataUri(svg)}
           alt={t('preview.alt')}
           className="block w-auto h-auto max-w-full max-h-full"
         />
       )}
-      {!loading && !diagnostics && !svg && (
+      {!loading && !hasErrors && !svg && (
         <div className="text-muted-foreground text-sm text-center">
           {t('preview.empty')}
         </div>
