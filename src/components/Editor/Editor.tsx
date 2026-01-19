@@ -13,6 +13,7 @@ interface EditorProps {
   theme?: 'light' | 'dark'
   showLineNumbers?: boolean
   enableAutoComplete?: boolean
+  simplifiedFormulaMode?: boolean
 }
 
 export interface EditorRef {
@@ -41,10 +42,12 @@ const Editor = forwardRef<EditorRef, EditorProps>(({
   fontSize = 14,
   theme = 'light',
   showLineNumbers = true,
-  enableAutoComplete = true
+  enableAutoComplete = true,
+  simplifiedFormulaMode = false
 }, ref) => {
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null)
   const monaco = useMonaco()
+  const languageId = simplifiedFormulaMode ? 'typst-math' : 'typst'
 
   // Re-apply theme after Shiki initialization
   useEffect(() => {
@@ -102,6 +105,7 @@ const Editor = forwardRef<EditorRef, EditorProps>(({
       <MonacoEditor
         height="100%"
         defaultLanguage="typst"
+        language={languageId}
         value={value}
         onChange={handleEditorChange}
         onMount={handleEditorDidMount}

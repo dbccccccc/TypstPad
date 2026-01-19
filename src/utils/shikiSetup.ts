@@ -22,14 +22,23 @@ export async function setupShikiForMonaco(monaco: typeof Monaco) {
       engine: createOnigurumaEngine(import('shiki/wasm'))
     })
 
+    const typstMathGrammar: LanguageRegistration = {
+      ...(typstGrammar as unknown as LanguageRegistration),
+      name: 'typst-math',
+      scopeName: 'source.typst.math',
+      patterns: [{ include: '#math' }],
+    }
+
     // Load custom Typst syntax
     await highlighter.loadLanguage(typstGrammar as unknown as LanguageRegistration)
+    await highlighter.loadLanguage(typstMathGrammar)
 
     // Register typst language
     monaco.languages.register({ id: 'typst' })
+    monaco.languages.register({ id: 'typst-math' })
 
     // Register Typst completions
-    registerTypstCompletions(monaco)
+    registerTypstCompletions(monaco, ['typst', 'typst-math'])
 
     // Integrate Shiki into Monaco
     shikiToMonaco(highlighter, monaco)

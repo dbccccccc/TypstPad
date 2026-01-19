@@ -166,6 +166,7 @@ function App() {
                 theme={theme}
                 showLineNumbers={settings.showLineNumbers}
                 enableAutoComplete={settings.enableAutoComplete}
+                simplifiedFormulaMode={settings.simplifiedFormulaMode}
               />
             </div>
           </section>
