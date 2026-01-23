@@ -104,7 +104,7 @@ const Editor = forwardRef<EditorRef, EditorProps>(({
     }`}>
       <MonacoEditor
         height="100%"
-        defaultLanguage="typst"
+        defaultLanguage={languageId}
         language={languageId}
         value={value}
         onChange={handleEditorChange}
