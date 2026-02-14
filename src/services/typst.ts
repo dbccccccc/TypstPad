@@ -62,8 +62,20 @@ export function subscribeToLoadingProgress(callback: LoadingCallback): () => voi
 // Preload WASM modules (call this early to start loading)
 export function preloadTypst(): Promise<void> {
   if (initPromise) return initPromise
-  initPromise = initializeTypst()
-  return initPromise
+
+  const promise = initializeTypst()
+  initPromise = promise
+
+  return promise.catch((error) => {
+    // Allow retries after transient network/WASM initialization failures.
+    if (initPromise === promise) {
+      initPromise = null
+      isInitialized = false
+      typstInstance = null
+      fontProgress.callback = null
+    }
+    throw error
+  })
 }
 
 function notifyLoadingProgress(

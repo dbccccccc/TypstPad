@@ -41,14 +41,15 @@ function Preview({ code, onCompiled, simplifiedFormulaMode, fontRevision }: Prev
   useEffect(() => {
     const compileId = ++compileIdRef.current
     const debounceMs = 200
+    let active = true
 
     const timeoutId = window.setTimeout(async () => {
       setLoading({ phase: 'compiling' })
       const result = await compileTypst(code, {
-        simplifiedFormulaMode
+        simplifiedFormulaMode,
       })
 
-      if (compileId !== compileIdRef.current) return
+      if (!active || compileId !== compileIdRef.current) return
 
       setLoading(null) // Clear loading state after compilation
 
@@ -64,9 +65,11 @@ function Preview({ code, onCompiled, simplifiedFormulaMode, fontRevision }: Prev
     }, debounceMs)
 
     return () => {
+      active = false
+      compileIdRef.current += 1
       window.clearTimeout(timeoutId)
     }
-  }, [code, onCompiled, simplifiedFormulaMode, fontRevision, t])
+  }, [code, onCompiled, simplifiedFormulaMode, fontRevision])
 
   // Format bytes to human readable
   const formatBytes = (bytes: number) => {

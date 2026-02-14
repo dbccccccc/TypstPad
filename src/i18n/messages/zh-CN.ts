@@ -3,6 +3,9 @@ import type { MessageSchema } from './en'
 const messages: MessageSchema = {
   app: {
     title: 'TypstPad - 在线 Typst 公式编辑器',
+    titleDocs: 'TypstPad 文档',
+    titleAbout: '关于 TypstPad',
+    titleNotFound: '页面未找到 - TypstPad',
   },
   common: {
     loading: '加载中...',
@@ -13,6 +16,38 @@ const messages: MessageSchema = {
     cancel: '取消',
     formula: '公式',
     fonts: '字体',
+    retry: '重试',
+    comingSoon: '即将上线',
+  },
+  ocr: {
+    button: 'OCR',
+    intro: {
+      title: 'OCR',
+      description: '上传截图或照片提取文本。',
+      fileSizeLimit: '文件大小限制：{maxMb} MB',
+      limitInfo: '今日额度：{count}/{limit}',
+      remaining: '今日剩余：{remaining}',
+      resetsAt: '重置时间：{time}',
+      choosePhoto: '选择图片',
+      login: '登录后继续',
+    },
+    error: {
+      limitReached: '今日 OCR 次数已达上限，请稍后再试。',
+      fileTooLarge: '图片过大，最大支持 {maxMb} MB。',
+      emptyResult: 'OCR 没有返回文本。',
+      failed: 'OCR 失败，请重试。',
+    },
+  },
+  auth: {
+    login: {
+      title: '使用 GitHub 登录',
+      description: '登录弹窗会在完成后自动关闭。',
+      github: '使用 GitHub 登录',
+    },
+    error: {
+      popupBlocked: '登录弹窗被拦截，请允许弹窗后重试。',
+      loginFailed: '登录失败，请重试。',
+    },
   },
   header: {
     github: 'GitHub',
@@ -20,6 +55,10 @@ const messages: MessageSchema = {
     savedFormulas: '已保存公式',
     settings: '设置',
     language: '语言',
+    login: '登录',
+    account: '账号',
+    logout: '退出登录',
+    emailUnavailable: '未提供邮箱',
   },
   theme: {
     light: '浅色',
@@ -32,6 +71,12 @@ const messages: MessageSchema = {
       en: 'English',
       zhCN: '简体中文',
     },
+  },
+  navigation: {
+    pages: '页面',
+    editor: '编辑器',
+    docs: '文档',
+    about: '关于',
   },
   settings: {
     title: '设置',
@@ -85,6 +130,46 @@ const messages: MessageSchema = {
       confirm: '确定要重置所有设置吗？',
     },
   },
+  docs: {
+    title: '文档',
+    description: '快速了解编辑流程和常用 Typst 代码片段。',
+    quickStart: {
+      title: '快速开始',
+      step1: '在输入区编写 Typst 代码。',
+      step2: '在预览区查看渲染结果。',
+      step3: '通过导出按钮复制或下载图片/代码/分享链接。',
+    },
+    link: {
+      typst: '打开 Typst 官方文档',
+    },
+  },
+  about: {
+    title: '关于 TypstPad',
+    description: 'TypstPad 是一个专注于公式编辑与分享的 Typst 工作台。',
+    mission: {
+      title: '项目目标',
+      body: '在桌面和移动设备上都提供流畅的公式输入体验，并支持实用导出能力。',
+    },
+    features: {
+      title: '核心能力',
+      item1: '编辑时实时渲染 Typst 公式。',
+      item2: '提供符号工具栏与自动补全。',
+      item3: '支持导出 PNG/JPG/SVG/HTML/Typst。',
+      item4: '支持分享链接与本地/账号保存。',
+      item5: '界面兼顾主题、语言与可访问性。',
+    },
+    links: {
+      title: '项目链接',
+      github: 'GitHub 仓库',
+      license: 'MIT 许可证',
+      typstDocs: 'Typst 文档',
+    },
+  },
+  notFound: {
+    title: '页面不存在',
+    description: '你访问的页面不存在，可以返回编辑器继续使用。',
+    backToEditor: '返回编辑器',
+  },
   export: {
     section: {
       copy: '复制到剪贴板',
@@ -113,9 +198,16 @@ const messages: MessageSchema = {
       share: '分享',
       copied: '已复制',
     },
+    error: {
+      copyFailed: '复制失败。请检查剪贴板权限后重试。',
+    },
   },
   formulas: {
     title: '已保存公式',
+    tabs: {
+      local: '本地',
+      account: '账号',
+    },
     clearAll: '清空',
     clearAllConfirm: '确定要删除所有已保存公式吗？',
     emptyTitle: '还没有保存的公式',
@@ -128,15 +220,36 @@ const messages: MessageSchema = {
       delete: '删除',
     },
     untitled: '未命名',
+    account: {
+      emptyTitle: '账号内还没有保存的公式',
+      emptyHint: '将公式保存到账号后会显示在这里。',
+      loginTitle: '登录后查看账号保存',
+      loginHint: '登录以访问保存在账号中的公式。',
+      error: {
+        loadFailed: '加载账号保存失败，请重试。',
+        saveFailed: '保存到账号失败，请重试。',
+        updateFailed: '更新账号保存失败，请重试。',
+        deleteFailed: '删除账号保存失败，请重试。',
+      },
+    },
   },
   saveFormula: {
     title: '保存公式',
     description: '可以输入名称，也可以留空自动生成。',
+    locationLabel: '保存到',
+    location: {
+      local: '本地',
+      account: '账号',
+    },
+    accountHint: '保存到账号，方便在多设备访问。',
+    accountComingSoon: '账号保存功能即将上线。',
+    loginToSave: '登录后可保存到账号。',
     nameLabel: '名称（可选）',
     placeholder: '输入公式名称',
     autoName: '自动名称：“{name}”',
     previewLabel: '预览',
     previewEmpty: '暂无可预览内容。',
+    saveAccount: '保存到账号',
   },
   fontManager: {
     title: '字体管理',
@@ -146,6 +259,8 @@ const messages: MessageSchema = {
     upload: '上传字体',
     uploadHelp: '支持 .otf 和 .ttf。重复字体将被忽略。上传字体会保存在当前浏览器中。',
     uploadError: '上传字体失败，请重试。',
+    toggleError: '更新内置字体失败，请重试。',
+    removeError: '移除上传字体失败，请重试。',
     uploadedEmpty: '暂无上传字体。',
     install: '安装',
     remove: '移除',
@@ -176,6 +291,7 @@ const messages: MessageSchema = {
   },
   editor: {
     loading: '正在加载编辑器...',
+    resizeInput: '调整输入区域大小',
   },
   math: {
     category: {

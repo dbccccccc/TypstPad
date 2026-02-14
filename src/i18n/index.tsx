@@ -46,10 +46,14 @@ function getSystemLocale(): Locale | null {
 
 function readStoredLocale(): Locale | null {
   if (typeof window === 'undefined') return null
-  const stored = localStorage.getItem(STORAGE_KEY)
-  if (!stored) return null
-  const matched = matchLocale(stored)
-  return matched
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY)
+    if (!stored) return null
+    const matched = matchLocale(stored)
+    return matched
+  } catch {
+    return null
+  }
 }
 
 function resolveInitialLocale(systemLocale: Locale | null): Locale {
@@ -139,7 +143,11 @@ export function I18nProvider({ children }: { children: ReactNode }) {
 
   const setLocale = useCallback((nextLocale: Locale) => {
     setLocaleState(nextLocale)
-    localStorage.setItem(STORAGE_KEY, nextLocale)
+    try {
+      localStorage.setItem(STORAGE_KEY, nextLocale)
+    } catch {
+      // Ignore storage failures (private mode, quota, etc).
+    }
   }, [])
 
   const t = useCallback((key: string, params?: I18nParams) => {

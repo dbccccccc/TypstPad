@@ -105,6 +105,7 @@ export default function SymbolPanel({ category, onInsertSymbol }: SymbolPanelPro
             <Tooltip key={index}>
               <TooltipTrigger asChild>
                 <button
+                  type="button"
                   onClick={() => handleSymbolClick(symbol)}
                   className={cn(
                     "flex items-center justify-center rounded-md text-sm",

@@ -11,11 +11,25 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
 
+function isThemeMode(value: string | null): value is ThemeMode {
+  return value === 'light' || value === 'dark' || value === 'system'
+}
+
 function getSystemTheme(): ResolvedTheme {
   if (typeof window !== 'undefined' && window.matchMedia) {
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
   }
   return 'light'
+}
+
+function readStoredThemeMode(): ThemeMode | null {
+  if (typeof window === 'undefined') return null
+  try {
+    const saved = localStorage.getItem('theme-mode')
+    return isThemeMode(saved) ? saved : null
+  } catch {
+    return null
+  }
 }
 
 interface ThemeProviderProps {
@@ -24,8 +38,7 @@ interface ThemeProviderProps {
 
 export function ThemeProvider({ children }: ThemeProviderProps) {
   const [mode, setModeState] = useState<ThemeMode>(() => {
-    const saved = localStorage.getItem('theme-mode')
-    return (saved as ThemeMode) || 'system'
+    return readStoredThemeMode() ?? 'system'
   })
 
   const [systemTheme, setSystemTheme] = useState<ResolvedTheme>(getSystemTheme)
@@ -33,7 +46,11 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
   const theme: ResolvedTheme = mode === 'system' ? systemTheme : mode
 
   useEffect(() => {
-    localStorage.setItem('theme-mode', mode)
+    try {
+      localStorage.setItem('theme-mode', mode)
+    } catch {
+      // Ignore storage failures (private mode, quota, etc).
+    }
   }, [mode])
 
   useEffect(() => {

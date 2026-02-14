@@ -49,6 +49,18 @@ export default defineConfig({
   optimizeDeps: {
     exclude: ['@myriaddreamin/typst.ts']
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return undefined
+          if (id.includes('monaco-editor') || id.includes('@monaco-editor')) return 'vendor-monaco'
+          if (id.includes('@myriaddreamin')) return 'vendor-typst'
+          return undefined
+        },
+      },
+    },
+  },
   server: {
     headers: {
       'Cross-Origin-Opener-Policy': 'same-origin',

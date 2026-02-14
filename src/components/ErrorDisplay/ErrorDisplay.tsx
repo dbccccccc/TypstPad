@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { AlertCircle, ChevronLeft, ChevronRight, ArrowRight, ExternalLink } from 'lucide-react'
 import { DiagnosticInfo } from '../../services/typst'
 import { Button } from '../ui/button'
@@ -31,9 +31,19 @@ function ErrorDisplay({ diagnostics }: ErrorDisplayProps) {
   const [currentIndex, setCurrentIndex] = useState(0)
   const { t } = useI18n()
 
+  useEffect(() => {
+    if (diagnostics.length === 0) {
+      setCurrentIndex(0)
+      return
+    }
+    if (currentIndex < diagnostics.length) return
+    setCurrentIndex(diagnostics.length - 1)
+  }, [currentIndex, diagnostics.length])
+
   if (diagnostics.length === 0) return null
 
-  const current = diagnostics[currentIndex]
+  const safeIndex = Math.min(currentIndex, diagnostics.length - 1)
+  const current = diagnostics[safeIndex]
   const hasMultiple = diagnostics.length > 1
 
   const goToPrev = () => {
@@ -55,7 +65,7 @@ function ErrorDisplay({ diagnostics }: ErrorDisplayProps) {
           </span>
           {hasMultiple && (
             <span className="text-xs text-red-500 bg-red-100 px-1.5 py-0.5 rounded">
-              {currentIndex + 1}/{diagnostics.length}
+              {safeIndex + 1}/{diagnostics.length}
             </span>
           )}
         </div>

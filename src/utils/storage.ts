@@ -80,7 +80,11 @@ export function loadFormulaStorage(): FormulaStorage {
 }
 
 function saveFormulaStorage(storage: FormulaStorage): void {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(storage))
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(storage))
+  } catch {
+    // Ignore storage failures (private mode, quota, etc).
+  }
 }
 
 export function saveDraft(content: string): void {

@@ -113,7 +113,7 @@ html, body {
   to { opacity: 0; transform: translateY(0.5rem); }
 }
 
-@keyframes menuShow {
+@keyframes menuShowFromBottom {
   from {
     opacity: 0;
     transform: scale(0.95) translateY(0.5rem);
@@ -124,7 +124,7 @@ html, body {
   }
 }
 
-@keyframes menuHide {
+@keyframes menuHideToBottom {
   from {
     opacity: 1;
     transform: scale(1) translateY(0);
@@ -132,6 +132,28 @@ html, body {
   to {
     opacity: 0;
     transform: scale(0.95) translateY(0.5rem);
+  }
+}
+
+@keyframes menuShowFromTop {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-0.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes menuHideToTop {
+  from {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95) translateY(-0.5rem);
   }
 }
 
@@ -196,11 +218,45 @@ html, body {
 
 /* Menu animations */
 .animate-menu-show {
-  animation: menuShow 200ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: menuShowFromBottom 200ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .animate-menu-hide {
-  animation: menuHide 150ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: menuHideToBottom 150ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-menu-show-bottom {
+  animation: menuShowFromBottom 200ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-menu-hide-bottom {
+  animation: menuHideToBottom 150ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-menu-show-top {
+  animation: menuShowFromTop 200ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-menu-hide-top {
+  animation: menuHideToTop 150ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-menu-show,
+  .animate-menu-show-bottom,
+  .animate-menu-show-top {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .animate-menu-hide,
+  .animate-menu-hide-bottom,
+  .animate-menu-hide-top {
+    animation: none !important;
+    opacity: 0 !important;
+    transform: none !important;
+  }
 }
 
 /* Monaco editor theme fix - prevent white flash in dark mode */

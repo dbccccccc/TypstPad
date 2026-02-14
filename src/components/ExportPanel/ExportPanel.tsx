@@ -24,14 +24,16 @@ interface ExportPanelProps {
   onDownloadPNG: () => void
   onDownloadJPG: () => void
   onDownloadSVG: () => void
-  onCopyPNG: () => void
-  onCopyTypst: () => void
+  onCopyPNG: () => Promise<boolean> | boolean
+  onCopyTypst: () => Promise<boolean> | boolean
   onDownloadTypst: () => void
-  onCopySVG: () => void
-  onCopyHTML: () => void
+  onCopySVG: () => Promise<boolean> | boolean
+  onCopyHTML: () => Promise<boolean> | boolean
   onDownloadHTML: () => void
-  onCopyShareLink: () => void
+  onCopyShareLink: () => Promise<boolean> | boolean
 }
+
+type CopyAction = () => Promise<boolean> | boolean
 
 type CopyState = {
   [key: string]: boolean
@@ -53,10 +55,8 @@ interface MenuSection {
 
 const MenuContent = memo(function MenuContent({
   sections,
-  onItemClick,
 }: {
   sections: MenuSection[]
-  onItemClick: (onClick: () => void) => void
 }) {
   return (
     <>
@@ -70,11 +70,13 @@ const MenuContent = memo(function MenuContent({
           {section.items.map((item, itemIndex) => (
             <button
               key={itemIndex}
-              onClick={() => onItemClick(item.onClick)}
+              type="button"
+              role="menuitem"
+              onClick={item.onClick}
               className={cn(
-                "relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none",
-                "transition-colors hover:bg-accent hover:text-accent-foreground",
-                "gap-2"
+                'relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none',
+                'transition-colors hover:bg-accent hover:text-accent-foreground',
+                'gap-2'
               )}
             >
               {item.icon}
@@ -108,18 +110,24 @@ export default function ExportPanel({
   const isDisabled = !svg
   const { t } = useI18n()
 
-  const handleCopy = useCallback((key: string, action: () => void) => {
-    action()
+  const handleCopy = useCallback(async (key: string, action: CopyAction) => {
+    let copied = false
+    try {
+      copied = (await action()) === true
+    } catch {
+      copied = false
+    }
+
+    if (!copied) {
+      alert(t('export.error.copyFailed'))
+      return
+    }
+
     setCopyState(prev => ({ ...prev, [key]: true }))
     setTimeout(() => {
       setCopyState(prev => ({ ...prev, [key]: false }))
     }, 2000)
-  }, [])
-
-  const handleItemClick = useCallback((onClick: () => void) => {
-    onClick()
-    // Don't close menu on click, let mouse leave handle it
-  }, [])
+  }, [t])
 
   const imageSections: MenuSection[] = [
     {
@@ -129,7 +137,9 @@ export default function ExportPanel({
         {
           icon: <FileImage className="h-4 w-4 text-blue-500" />,
           label: t('export.copy.png'),
-          onClick: () => handleCopy('png-copy', onCopyPNG),
+          onClick: () => {
+            void handleCopy('png-copy', onCopyPNG)
+          },
           showCheck: copyState['png-copy'],
         },
       ],
@@ -168,19 +178,25 @@ export default function ExportPanel({
         {
           icon: <FileCode className="h-4 w-4 text-cyan-500" />,
           label: t('export.copy.typst'),
-          onClick: () => handleCopy('typst-copy', onCopyTypst),
+          onClick: () => {
+            void handleCopy('typst-copy', onCopyTypst)
+          },
           showCheck: copyState['typst-copy'],
         },
         {
           icon: <FileType className="h-4 w-4 text-purple-500" />,
           label: t('export.copy.svg'),
-          onClick: () => handleCopy('svg-copy', onCopySVG),
+          onClick: () => {
+            void handleCopy('svg-copy', onCopySVG)
+          },
           showCheck: copyState['svg-copy'],
         },
         {
           icon: <Globe className="h-4 w-4 text-orange-500" />,
           label: t('export.copy.html'),
-          onClick: () => handleCopy('html-copy', onCopyHTML),
+          onClick: () => {
+            void handleCopy('html-copy', onCopyHTML)
+          },
           showCheck: copyState['html-copy'],
         },
       ],
@@ -211,13 +227,17 @@ export default function ExportPanel({
     },
   ]
 
+  const shareCopied = copyState['share'] === true
+
   return (
-    <MenuGroupProvider>
-      <div className="flex items-center gap-2">
+    <MenuGroupProvider closeDelay={0}>
+      <div className="flex items-center gap-1 sm:gap-2">
         {/* Export Image */}
         <FloatingMenu
           menuId="image"
           placement="top-end"
+          openOnHover={false}
+          closeOnSelect
           disabled={isDisabled}
           contentClassName="min-w-[14rem] max-w-[calc(100vw-2rem)] max-h-[70dvh] overflow-y-auto p-1"
           trigger={({ triggerProps }) => (
@@ -233,13 +253,15 @@ export default function ExportPanel({
             </Button>
           )}
         >
-          <MenuContent sections={imageSections} onItemClick={handleItemClick} />
+          <MenuContent sections={imageSections} />
         </FloatingMenu>
 
         {/* Export Code */}
         <FloatingMenu
           menuId="code"
           placement="top-end"
+          openOnHover={false}
+          closeOnSelect
           disabled={isDisabled}
           contentClassName="min-w-[14rem] max-w-[calc(100vw-2rem)] max-h-[70dvh] overflow-y-auto p-1"
           trigger={({ triggerProps }) => (
@@ -255,7 +277,7 @@ export default function ExportPanel({
             </Button>
           )}
         >
-          <MenuContent sections={codeSections} onItemClick={handleItemClick} />
+          <MenuContent sections={codeSections} />
         </FloatingMenu>
 
         {/* Share */}
@@ -263,18 +285,28 @@ export default function ExportPanel({
           variant="outline"
           size="sm"
           disabled={isDisabled}
-          onClick={() => handleCopy('share', onCopyShareLink)}
+          onClick={() => {
+            void handleCopy('share', onCopyShareLink)
+          }}
           className="gap-2 transition-all duration-200 hover:shadow-md"
         >
-          {copyState['share'] ? (
+          {shareCopied ? (
             <Check className="h-4 w-4 text-green-500" />
           ) : (
             <Share2 className="h-4 w-4" />
           )}
-          <span className="sr-only sm:not-sr-only">
-            {copyState['share'] ? t('export.button.copied') : t('export.button.share')}
+          <span
+            aria-live="polite"
+            className={cn(shareCopied ? 'text-xs sm:text-sm' : 'sr-only sm:not-sr-only')}
+          >
+            {shareCopied ? t('export.button.copied') : t('export.button.share')}
           </span>
-          <Link className="hidden sm:inline-block h-3.5 w-3.5 text-muted-foreground" />
+          <Link
+            className={cn(
+              'h-3.5 w-3.5 text-muted-foreground',
+              shareCopied ? 'hidden' : 'hidden sm:inline-block'
+            )}
+          />
         </Button>
       </div>
     </MenuGroupProvider>

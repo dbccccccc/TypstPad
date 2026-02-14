@@ -79,6 +79,7 @@ function useMenuGroup() {
 }
 
 type MenuPlacement = "bottom-start" | "bottom-end" | "top-start" | "top-end"
+type VerticalPlacement = "top" | "bottom"
 
 type FloatingMenuTriggerProps = {
   onClick: React.MouseEventHandler<HTMLElement>
@@ -99,6 +100,7 @@ interface FloatingMenuProps {
   offset?: number
   collisionPadding?: number
   openOnHover?: boolean
+  closeOnSelect?: boolean
   disabled?: boolean
   containerClassName?: string
   contentClassName?: string
@@ -114,6 +116,7 @@ function FloatingMenu({
   offset = 4,
   collisionPadding = 8,
   openOnHover = true,
+  closeOnSelect = false,
   disabled = false,
   containerClassName,
   contentClassName,
@@ -123,51 +126,95 @@ function FloatingMenu({
   const { activeMenu, isClosing, openMenu, closeMenu } = useMenuGroup()
   const containerRef = React.useRef<HTMLDivElement>(null)
   const menuRef = React.useRef<HTMLDivElement>(null)
+  const viewportFrameRef = React.useRef<number | null>(null)
   const openedByClickRef = React.useRef(false)
   const [position, setPosition] = React.useState({ top: 0, left: 0 })
+  const [supportsHover, setSupportsHover] = React.useState(true)
 
   const isOpen = activeMenu === menuId
+  const isBottomPlacement = placement.startsWith("bottom")
+  const isStartPlacement = placement.endsWith("start")
+  const [resolvedVerticalPlacement, setResolvedVerticalPlacement] = React.useState<VerticalPlacement>(
+    isBottomPlacement ? "bottom" : "top"
+  )
 
-  const updatePosition = React.useCallback(() => {
-    if (!containerRef.current || typeof window === "undefined") return
+  const hoverEnabled = openOnHover && supportsHover
+  const animationClass = isClosing
+    ? (resolvedVerticalPlacement === "bottom" ? "animate-menu-hide-bottom" : "animate-menu-hide-top")
+    : (resolvedVerticalPlacement === "bottom" ? "animate-menu-show-bottom" : "animate-menu-show-top")
+  const transformOrigin = `${resolvedVerticalPlacement === "bottom" ? "top" : "bottom"} ${isStartPlacement ? "left" : "right"}`
 
-    const rect = containerRef.current.getBoundingClientRect()
-    const menuRect = menuRef.current?.getBoundingClientRect()
-    const viewportWidth = window.innerWidth
-    const viewportHeight = window.innerHeight
-    const menuWidth = menuRect?.width ?? 0
-    const menuHeight = menuRect?.height ?? 0
-    const isBottom = placement.startsWith("bottom")
-    const isStart = placement.endsWith("start")
-
-    let top = isBottom ? rect.bottom + offset : rect.top - menuHeight - offset
-    let left = isStart ? rect.left : rect.right - menuWidth
-
-    if (menuRect) {
-      if (isBottom && top + menuHeight > viewportHeight - collisionPadding) {
-        const flippedTop = rect.top - menuHeight - offset
-        if (flippedTop >= collisionPadding) {
-          top = flippedTop
-        }
-      } else if (!isBottom && top < collisionPadding) {
-        const flippedTop = rect.bottom + offset
-        if (flippedTop + menuHeight <= viewportHeight - collisionPadding) {
-          top = flippedTop
-        }
-      }
-
-      left = Math.min(
-        Math.max(left, collisionPadding),
-        viewportWidth - menuWidth - collisionPadding
-      )
-      top = Math.min(
-        Math.max(top, collisionPadding),
-        viewportHeight - menuHeight - collisionPadding
-      )
+  React.useEffect(() => {
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+      return
     }
 
+    const mediaQuery = window.matchMedia("(hover: hover) and (pointer: fine)")
+    const updateSupportsHover = () => setSupportsHover(mediaQuery.matches)
+
+    updateSupportsHover()
+
+    if (typeof mediaQuery.addEventListener === "function") {
+      mediaQuery.addEventListener("change", updateSupportsHover)
+      return () => mediaQuery.removeEventListener("change", updateSupportsHover)
+    }
+
+    mediaQuery.addListener(updateSupportsHover)
+    return () => mediaQuery.removeListener(updateSupportsHover)
+  }, [])
+
+  React.useEffect(() => {
+    setResolvedVerticalPlacement(isBottomPlacement ? "bottom" : "top")
+  }, [isBottomPlacement])
+
+  const updatePosition = React.useCallback(() => {
+    if (!containerRef.current || !menuRef.current || typeof window === "undefined") return
+
+    const rect = containerRef.current.getBoundingClientRect()
+    const menuEl = menuRef.current
+    const viewportWidth = window.innerWidth
+    const viewportHeight = window.innerHeight
+    const menuWidth = menuEl.offsetWidth
+    const menuHeight = menuEl.offsetHeight
+
+    let resolvedVertical: VerticalPlacement = isBottomPlacement ? "bottom" : "top"
+    let top = isBottomPlacement ? rect.bottom + offset : rect.top - menuHeight - offset
+    let left = isStartPlacement ? rect.left : rect.right - menuWidth
+
+    if (isBottomPlacement && top + menuHeight > viewportHeight - collisionPadding) {
+      const flippedTop = rect.top - menuHeight - offset
+      if (flippedTop >= collisionPadding) {
+        top = flippedTop
+        resolvedVertical = "top"
+      }
+    } else if (!isBottomPlacement && top < collisionPadding) {
+      const flippedTop = rect.bottom + offset
+      if (flippedTop + menuHeight <= viewportHeight - collisionPadding) {
+        top = flippedTop
+        resolvedVertical = "bottom"
+      }
+    }
+
+    left = Math.min(
+      Math.max(left, collisionPadding),
+      viewportWidth - menuWidth - collisionPadding
+    )
+    top = Math.min(
+      Math.max(top, collisionPadding),
+      viewportHeight - menuHeight - collisionPadding
+    )
+
     setPosition({ top, left })
-  }, [placement, offset, collisionPadding])
+    setResolvedVerticalPlacement((prev) => (prev === resolvedVertical ? prev : resolvedVertical))
+  }, [collisionPadding, isBottomPlacement, isStartPlacement, offset])
+
+  React.useEffect(() => {
+    return () => {
+      if (viewportFrameRef.current !== null && typeof window !== "undefined") {
+        window.cancelAnimationFrame(viewportFrameRef.current)
+      }
+    }
+  }, [])
 
   React.useLayoutEffect(() => {
     if (!isOpen) return
@@ -180,15 +227,54 @@ function FloatingMenu({
   React.useEffect(() => {
     if (!isOpen || typeof window === "undefined") return
 
-    const handleViewportChange = () => updatePosition()
-    window.addEventListener("resize", handleViewportChange)
-    window.addEventListener("scroll", handleViewportChange, true)
+    const scheduleUpdate = () => {
+      if (viewportFrameRef.current !== null) return
+      viewportFrameRef.current = window.requestAnimationFrame(() => {
+        viewportFrameRef.current = null
+        updatePosition()
+      })
+    }
+
+    window.addEventListener("resize", scheduleUpdate)
+    window.addEventListener("scroll", scheduleUpdate, true)
 
     return () => {
-      window.removeEventListener("resize", handleViewportChange)
-      window.removeEventListener("scroll", handleViewportChange, true)
+      window.removeEventListener("resize", scheduleUpdate)
+      window.removeEventListener("scroll", scheduleUpdate, true)
+      if (viewportFrameRef.current !== null) {
+        window.cancelAnimationFrame(viewportFrameRef.current)
+        viewportFrameRef.current = null
+      }
     }
   }, [isOpen, updatePosition])
+
+  React.useEffect(() => {
+    if (!isOpen) return
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return
+      openedByClickRef.current = false
+      closeMenu()
+    }
+
+    document.addEventListener("keydown", handleKeyDown)
+    return () => document.removeEventListener("keydown", handleKeyDown)
+  }, [closeMenu, isOpen])
+
+  React.useEffect(() => {
+    if (!isOpen || !openedByClickRef.current || typeof window === "undefined") return
+
+    const frame = window.requestAnimationFrame(() => {
+      const root = menuRef.current
+      if (!root) return
+      const firstFocusable = root.querySelector<HTMLElement>(
+        'button,[href],input,select,textarea,[tabindex]:not([tabindex="-1"])'
+      )
+      firstFocusable?.focus()
+    })
+
+    return () => window.cancelAnimationFrame(frame)
+  }, [isOpen])
 
   const handleTriggerClick = React.useCallback((event: React.MouseEvent<HTMLElement>) => {
     if (event.defaultPrevented) return
@@ -203,17 +289,34 @@ function FloatingMenu({
     openMenu(menuId)
   }, [isOpen, closeMenu, openMenu, menuId, disabled])
 
-  const handleMouseEnter = React.useCallback(() => {
-    if (!openOnHover || disabled) return
-    openedByClickRef.current = false
-    openMenu(menuId)
-  }, [menuId, openMenu, openOnHover, disabled])
+  const handleMenuClick = React.useCallback((event: React.MouseEvent<HTMLDivElement>) => {
+    if (!closeOnSelect) return
 
-  const handleMouseLeave = React.useCallback(() => {
-    if (!openOnHover) return
+    const target = event.target as HTMLElement | null
+    if (!target) return
+
+    const actionable = target.closest<HTMLElement>(
+      'button,[role="menuitem"],a[href],[data-menu-close="true"]'
+    )
+
+    if (!actionable || !menuRef.current?.contains(actionable)) return
+    if (actionable instanceof HTMLButtonElement && actionable.disabled) return
+
     openedByClickRef.current = false
     closeMenu()
-  }, [closeMenu, openOnHover])
+  }, [closeOnSelect, closeMenu])
+
+  const handleMouseEnter = React.useCallback(() => {
+    if (!hoverEnabled || disabled) return
+    openedByClickRef.current = false
+    openMenu(menuId)
+  }, [menuId, openMenu, hoverEnabled, disabled])
+
+  const handleMouseLeave = React.useCallback(() => {
+    if (!hoverEnabled) return
+    openedByClickRef.current = false
+    closeMenu()
+  }, [closeMenu, hoverEnabled])
 
   React.useEffect(() => {
     if (!disabled || !isOpen) return
@@ -258,12 +361,14 @@ function FloatingMenu({
     <div
       ref={menuRef}
       role="menu"
+      tabIndex={-1}
       className={cn(
         "fixed z-[9999] rounded-md border bg-popover text-popover-foreground shadow-md",
-        isClosing ? "animate-menu-hide" : "animate-menu-show",
+        animationClass,
         contentClassName
       )}
-      style={{ top: position.top, left: position.left, ...contentStyle }}
+      style={{ top: position.top, left: position.left, transformOrigin, ...contentStyle }}
+      onClick={handleMenuClick}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >

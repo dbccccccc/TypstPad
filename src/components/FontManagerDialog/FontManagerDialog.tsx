@@ -82,6 +82,8 @@ function FontManagerDialog({ open, onOpenChange, onFontsChanged }: FontManagerDi
   const [pendingIds, setPendingIds] = useState<Set<string>>(new Set())
   const [uploading, setUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const installedIdsRef = useRef<string[]>([])
+  const bundledToggleQueueRef = useRef(Promise.resolve())
 
   const groupedFonts = useMemo<FontGroup[]>(() => {
     const map = new Map<string, FontGroup>()
@@ -144,6 +146,7 @@ function FontManagerDialog({ open, onOpenChange, onFontsChanged }: FontManagerDi
     Promise.all([getInstalledBundledFontIds(), getUploadedFonts()])
       .then(([bundledIds, uploaded]) => {
         if (!active) return
+        installedIdsRef.current = bundledIds
         setInstalledBundledIds(bundledIds)
         setUploadedFonts(uploaded)
       })
@@ -154,6 +157,10 @@ function FontManagerDialog({ open, onOpenChange, onFontsChanged }: FontManagerDi
       active = false
     }
   }, [open])
+
+  useEffect(() => {
+    installedIdsRef.current = installedBundledIds
+  }, [installedBundledIds])
 
   const updatePending = useCallback((id: string, value: boolean) => {
     setPendingIds(prev => {
@@ -167,20 +174,33 @@ function FontManagerDialog({ open, onOpenChange, onFontsChanged }: FontManagerDi
     })
   }, [])
 
-  const handleBundledToggle = useCallback(async (fontId: string, install: boolean) => {
-    updatePending(fontId, true)
-    const nextIds = install
-      ? Array.from(new Set([...installedBundledIds, fontId]))
-      : installedBundledIds.filter(id => id !== fontId)
-    try {
-      await setInstalledBundledFontIds(nextIds)
-      setInstalledBundledIds(nextIds)
-      refreshTypstFonts()
-      onFontsChanged?.()
-    } finally {
-      updatePending(fontId, false)
+  const computeNextBundledIds = useCallback((baseIds: string[], fontId: string, install: boolean): string[] => {
+    if (install) {
+      return Array.from(new Set([...baseIds, fontId]))
     }
-  }, [installedBundledIds, onFontsChanged, updatePending])
+    return baseIds.filter(id => id !== fontId)
+  }, [])
+
+  const handleBundledToggle = useCallback((fontId: string, install: boolean) => {
+    updatePending(fontId, true)
+
+    bundledToggleQueueRef.current = bundledToggleQueueRef.current
+      .then(async () => {
+        const nextIds = computeNextBundledIds(installedIdsRef.current, fontId, install)
+        await setInstalledBundledFontIds(nextIds)
+        installedIdsRef.current = nextIds
+        setInstalledBundledIds(nextIds)
+        refreshTypstFonts()
+        onFontsChanged?.()
+      })
+      .catch((error) => {
+        console.error('Failed to update bundled fonts:', error)
+        alert(t('fontManager.toggleError'))
+      })
+      .finally(() => {
+        updatePending(fontId, false)
+      })
+  }, [computeNextBundledIds, onFontsChanged, t, updatePending])
 
   const handleUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files ?? []).filter(file => /\.(otf|ttf)$/i.test(file.name))
@@ -209,10 +229,13 @@ function FontManagerDialog({ open, onOpenChange, onFontsChanged }: FontManagerDi
       setUploadedFonts(prev => prev.filter(font => font.id !== fontId))
       refreshTypstFonts()
       onFontsChanged?.()
+    } catch (error) {
+      console.error('Failed to remove uploaded font:', error)
+      alert(t('fontManager.removeError'))
     } finally {
       updatePending(fontId, false)
     }
-  }, [onFontsChanged, updatePending])
+  }, [onFontsChanged, t, updatePending])
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
