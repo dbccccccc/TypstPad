@@ -230,13 +230,12 @@ export default function ExportPanel({
   const shareCopied = copyState['share'] === true
 
   return (
-    <MenuGroupProvider closeDelay={0}>
+    <MenuGroupProvider>
       <div className="flex items-center gap-1 sm:gap-2">
         {/* Export Image */}
         <FloatingMenu
           menuId="image"
           placement="top-end"
-          openOnHover={false}
           closeOnSelect
           disabled={isDisabled}
           contentClassName="min-w-[14rem] max-w-[calc(100vw-2rem)] max-h-[70dvh] overflow-y-auto p-1"
@@ -260,7 +259,6 @@ export default function ExportPanel({
         <FloatingMenu
           menuId="code"
           placement="top-end"
-          openOnHover={false}
           closeOnSelect
           disabled={isDisabled}
           contentClassName="min-w-[14rem] max-w-[calc(100vw-2rem)] max-h-[70dvh] overflow-y-auto p-1"
