@@ -2,11 +2,15 @@ package saves
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/google/uuid"
 )
+
+// ErrNotFound is returned when a formula is not found or not owned by the user.
+var ErrNotFound = errors.New("not_found")
 
 // Formula represents a saved formula.
 type Formula struct {
@@ -129,7 +133,7 @@ func (s *Store) Delete(userID, id string) error {
 		return fmt.Errorf("check delete result: %w", err)
 	}
 	if rows == 0 {
-		return fmt.Errorf("not_found")
+		return ErrNotFound
 	}
 
 	return nil

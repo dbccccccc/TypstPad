@@ -2,6 +2,7 @@ package saves
 
 import (
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 
@@ -150,7 +151,7 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 
 	err := h.store.Delete(userID, id)
 	if err != nil {
-		if err.Error() == "not_found" {
+		if errors.Is(err, ErrNotFound) {
 			writeJSON(w, http.StatusNotFound, map[string]any{"error": "not_found"})
 			return
 		}
