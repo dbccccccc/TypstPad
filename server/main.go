@@ -4,12 +4,14 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/dbccccccc/TypstPad/server/internal/auth"
 	"github.com/dbccccccc/TypstPad/server/internal/db"
 	"github.com/dbccccccc/TypstPad/server/internal/middleware"
+	"github.com/dbccccccc/TypstPad/server/internal/ocr"
 	"github.com/dbccccccc/TypstPad/server/internal/saves"
 )
 
@@ -36,9 +38,33 @@ func main() {
 		log.Fatalf("failed to migrate database: %v", err)
 	}
 
+	if err := ocr.MigrateUsage(database); err != nil {
+		log.Fatalf("failed to migrate ocr usage: %v", err)
+	}
+
 	sessionStore := auth.NewSessionStore(database)
 	userStore := db.NewUserStore(database)
 	saveStore := saves.NewStore(database)
+
+	// OCR setup
+	ocrDailyLimit := 50
+	if v := os.Getenv("OCR_DAILY_LIMIT"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n > 0 {
+			ocrDailyLimit = n
+		}
+	}
+	usageStore := ocr.NewUsageStore(database, ocrDailyLimit)
+
+	var ocrProvider ocr.Provider
+	if apiURL := os.Getenv("OCR_API_URL"); apiURL != "" {
+		ocrProvider = ocr.NewExternalAPIProvider(apiURL, os.Getenv("OCR_API_KEY"))
+		log.Printf("OCR: using external API at %s", apiURL)
+	} else {
+		ocrProvider = ocr.NewNoopProvider()
+		log.Println("OCR: no OCR_API_URL configured; /ocr endpoint will return ocr_not_configured")
+	}
+
+	ocrHandler := ocr.NewHandler(ocrProvider, usageStore, sessionStore)
 
 	cors := middleware.CORS(allowedOrigins)
 
@@ -78,6 +104,9 @@ func main() {
 	mux.HandleFunc("POST /account/saves", savesHandler.Create)
 	mux.HandleFunc("PUT /account/saves/{id}", savesHandler.Update)
 	mux.HandleFunc("DELETE /account/saves/{id}", savesHandler.Delete)
+
+	// OCR route
+	mux.HandleFunc("POST /ocr", ocrHandler.Process)
 
 	// Health check
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
