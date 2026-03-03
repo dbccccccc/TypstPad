@@ -19,6 +19,7 @@ type HandlerConfig struct {
 	GithubClientID     string
 	GithubClientSecret string
 	BaseURL            string
+	AllowedOrigins     []string
 	SessionStore       *SessionStore
 	UserStore          *db.UserStore
 	SessionSecret      string
@@ -40,6 +41,14 @@ func (h *Handler) isSecure() bool {
 
 func (h *Handler) redirectURI(provider string) string {
 	return strings.TrimRight(h.cfg.BaseURL, "/") + "/auth/callback/" + provider
+}
+
+// frontendOrigin returns the first allowed origin for postMessage targeting.
+func (h *Handler) frontendOrigin() string {
+	if len(h.cfg.AllowedOrigins) > 0 {
+		return strings.TrimRight(h.cfg.AllowedOrigins[0], "/")
+	}
+	return "*"
 }
 
 func (h *Handler) generateState() string {
@@ -79,6 +88,28 @@ func (h *Handler) Callback(w http.ResponseWriter, r *http.Request) {
 		h.renderCallbackError(w, "unsupported_provider")
 		return
 	}
+
+	// Validate CSRF state
+	stateCookie, err := r.Cookie("oauth_state")
+	if err != nil || stateCookie.Value == "" {
+		h.renderCallbackError(w, "missing_state")
+		return
+	}
+	queryState := r.URL.Query().Get("state")
+	if queryState == "" || queryState != stateCookie.Value {
+		h.renderCallbackError(w, "invalid_state")
+		return
+	}
+	// Clear the state cookie
+	http.SetCookie(w, &http.Cookie{
+		Name:     "oauth_state",
+		Value:    "",
+		Path:     "/",
+		MaxAge:   -1,
+		HttpOnly: true,
+		Secure:   h.isSecure(),
+		SameSite: http.SameSiteLaxMode,
+	})
 
 	code := r.URL.Query().Get("code")
 	if code == "" {
@@ -176,13 +207,13 @@ func (h *Handler) renderCallbackSuccess(w http.ResponseWriter, user *db.User) {
 (function() {
   var user = %s;
   if (window.opener) {
-    window.opener.postMessage({type: "ocr-auth-success", user: user}, "*");
+    window.opener.postMessage({type: "ocr-auth-success", user: user}, %q);
   }
   window.close();
 })();
 </script>
 </body>
-</html>`, string(userJSON))
+</html>`, string(userJSON), h.frontendOrigin())
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
@@ -199,13 +230,13 @@ func (h *Handler) renderCallbackError(w http.ResponseWriter, errMsg string) {
 <script>
 (function() {
   if (window.opener) {
-    window.opener.postMessage({type: "ocr-auth-error", error: %q}, "*");
+    window.opener.postMessage({type: "ocr-auth-error", error: %q}, %q);
   }
   window.close();
 })();
 </script>
 </body>
-</html>`, errMsg, errMsg)
+</html>`, errMsg, errMsg, h.frontendOrigin())
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(http.StatusOK)

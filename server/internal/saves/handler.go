@@ -8,6 +8,11 @@ import (
 	"github.com/dbccccccc/TypstPad/server/internal/auth"
 )
 
+const (
+	maxNameLength    = 256
+	maxContentLength = 100_000 // ~100KB
+)
+
 // Handler handles saved formula HTTP endpoints.
 type Handler struct {
 	store        *Store
@@ -66,6 +71,15 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if len(body.Name) > maxNameLength {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"error": "name_too_long"})
+		return
+	}
+	if len(body.Content) > maxContentLength {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"error": "content_too_long"})
+		return
+	}
+
 	formula, err := h.store.Create(userID, body.Name, body.Content)
 	if err != nil {
 		log.Printf("create save failed: %v", err)
@@ -95,6 +109,15 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		writeJSON(w, http.StatusBadRequest, map[string]any{"error": "invalid_body"})
+		return
+	}
+
+	if body.Name != nil && len(*body.Name) > maxNameLength {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"error": "name_too_long"})
+		return
+	}
+	if body.Content != nil && len(*body.Content) > maxContentLength {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"error": "content_too_long"})
 		return
 	}
 

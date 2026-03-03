@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/dbccccccc/TypstPad/server/internal/auth"
 	"github.com/dbccccccc/TypstPad/server/internal/db"
@@ -41,10 +42,22 @@ func main() {
 
 	cors := middleware.CORS(allowedOrigins)
 
+	// Periodically clean up expired sessions
+	go func() {
+		ticker := time.NewTicker(1 * time.Hour)
+		defer ticker.Stop()
+		for range ticker.C {
+			if err := sessionStore.CleanExpired(); err != nil {
+				log.Printf("session cleanup failed: %v", err)
+			}
+		}
+	}()
+
 	authHandler := auth.NewHandler(auth.HandlerConfig{
 		GithubClientID:     ghClientID,
 		GithubClientSecret: ghClientSecret,
 		BaseURL:            baseURL,
+		AllowedOrigins:     allowedOrigins,
 		SessionStore:       sessionStore,
 		UserStore:          userStore,
 		SessionSecret:      sessionSecret,

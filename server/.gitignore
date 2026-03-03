@@ -1,1 +1,2 @@
-server/typstpad-server
+typstpad-server
+*.db
