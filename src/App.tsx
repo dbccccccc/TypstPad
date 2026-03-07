@@ -7,6 +7,8 @@ import SettingsDialog, { Settings, defaultSettings } from './components/Settings
 import Header from './components/Header/Header'
 import LoginDialog from './components/LoginDialog'
 import OcrIntroDialog from './components/OcrIntroDialog'
+import AIChatSidebar from './components/AIChatSidebar/AIChatSidebar'
+import AISettingsDialog from './components/AISettingsDialog/AISettingsDialog'
 import DocsPage from './pages/DocsPage'
 import AboutPage from './pages/AboutPage'
 import NotFoundPage from './pages/NotFoundPage'
@@ -19,6 +21,7 @@ import FormulasDialog from './components/FormulasDialog'
 import SaveFormulaDialog from './components/FormulasDialog/SaveFormulaDialog'
 import FontManagerDialog from './components/FontManagerDialog'
 import { preloadTypst } from './services/typst'
+import { type AISettings, loadAISettings, saveAISettings } from './services/ai'
 import { Code, Image, Save as SaveIcon, FolderOpen, Type, Loader2, ScanText } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useI18n } from '@/i18n'
@@ -186,6 +189,11 @@ function App() {
   const [isResizingEditor, setIsResizingEditor] = useState(false)
   const resizeStateRef = useRef<{ startY: number; startHeight: number } | null>(null)
 
+  // AI state
+  const [aiSidebarOpen, setAiSidebarOpen] = useState(false)
+  const [aiSettingsOpen, setAiSettingsOpen] = useState(false)
+  const [aiSettings, setAiSettings] = useState<AISettings>(() => loadAISettings())
+
   // Auto-save draft (debounced)
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -245,6 +253,19 @@ function App() {
 
   const handleInsertSymbol = useCallback((code: string) => {
     editorRef.current?.insertText(code)
+  }, [])
+
+  const handleAIInsertCode = useCallback((code: string) => {
+    editorRef.current?.insertText(code)
+  }, [])
+
+  const handleAIToggle = useCallback(() => {
+    setAiSidebarOpen(prev => !prev)
+  }, [])
+
+  const handleAISettingsChange = useCallback((newSettings: AISettings) => {
+    setAiSettings(newSettings)
+    saveAISettings(newSettings)
   }, [])
 
   const handleFontsChanged = useCallback(() => {
@@ -533,10 +554,12 @@ function App() {
         activePage={activePage}
         user={ocrUser}
         accountFeaturesEnabled={ACCOUNT_FEATURES_ENABLED}
+        onAIToggle={isEditorPage ? handleAIToggle : undefined}
+        aiOpen={aiSidebarOpen}
       />
 
       {isEditorPage ? (
-        <>
+        <div className="flex flex-1 min-h-0">
           <input
             ref={ocrFileInputRef}
             type="file"
@@ -759,7 +782,14 @@ function App() {
             loading={loginLoading || ocrRunning}
           />
 
-        </>
+          {/* AI Chat Sidebar */}
+          <AIChatSidebar
+            open={aiSidebarOpen}
+            onClose={handleAIToggle}
+            onSettingsClick={() => setAiSettingsOpen(true)}
+            onInsertCode={handleAIInsertCode}
+          />
+        </div>
       ) : activePage === 'docs' ? (
         <DocsPage />
       ) : activePage === 'about' ? (
@@ -780,6 +810,13 @@ function App() {
         onOpenChange={handleLoginDialogOpenChange}
         onLogin={handleLogin}
         loading={loginLoading}
+      />
+
+      <AISettingsDialog
+        open={aiSettingsOpen}
+        onOpenChange={setAiSettingsOpen}
+        settings={aiSettings}
+        onSettingsChange={handleAISettingsChange}
       />
     </div>
   )

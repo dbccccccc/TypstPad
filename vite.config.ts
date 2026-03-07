@@ -35,11 +35,15 @@ function wasmPreloadPlugin(): Plugin {
   }
 }
 
+// Detect Tauri environment
+const isTauri = process.env.TAURI_ENV_PLATFORM !== undefined
+
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react(), wasmPreloadPlugin()],
   define: {
-    __APP_VERSION__: JSON.stringify(APP_VERSION)
+    __APP_VERSION__: JSON.stringify(APP_VERSION),
+    __IS_TAURI__: JSON.stringify(isTauri),
   },
   resolve: {
     alias: {
@@ -65,6 +69,10 @@ export default defineConfig({
     headers: {
       'Cross-Origin-Opener-Policy': 'same-origin',
       'Cross-Origin-Embedder-Policy': 'require-corp'
-    }
-  }
+    },
+    // Tauri expects a fixed port
+    strictPort: true,
+  },
+  // Env variables prefixed with TAURI_ will be available on import.meta.env
+  envPrefix: ['VITE_', 'TAURI_'],
 })

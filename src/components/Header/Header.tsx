@@ -17,6 +17,7 @@ import {
   BookOpenText,
   Info,
   ChevronDown,
+  Bot,
 } from 'lucide-react'
 import { useI18n, type Locale } from '@/i18n'
 import type { OcrUser } from '@/services/ocr'
@@ -30,6 +31,8 @@ interface HeaderProps {
   activePage: AppPage
   user?: OcrUser | null
   accountFeaturesEnabled?: boolean
+  onAIToggle?: () => void
+  aiOpen?: boolean
 }
 
 const pageOptions: Array<{
@@ -196,6 +199,8 @@ function Header({
   activePage,
   user,
   accountFeaturesEnabled = true,
+  onAIToggle,
+  aiOpen = false,
 }: HeaderProps) {
   const { mode, setMode } = useTheme()
   const { t, locale, setLocale, systemLocale } = useI18n()
@@ -327,6 +332,18 @@ function Header({
               })}
             </div>
           </FloatingMenu>
+
+          {onAIToggle && (
+            <Button
+              variant={aiOpen ? 'secondary' : 'ghost'}
+              size="icon"
+              className="h-9 w-9 sm:h-10 sm:w-10"
+              onClick={onAIToggle}
+              title={t('ai.toggle')}
+            >
+              <Bot className="h-4 w-4" />
+            </Button>
+          )}
 
           <Button
             variant="ghost"

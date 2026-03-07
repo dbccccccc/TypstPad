@@ -3,6 +3,7 @@ import { Editor as MonacoEditor, useMonaco } from '@monaco-editor/react'
 import type { editor } from 'monaco-editor'
 import type * as Monaco from 'monaco-editor'
 import { setupShikiForMonaco, getShikiInitPromise } from '../../utils/shikiSetup'
+import { registerAICompletionProvider } from '../../utils/aiCompletion'
 import { Loader2 } from 'lucide-react'
 import { useI18n } from '@/i18n'
 
@@ -96,6 +97,8 @@ const Editor = forwardRef<EditorRef, EditorProps>(({
 
   const handleBeforeMount = async (monaco: typeof Monaco) => {
     await setupShikiForMonaco(monaco)
+    // Register AI inline completion provider
+    registerAICompletionProvider(monaco)
   }
 
   return (
