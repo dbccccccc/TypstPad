@@ -1,12 +1,10 @@
-import { useState, useCallback, useEffect, useRef, useMemo, type ChangeEvent } from 'react'
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import Editor, { EditorRef } from './components/Editor/Editor'
 import MathToolbar from './components/MathToolbar'
 import Preview from './components/Preview/Preview'
 import ExportPanel from './components/ExportPanel/ExportPanel'
 import SettingsDialog, { Settings, defaultSettings } from './components/SettingsDialog/SettingsDialog'
 import Header from './components/Header/Header'
-import LoginDialog from './components/LoginDialog'
-import OcrIntroDialog from './components/OcrIntroDialog'
 import DocsPage from './pages/DocsPage'
 import AboutPage from './pages/AboutPage'
 import NotFoundPage from './pages/NotFoundPage'
@@ -19,19 +17,9 @@ import FormulasDialog from './components/FormulasDialog'
 import SaveFormulaDialog from './components/FormulasDialog/SaveFormulaDialog'
 import FontManagerDialog from './components/FontManagerDialog'
 import { preloadTypst } from './services/typst'
-import { Code, Image, Save as SaveIcon, FolderOpen, Type, Loader2, ScanText } from 'lucide-react'
+import { Code, Image, Save as SaveIcon, FolderOpen, Type } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useI18n } from '@/i18n'
-import {
-  getOcrSession,
-  logoutOcrSession,
-  openLoginPopup,
-  submitOcr,
-  type OcrProvider,
-  type OcrUsage,
-  type OcrUser,
-} from './services/ocr'
-import { createAccountSave } from './services/accountSaves'
 import { APP_PAGE_PATHS, resolveAppPage, type AppPage, type NavigablePage } from './navigation/routes'
 
 function readStorageItem(key: string): string | null {
@@ -95,61 +83,10 @@ function loadEditorHeightFromStorage(): number {
   return clampEditorHeight(parsed)
 }
 
-const DEFAULT_OCR_UPLOAD_LIMIT_MB = 6
-
-function resolveOcrUploadLimitMb(): number {
-  const raw =
-    import.meta.env.VITE_OCR_MAX_UPLOAD_MB ||
-    import.meta.env.VITE_OCR_UPLOAD_LIMIT_MB ||
-    String(DEFAULT_OCR_UPLOAD_LIMIT_MB)
-
-  const parsed = Number(raw)
-  if (!Number.isFinite(parsed) || parsed <= 0) {
-    return DEFAULT_OCR_UPLOAD_LIMIT_MB
-  }
-
-  return parsed
-}
-
-function formatUploadLimitMb(limitMb: number): string {
-  if (!Number.isFinite(limitMb)) return String(DEFAULT_OCR_UPLOAD_LIMIT_MB)
-  if (Number.isInteger(limitMb)) return String(limitMb)
-  return limitMb.toFixed(1).replace(/\.0$/, '')
-}
-
-function parseOcrUsage(value: unknown): OcrUsage | null {
-  if (!value || typeof value !== 'object') return null
-  const data = value as Partial<OcrUsage>
-
-  if (
-    typeof data.count !== 'number' ||
-    !Number.isFinite(data.count) ||
-    typeof data.limit !== 'number' ||
-    !Number.isFinite(data.limit) ||
-    typeof data.resetAt !== 'number' ||
-    !Number.isFinite(data.resetAt)
-  ) {
-    return null
-  }
-
-  return {
-    count: Math.max(0, Math.floor(data.count)),
-    limit: Math.max(0, Math.floor(data.limit)),
-    resetAt: Math.max(0, Math.floor(data.resetAt)),
-  }
-}
-
-const OCR_UPLOAD_LIMIT_MB = resolveOcrUploadLimitMb()
-const OCR_UPLOAD_LIMIT_BYTES = Math.floor(OCR_UPLOAD_LIMIT_MB * 1024 * 1024)
-const OCR_UPLOAD_LIMIT_LABEL = formatUploadLimitMb(OCR_UPLOAD_LIMIT_MB)
-// Account-backed features are temporarily gated while server support is rolled out.
-const ACCOUNT_FEATURES_ENABLED = false
-
 function App() {
   const { theme } = useTheme()
   const { t } = useI18n()
   const editorRef = useRef<EditorRef>(null)
-  const ocrFileInputRef = useRef<HTMLInputElement>(null)
   const initialSettings = useMemo(() => loadSettingsFromStorage(), [])
   const [code, setCode] = useState(() => {
     // URL formula always takes priority
@@ -169,15 +106,6 @@ function App() {
   const [saveDialogOpen, setSaveDialogOpen] = useState(false)
   const [fontManagerOpen, setFontManagerOpen] = useState(false)
   const [fontRevision, setFontRevision] = useState(0)
-  const [ocrUser, setOcrUser] = useState<OcrUser | null>(null)
-  const [loginDialogOpen, setLoginDialogOpen] = useState(false)
-  const [ocrIntroOpen, setOcrIntroOpen] = useState(false)
-  const [ocrPendingFile, setOcrPendingFile] = useState<File | null>(null)
-  const [ocrRunning, setOcrRunning] = useState(false)
-  const [loginLoading, setLoginLoading] = useState(false)
-  const [ocrUsage, setOcrUsage] = useState<OcrUsage | null>(null)
-  const [loginOrigin, setLoginOrigin] = useState<'intro' | null>(null)
-  const [accountSaving, setAccountSaving] = useState(false)
   const [activePage, setActivePage] = useState<AppPage>(() => {
     if (typeof window === 'undefined') return 'editor'
     return resolveAppPage(window.location.pathname)
@@ -199,13 +127,6 @@ function App() {
     preloadTypst().catch((err) => {
       console.error('Failed to preload typst:', err)
     })
-  }, [])
-
-  useEffect(() => {
-    if (!ACCOUNT_FEATURES_ENABLED) return
-    getOcrSession()
-      .then((user) => setOcrUser(user))
-      .catch(() => null)
   }, [])
 
   useEffect(() => {
@@ -238,10 +159,6 @@ function App() {
   const handleCompiled = useCallback((newSvg: string | null, _diagnostics: unknown) => {
     setSvg(newSvg)
   }, [])
-
-  const handleComingSoon = useCallback(() => {
-    alert(t('common.comingSoon'))
-  }, [t])
 
   const handleInsertSymbol = useCallback((code: string) => {
     editorRef.current?.insertText(code)
@@ -299,73 +216,6 @@ function App() {
     event.preventDefault()
   }, [editorHeight, settings.layoutMode])
 
-  const runOcr = useCallback(async (file: File) => {
-    setOcrRunning(true)
-    try {
-      const result = await submitOcr(file)
-      const usage = parseOcrUsage(result.usage)
-      if (usage) {
-        setOcrUsage(usage)
-      }
-
-      const text = result.text?.trim()
-      if (!text) {
-        alert(t('ocr.error.emptyResult'))
-        return
-      }
-
-      if (editorRef.current) {
-        editorRef.current.insertText(text)
-      } else {
-        setCode((prev) => `${prev}${text}`)
-      }
-    } catch (error) {
-      const status = (error as { status?: number }).status
-      if (status === 401) {
-        setOcrPendingFile(file)
-        setLoginDialogOpen(true)
-        return
-      }
-
-      if (status === 429) {
-        const usage = parseOcrUsage((error as { data?: { usage?: unknown } }).data?.usage)
-        if (usage) {
-          setOcrUsage(usage)
-        }
-        alert(t('ocr.error.limitReached'))
-        return
-      }
-
-      if (status === 413) {
-        alert(t('ocr.error.fileTooLarge', { maxMb: OCR_UPLOAD_LIMIT_LABEL }))
-        return
-      }
-
-      console.error('OCR failed:', error)
-      alert(t('ocr.error.failed'))
-    } finally {
-      setOcrRunning(false)
-    }
-  }, [t])
-
-  const handleOcrClick = useCallback(() => {
-    if (!ACCOUNT_FEATURES_ENABLED) {
-      handleComingSoon()
-      return
-    }
-    setOcrIntroOpen(true)
-  }, [handleComingSoon])
-
-  const handleLoginClick = useCallback(() => {
-    if (!ACCOUNT_FEATURES_ENABLED) {
-      handleComingSoon()
-      return
-    }
-    setLoginOrigin(null)
-    setOcrPendingFile(null)
-    setLoginDialogOpen(true)
-  }, [handleComingSoon])
-
   const handleNavigate = useCallback((nextPage: NavigablePage) => {
     if (typeof window === 'undefined') return
 
@@ -376,137 +226,9 @@ function App() {
     setActivePage(nextPage)
   }, [])
 
-  const handleLogoutClick = useCallback(async () => {
-    try {
-      await logoutOcrSession()
-    } catch (error) {
-      console.error('Failed to logout:', error)
-    } finally {
-      setOcrUser(null)
-      setOcrUsage(null)
-    }
-  }, [])
-
-  const handleOcrFileChange = useCallback(async (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    event.target.value = ''
-    if (!file) return
-    if (!ACCOUNT_FEATURES_ENABLED) {
-      handleComingSoon()
-      return
-    }
-
-    if (file.size > OCR_UPLOAD_LIMIT_BYTES) {
-      alert(t('ocr.error.fileTooLarge', { maxMb: OCR_UPLOAD_LIMIT_LABEL }))
-      return
-    }
-
-    let user = ocrUser
-    if (!user) {
-      user = await getOcrSession().catch(() => null)
-      if (user) setOcrUser(user)
-    }
-
-    if (!user) {
-      setOcrPendingFile(file)
-      setLoginDialogOpen(true)
-      return
-    }
-
-    await runOcr(file)
-  }, [handleComingSoon, ocrUser, runOcr, t])
-
-  const handleLogin = useCallback(async (provider: OcrProvider) => {
-    if (!ACCOUNT_FEATURES_ENABLED) {
-      handleComingSoon()
-      return
-    }
-    setLoginLoading(true)
-    try {
-      const user = await openLoginPopup(provider)
-      setOcrUser(user)
-      setLoginDialogOpen(false)
-
-      const pendingFile = ocrPendingFile
-      setOcrPendingFile(null)
-      const shouldRestoreIntro = loginOrigin === 'intro' && !pendingFile
-      setLoginOrigin(null)
-      if (pendingFile) {
-        await runOcr(pendingFile)
-      } else if (shouldRestoreIntro) {
-        setOcrIntroOpen(true)
-      }
-    } catch (error) {
-      console.error('Login failed:', error)
-      const message = error instanceof Error ? error.message : ''
-      if (message === 'popup_blocked') {
-        alert(t('auth.error.popupBlocked'))
-      } else {
-        alert(t('auth.error.loginFailed'))
-      }
-    } finally {
-      setLoginLoading(false)
-      setLoginOrigin(null)
-    }
-  }, [handleComingSoon, loginOrigin, ocrPendingFile, runOcr, t])
-
-  const handleLoginDialogOpenChange = useCallback((open: boolean) => {
-    setLoginDialogOpen(open)
-    if (!open) {
-      setOcrPendingFile(null)
-      setLoginOrigin(null)
-    }
-  }, [])
-
-  const handleOcrIntroOpenChange = useCallback((open: boolean) => {
-    setOcrIntroOpen(open)
-  }, [])
-
-  const handleOcrChoosePhoto = useCallback(() => {
-    setOcrIntroOpen(false)
-    ocrFileInputRef.current?.click()
-  }, [])
-
-  const handleIntroLoginClick = useCallback(() => {
-    if (!ACCOUNT_FEATURES_ENABLED) {
-      handleComingSoon()
-      return
-    }
-    setOcrIntroOpen(false)
-    setLoginOrigin('intro')
-    setLoginDialogOpen(true)
-  }, [handleComingSoon])
-
-  const handleSaveLoginClick = useCallback(() => {
-    setSaveDialogOpen(false)
-    handleLoginClick()
-  }, [handleLoginClick])
-
   const handleSaveLocal = useCallback((name: string) => {
     addFormula(name, code, { fallbackName: t('formulas.untitled') })
   }, [code, t])
-
-  const handleSaveAccount = useCallback(async (name: string) => {
-    if (!ACCOUNT_FEATURES_ENABLED) {
-      handleComingSoon()
-      return
-    }
-    if (!ocrUser) {
-      handleSaveLoginClick()
-      throw new Error('unauthenticated')
-    }
-
-    setAccountSaving(true)
-    try {
-      await createAccountSave(name, code)
-    } catch (error) {
-      console.error('Failed to save account formula:', error)
-      alert(t('formulas.account.error.saveFailed'))
-      throw error
-    } finally {
-      setAccountSaving(false)
-    }
-  }, [code, handleComingSoon, handleSaveLoginClick, ocrUser, t])
 
   useEffect(() => {
     writeStorageItem('typst-editor-settings', JSON.stringify(settings))
@@ -521,30 +243,17 @@ function App() {
   }, [buildFormulaImageHtml, t])
 
   const isEditorPage = activePage === 'editor'
-  const ocrButtonLabel = ACCOUNT_FEATURES_ENABLED ? t('ocr.button') : t('common.comingSoon')
 
   return (
     <div className="flex flex-col h-screen h-[100dvh] bg-background">
       <Header
         onSettingsClick={() => setSettingsOpen(true)}
-        onLoginClick={handleLoginClick}
-        onLogoutClick={handleLogoutClick}
         onNavigate={handleNavigate}
         activePage={activePage}
-        user={ocrUser}
-        accountFeaturesEnabled={ACCOUNT_FEATURES_ENABLED}
       />
 
       {isEditorPage ? (
         <>
-          <input
-            ref={ocrFileInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={handleOcrFileChange}
-          />
-
           <main className="flex-1 min-h-0 overflow-auto p-3 sm:p-6">
             <div className={`mx-auto ${
               settings.layoutMode === 'side-by-side'
@@ -596,22 +305,6 @@ function App() {
                     >
                       <Type className="h-3.5 w-3.5" />
                       <span className="sr-only sm:not-sr-only">{t('common.fonts')}</span>
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleOcrClick}
-                      className="h-7 gap-1 px-2 sm:gap-1.5 sm:px-2.5"
-                      disabled={ACCOUNT_FEATURES_ENABLED && (ocrRunning || loginLoading)}
-                      aria-label={ocrButtonLabel}
-                      title={ocrButtonLabel}
-                    >
-                      {ocrRunning ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      ) : (
-                        <ScanText className="h-3.5 w-3.5" />
-                      )}
-                      <span className="sr-only sm:not-sr-only">{ocrButtonLabel}</span>
                     </Button>
                   </div>
                 </div>
@@ -725,9 +418,6 @@ function App() {
             open={formulasOpen}
             onOpenChange={setFormulasOpen}
             onLoadFormula={setCode}
-            user={ACCOUNT_FEATURES_ENABLED ? ocrUser : null}
-            onLoginClick={handleLoginClick}
-            accountEnabled={ACCOUNT_FEATURES_ENABLED}
           />
 
           <SaveFormulaDialog
@@ -735,11 +425,6 @@ function App() {
             onOpenChange={setSaveDialogOpen}
             content={code}
             onSaveLocal={handleSaveLocal}
-            onSaveAccount={handleSaveAccount}
-            isAuthenticated={ACCOUNT_FEATURES_ENABLED && Boolean(ocrUser)}
-            onLoginClick={handleSaveLoginClick}
-            accountSaving={accountSaving}
-            accountSaveEnabled={ACCOUNT_FEATURES_ENABLED}
           />
 
           <FontManagerDialog
@@ -747,18 +432,6 @@ function App() {
             onOpenChange={setFontManagerOpen}
             onFontsChanged={handleFontsChanged}
           />
-
-          <OcrIntroDialog
-            open={ocrIntroOpen}
-            onOpenChange={handleOcrIntroOpenChange}
-            onChoosePhoto={handleOcrChoosePhoto}
-            onLoginClick={handleIntroLoginClick}
-            isAuthenticated={Boolean(ocrUser)}
-            usage={ocrUsage}
-            maxUploadMb={OCR_UPLOAD_LIMIT_MB}
-            loading={loginLoading || ocrRunning}
-          />
-
         </>
       ) : activePage === 'docs' ? (
         <DocsPage />
@@ -773,13 +446,6 @@ function App() {
         onOpenChange={setSettingsOpen}
         settings={settings}
         onSettingsChange={setSettings}
-      />
-
-      <LoginDialog
-        open={loginDialogOpen}
-        onOpenChange={handleLoginDialogOpenChange}
-        onLogin={handleLogin}
-        loading={loginLoading}
       />
     </div>
   )

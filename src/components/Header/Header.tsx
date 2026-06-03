@@ -9,9 +9,6 @@ import {
   Settings,
   Check,
   Languages,
-  LogIn,
-  LogOut,
-  User,
   PanelsTopLeft,
   Code2,
   BookOpenText,
@@ -19,17 +16,12 @@ import {
   ChevronDown,
 } from 'lucide-react'
 import { useI18n, type Locale } from '@/i18n'
-import type { OcrUser } from '@/services/ocr'
 import type { AppPage, NavigablePage } from '@/navigation/routes'
 
 interface HeaderProps {
   onSettingsClick: () => void
-  onLoginClick: () => void
-  onLogoutClick: () => void
   onNavigate: (page: NavigablePage) => void
   activePage: AppPage
-  user?: OcrUser | null
-  accountFeaturesEnabled?: boolean
 }
 
 const pageOptions: Array<{
@@ -134,68 +126,13 @@ function PageMenu({
   )
 }
 
-function AccountMenu({
-  user,
-  onLogout,
-}: {
-  user: OcrUser
-  onLogout: () => void
-}) {
-  const { closeMenu } = useMenuGroup()
-  const { t } = useI18n()
-
-  const handleLogout = () => {
-    onLogout()
-    closeMenu()
-  }
-
-  const email = user.email || t('header.emailUnavailable')
-
-  return (
-    <div className="flex min-w-[12rem] flex-col gap-2 p-2">
-      <div className="flex flex-col">
-        {user.name && <span className="text-sm font-medium">{user.name}</span>}
-        <span className="text-xs text-muted-foreground">{email}</span>
-      </div>
-      <div className="h-px bg-border" />
-      <Button
-        type="button"
-        variant="ghost"
-        size="sm"
-        className="justify-start gap-2"
-        onClick={handleLogout}
-      >
-        <LogOut className="h-4 w-4" />
-        {t('header.logout')}
-      </Button>
-    </div>
-  )
-}
-
 // Version injected by Vite from package.json
 declare const __APP_VERSION__: string
 
-function isSafeAvatarUrl(value?: string | null): boolean {
-  if (!value) return false
-  if (value.startsWith('data:') || value.startsWith('blob:')) return true
-  if (typeof window === 'undefined') return false
-
-  try {
-    const url = new URL(value, window.location.origin)
-    return url.origin === window.location.origin
-  } catch {
-    return false
-  }
-}
-
 function Header({
   onSettingsClick,
-  onLoginClick,
-  onLogoutClick,
   onNavigate,
   activePage,
-  user,
-  accountFeaturesEnabled = true,
 }: HeaderProps) {
   const { mode, setMode } = useTheme()
   const { t, locale, setLocale, systemLocale } = useI18n()
@@ -204,16 +141,12 @@ function Header({
     setMode(newMode)
   }
 
-  const userLabel = user?.name || user?.email || t('header.account')
-  const accountButtonLabel = accountFeaturesEnabled ? t('header.login') : t('common.comingSoon')
   const ThemeIcon = themeIconMap[mode] ?? Monitor
   const systemSuffix = systemLocale ? ` (${t('language.systemSuffix')})` : ''
   const languageOptions: Array<{ value: Locale; label: string }> = [
     { value: 'en', label: t('language.name.en') },
     { value: 'zh-CN', label: t('language.name.zhCN') },
   ]
-  const shouldShowAccountMenu = accountFeaturesEnabled && Boolean(user)
-  const canRenderAvatar = shouldShowAccountMenu && isSafeAvatarUrl(user?.avatarUrl)
 
   return (
     <MenuGroupProvider>
@@ -337,53 +270,6 @@ function Header({
           >
             <Settings className="h-5 w-5" />
           </Button>
-          {shouldShowAccountMenu && user ? (
-            <FloatingMenu
-              menuId="account"
-              placement="bottom-end"
-              openOnHover={false}
-              contentClassName="p-0"
-              trigger={({ triggerProps }) => (
-                <Button
-                  {...triggerProps}
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="ml-1 h-9 w-9 rounded-full p-0 leading-none sm:ml-2 sm:h-10 sm:w-10"
-                  title={userLabel}
-                  aria-label={userLabel}
-                >
-                  {canRenderAvatar ? (
-                    <span className="h-7 w-7 overflow-hidden rounded-full bg-muted sm:h-8 sm:w-8">
-                      <img
-                        src={user.avatarUrl || undefined}
-                        alt={userLabel}
-                        className="h-full w-full object-cover"
-                      />
-                    </span>
-                  ) : (
-                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-muted sm:h-8 sm:w-8">
-                      <User className="h-4 w-4 text-muted-foreground" />
-                    </span>
-                  )}
-                </Button>
-              )}
-            >
-              <AccountMenu user={user} onLogout={onLogoutClick} />
-            </FloatingMenu>
-          ) : (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="ml-1 h-9 gap-2 px-2 sm:ml-2 sm:h-10 sm:px-3"
-              onClick={onLoginClick}
-              title={accountButtonLabel}
-              aria-label={accountButtonLabel}
-            >
-              <LogIn className="h-4 w-4" />
-              <span className="hidden sm:inline">{accountButtonLabel}</span>
-            </Button>
-          )}
       </div>
     </header>
   </MenuGroupProvider>
