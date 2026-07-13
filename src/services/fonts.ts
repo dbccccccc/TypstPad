@@ -1,4 +1,4 @@
-import { createTypstFontBuilder } from '@myriaddreamin/typst.ts/dist/esm/compiler.mjs'
+import { createTypstFontBuilder } from '@myriaddreamin/typst.ts/compiler'
 import compilerWasm from '@myriaddreamin/typst-ts-web-compiler/pkg/typst_ts_web_compiler_bg.wasm?url'
 
 export type FontCategory = 'text' | 'math' | 'mono'

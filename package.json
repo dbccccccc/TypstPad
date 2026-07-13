@@ -1,6 +1,6 @@
 {
   "name": "typstpad",
-  "version": "0.9.2",
+  "version": "0.9.3",
   "type": "module",
   "description": "A simple and elegant online Typst formula editor with real-time preview",
   "engines": {
@@ -15,9 +15,9 @@
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
-    "@myriaddreamin/typst-ts-web-compiler": "^0.7.0-rc2",
-    "@myriaddreamin/typst.react": "^0.7.0-rc2",
-    "@myriaddreamin/typst.ts": "^0.7.0-rc2",
+    "@myriaddreamin/typst-ts-renderer": "^0.7.0",
+    "@myriaddreamin/typst-ts-web-compiler": "^0.7.0",
+    "@myriaddreamin/typst.ts": "^0.7.0",
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-dropdown-menu": "^2.1.16",
     "@radix-ui/react-label": "^2.1.8",
@@ -55,6 +55,6 @@
     "vitest": "^4.1.8"
   },
   "overrides": {
-    "dompurify": "^3.4.7"
+    "dompurify": "^3.4.12"
   }
 }

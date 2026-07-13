@@ -148,7 +148,7 @@ docker-compose up -d
 - **Styling**: Tailwind CSS
 - **Editor**: Monaco Editor
 - **Syntax Highlighting**: Shiki
-- **Typst Rendering**: @myriaddreamin/typst.ts
+- **Typst Rendering**: Typst 0.14.2 via @myriaddreamin/typst.ts 0.7
 - **UI Components**: Radix UI
 - **Icons**: Lucide React
 
@@ -238,7 +238,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🗺️ Roadmap
 
 - [x] Formula library for saving and managing formulas
-- [ ] Multi-language support
+- [x] Multi-language support
 - [ ] More export format support
 
 ---

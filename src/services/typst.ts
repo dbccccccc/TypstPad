@@ -1,6 +1,6 @@
 // Typst compilation service using typst.ts
-import { TypstSnippet } from '@myriaddreamin/typst.ts/dist/esm/contrib/snippet.mjs'
-import { loadFonts } from '@myriaddreamin/typst.ts/dist/esm/options.init.mjs'
+import { TypstSnippet } from '@myriaddreamin/typst.ts/contrib/snippet'
+import { loadFonts } from '@myriaddreamin/typst.ts/options.init'
 import compilerWasm from '@myriaddreamin/typst-ts-web-compiler/pkg/typst_ts_web_compiler_bg.wasm?url'
 import rendererWasm from '@myriaddreamin/typst-ts-renderer/pkg/typst_ts_renderer_bg.wasm?url'
 import { getFontSources } from './fonts'
