@@ -1,0 +1,1 @@
+{"auto_crop":true,"crop_margin_ratio":0.12,"crop_min_margin":2,"crop_threshold":12,"input_height":256,"max_width":2048,"minimum_foreground_pixels":4,"normalize_polarity":true,"resize_mode":"contain","schema_version":"image-preprocess-v3","vertical_alignment":"center","width_buckets":[512,1024,1536,2048]}

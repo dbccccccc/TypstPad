@@ -183,7 +183,10 @@ function Header({
           <PageMenu activePage={activePage} onNavigate={onNavigate} />
         </FloatingMenu>
 
-        <sub className="hidden text-[10px] text-muted-foreground sm:inline">
+        <sub
+          className="hidden text-[10px] text-muted-foreground sm:inline"
+          title={`TypstPad ${__APP_VERSION__}`}
+        >
           v{__APP_VERSION__}
         </sub>
         <nav className="ml-2 hidden items-center gap-1 md:flex">

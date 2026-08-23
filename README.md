@@ -21,6 +21,7 @@ A simple and elegant online Typst formula editor with real-time preview.
   - HTML
   - Typst source code
 - 📋 **Clipboard Support** - Copy images and code directly to clipboard
+- 🔎 **Image to Typst (Experimental)** - Recognize a tightly cropped printed formula locally in your browser
 - 🔗 **Share Links** - Generate shareable URLs with encoded formulas
 - 💾 **Formula Library** - Save and manage your formulas locally
   - Auto-save draft for seamless workflow
@@ -35,7 +36,7 @@ A simple and elegant online Typst formula editor with real-time preview.
 
 ### Prerequisites
 
-- Node.js 18+ (20+ recommended)
+- Node.js 20+
 - npm or yarn
 
 ### Installation
@@ -202,6 +203,19 @@ typstpad/
    - Click "Export Code" to copy/download the source code
    - Click "Share" to generate a shareable URL
 
+### Image to Typst (Experimental)
+
+Select **Image to Typst** in the input panel, then choose, drop, or paste a PNG,
+JPEG, or WebP image containing one tightly cropped printed formula. Recognition
+runs locally in the browser; the image is not uploaded. Review every generated
+token before placing the draft in the editor.
+
+The included Phase 10 IBEM model is experimental and is substantially less
+accurate on long or displayed formulas. It is not intended for handwriting,
+full-page segmentation, photographs, or arbitrary screenshots. See the bundled
+model card and third-party notices under `public/im2typst` for qualification,
+provenance, and license details.
+
 ### Settings
 
 Access settings by clicking the gear icon in the header.
@@ -229,6 +243,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - [Typst](https://typst.app/) - The typesetting system
 - [typst.ts](https://github.com/Myriad-Dreamin/typst.ts) - Typst WebAssembly compiler
+- [IBEM](https://zenodo.org/records/7963703) - Mathematical-expression training dataset (CC BY 4.0)
+- [ONNX Runtime](https://github.com/microsoft/onnxruntime) - Local browser model execution
 - [Monaco Editor](https://microsoft.github.io/monaco-editor/) - Code editor
 - [Shiki](https://shiki.matsu.io/) - Syntax highlighter
 - [Radix UI](https://www.radix-ui.com/) - UI components

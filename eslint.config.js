@@ -6,7 +6,14 @@ import globals from 'globals'
 
 export default [
   {
-    ignores: ['dist/**', 'node_modules/**', '.vite/**', 'public/monaco-editor/**'],
+    ignores: [
+      'dist/**',
+      'node_modules/**',
+      '.vite/**',
+      'public/monaco-editor/**',
+      'public/im2typst/**',
+      'website-integration-kit/dist/**',
+    ],
   },
   js.configs.recommended,
   {

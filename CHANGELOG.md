@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.0] - 2026-08-22
+
+### Added
+- **Local Image to Typst** - Recognize a tightly cropped printed formula from PNG, JPEG, or WebP and review the generated Typst before inserting it into the editor
+- **Bundled IBEM Model** - Ship the qualified Phase 10 encoder, decoder, tokenizer metadata, ONNX Runtime Web assets, model card, and third-party notices with the application
+- **Model Project Links** - Link the bundled model's Hugging Face page and source repository from the About page
+- **Recognition Tests** - Validate model assets, preprocessing, decoding safeguards, and formula-output handling in the automated test suite
+
+### Changed
+- **Offline Asset Delivery** - Cache model and runtime assets locally and serve them with explicit WebAssembly, ONNX, and cross-origin isolation headers
+- **Documentation** - Document the experimental recognition workflow, supported image types, local-only processing, limitations, provenance, and licenses
+- **Node.js Build Baseline** - Align local, CI, and Docker builds on Node.js 20 or newer
+
+### Security
+- **Model Integrity Checks** - Verify bundled model metadata and SHA-256 hashes before initializing inference
+- **Formula Output Policy** - Reject incomplete, repetitive, repaired, or non-formula model output instead of inserting it automatically
+- **Dependency Patches** - Update DOMPurify and affected build dependencies to releases that clear the moderate-or-higher CI audit gate
+
 ## [0.9.3] - 2026-07-13
 
 ### Changed

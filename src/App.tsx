@@ -16,8 +16,10 @@ import { svgToDataUri } from './utils/svg'
 import FormulasDialog from './components/FormulasDialog'
 import SaveFormulaDialog from './components/FormulasDialog/SaveFormulaDialog'
 import FontManagerDialog from './components/FontManagerDialog'
+import ImageToTypstDialog from './components/ImageToTypstDialog'
 import { preloadTypst } from './services/typst'
-import { Code, Image, Save as SaveIcon, FolderOpen, Type } from 'lucide-react'
+import { recognitionToEditorCode } from './services/im2typst'
+import { Code, Image, Save as SaveIcon, FolderOpen, ScanText, Type } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useI18n } from '@/i18n'
 import { APP_PAGE_PATHS, resolveAppPage, type AppPage, type NavigablePage } from './navigation/routes'
@@ -105,6 +107,7 @@ function App() {
   const [formulasOpen, setFormulasOpen] = useState(false)
   const [saveDialogOpen, setSaveDialogOpen] = useState(false)
   const [fontManagerOpen, setFontManagerOpen] = useState(false)
+  const [imageToTypstOpen, setImageToTypstOpen] = useState(false)
   const [fontRevision, setFontRevision] = useState(0)
   const [activePage, setActivePage] = useState<AppPage>(() => {
     if (typeof window === 'undefined') return 'editor'
@@ -167,6 +170,10 @@ function App() {
   const handleFontsChanged = useCallback(() => {
     setFontRevision((prev) => prev + 1)
   }, [])
+
+  const handleUseRecognizedFormula = useCallback((formula: string) => {
+    setCode(recognitionToEditorCode(formula, settings.simplifiedFormulaMode))
+  }, [settings.simplifiedFormulaMode])
 
   useEffect(() => {
     writeStorageItem(EDITOR_HEIGHT_STORAGE_KEY, String(editorHeight))
@@ -272,6 +279,17 @@ function App() {
                     {t('common.input')}
                   </h2>
                   <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setImageToTypstOpen(true)}
+                      className="h-7 gap-1 px-2 sm:gap-1.5 sm:px-2.5"
+                      aria-label={t('imageToTypst.button')}
+                      title={t('imageToTypst.button')}
+                    >
+                      <ScanText className="h-3.5 w-3.5" />
+                      <span className="sr-only sm:not-sr-only">{t('imageToTypst.button')}</span>
+                    </Button>
                     <Button
                       variant="ghost"
                       size="sm"
@@ -431,6 +449,12 @@ function App() {
             open={fontManagerOpen}
             onOpenChange={setFontManagerOpen}
             onFontsChanged={handleFontsChanged}
+          />
+
+          <ImageToTypstDialog
+            open={imageToTypstOpen}
+            onOpenChange={setImageToTypstOpen}
+            onUseFormula={handleUseRecognizedFormula}
           />
         </>
       ) : activePage === 'docs' ? (

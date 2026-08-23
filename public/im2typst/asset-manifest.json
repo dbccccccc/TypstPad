@@ -1,0 +1,89 @@
+{
+  "schema_version": "local-browser-assets-v1",
+  "qualification": "experimental-teacher-local-testing-only",
+  "model_variant": "wasm",
+  "execution_provider": "wasm",
+  "onnxruntime_web_version": "1.22.0",
+  "release_schema_version": "browser-deployment-v1",
+  "checkpoint": {
+    "parameter_hash": "dcbf1a037fee205c82b7c52c9d0c0c2ee3d68d4a514f4593e15711f02bad31ec",
+    "path": "checkpoint-step-002000.pt",
+    "sha256": "29d4a51adc71526f395750bb12a1783fbfd9bfa5a4c68fc9bfb665b68c633d52",
+    "step": 2000,
+    "training_run_id": "64e092c2013ed43e35d3573e3e2a161c9948f12279ebb92513ab6b15c8811814"
+  },
+  "model": {
+    "encoder.int8.onnx": {
+      "bytes": 11039884,
+      "sha256": "6c889df95eb503c3debefad306e3bdc1f4d4a4f1d217f89a664d5710262bdab1"
+    },
+    "decoder-step.int8.onnx": {
+      "bytes": 7541001,
+      "sha256": "fea2c1792dcfbb8b9e4ed3215d9591fa8ad5f99bd626bc9862355c666083eecf"
+    },
+    "model-config.json": {
+      "bytes": 411,
+      "sha256": "91ce74a06e698c31323e61948c4016fc7d267d62976e6291095a71cb13cccb34"
+    },
+    "output-policy.json": {
+      "bytes": 1146,
+      "sha256": "73b611f8cb8b9035f8db334e5a0390956b78d20b8bba4cf92c789221c8316797"
+    },
+    "preprocess-config.json": {
+      "bytes": 306,
+      "sha256": "e39d199285cc83ec7b48a5a02af39f3d904607e7b462d023aa6964ed3ee5659d"
+    },
+    "vocabulary.json": {
+      "bytes": 4690,
+      "sha256": "45516a0227a25922979210a3d69dc400b2876d072fec68b4c26557e05c7fe737"
+    },
+    "evaluation.json": {
+      "bytes": 7206,
+      "sha256": "39de1c13553be1d66eb323cfec73bcbf5bec3d99b32c773cfae943867deae189"
+    },
+    "deployment.json": {
+      "bytes": 5679,
+      "sha256": "34c6e7e47f6234810facc6b1b7386839ffdef72cdee7746fb58347b0623727fe"
+    },
+    "onnx-parity.json": {
+      "bytes": 2210,
+      "sha256": "b630bc5ad91d015b89c2c4296561b615d056d09a480750a262a234a947a2eaad"
+    },
+    "MODEL_CARD.md": {
+      "bytes": 4054,
+      "sha256": "dbbf239df2dc281c44f76bfe7c9798817a2f750653a0753dcbb509c5ff0030fb"
+    },
+    "MODEL_LICENSE.md": {
+      "bytes": 1430,
+      "sha256": "0abeaf86793abd30de08ad682f636026606c02a30f43dde0694f20e068e8ad5c"
+    },
+    "LICENSE": {
+      "bytes": 1088,
+      "sha256": "b61d1b5bd1739737d2fa4395286f4f955618ea942854c60c8b810245a4daf2cf"
+    },
+    "SHA256SUMS": {
+      "bytes": 1343,
+      "sha256": "bd7ede5dbb494a8160497e41f91b62406db1031d5aa0f6da297c0b55804ea316"
+    }
+  },
+  "runtime": {
+    "ort.wasm.min.js": {
+      "bytes": 48327,
+      "sha256": "65e09376df69107e881b5c34d2d37aed333a366b6d941073ec518168e269b87d"
+    },
+    "ort-wasm-simd-threaded.mjs": {
+      "bytes": 20856,
+      "sha256": "30dd851d9c00622940500f71ddd2ff8820c5cb65270816080175b958705385a8"
+    },
+    "ort-wasm-simd-threaded.wasm": {
+      "bytes": 11210254,
+      "sha256": "71aef04959c5c1b6de461b6538e2058e306610034a85aad2742d0c7fd4533fe4"
+    }
+  },
+  "example": {
+    "formula.png": {
+      "bytes": 854,
+      "sha256": "4c05c4cecb9801d4f04c11d4416e86e3aa93c8ebfe93167ac6c7db0eae1467de"
+    }
+  }
+}

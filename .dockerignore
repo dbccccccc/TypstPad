@@ -37,6 +37,7 @@ Thumbs.db
 README.md
 CHANGELOG.md
 *.md
+!public/im2typst/**/*.md
 
 # Test files
 coverage

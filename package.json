@@ -1,10 +1,10 @@
 {
   "name": "typstpad",
-  "version": "0.9.3",
+  "version": "0.10.0",
   "type": "module",
   "description": "A simple and elegant online Typst formula editor with real-time preview",
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=20.0.0"
   },
   "scripts": {
     "dev": "vite",
@@ -55,6 +55,6 @@
     "vitest": "^4.1.8"
   },
   "overrides": {
-    "dompurify": "^3.4.12"
+    "dompurify": "^3.4.14"
   }
 }

@@ -1,12 +1,15 @@
 // Service Worker for TypstPad - Caches WASM and font files
-const CACHE_NAME = 'typstpad-v1'
+const CACHE_NAME = 'typstpad-v2'
 
 // Resources to cache (large files that benefit most from caching)
 const CACHE_PATTERNS = [
   /\.wasm$/,
+  /\.mjs$/,
+  /\.onnx$/,
   /\.otf$/,
   /\.ttf$/,
   /\.woff2?$/,
+  /\/im2typst\/model\/.*\.json$/,
 ]
 
 // Check if URL should be cached
