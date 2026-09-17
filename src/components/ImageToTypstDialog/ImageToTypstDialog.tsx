@@ -241,7 +241,7 @@ function ImageToTypstDialog({
               {modelState === 'error' && <AlertTriangle className="h-3.5 w-3.5 text-destructive" />}
               <span>
                 {modelState === 'ready'
-                  ? t('imageToTypst.modelReady', { size: modelSize ?? '18.6 MB' })
+                  ? t('imageToTypst.modelReady', { name: info?.modelName ?? 'TypLens-V1 INT8', size: modelSize ?? '33.9 MB' })
                   : modelState === 'error'
                     ? t('imageToTypst.modelFailed')
                     : stageLabel}
@@ -400,7 +400,7 @@ function ImageToTypstDialog({
                   <p className="mt-1 text-xs text-muted-foreground">
                     {result.accepted
                       ? t('imageToTypst.resultHelp')
-                      : t(`imageToTypst.issue.${result.safetyIssue ?? 'output-policy'}`)}
+                      : t(`imageToTypst.issue.${result.safetyIssue ?? 'empty-output'}`)}
                   </p>
                 </div>
                 <dl className="flex gap-3 text-xs text-muted-foreground">

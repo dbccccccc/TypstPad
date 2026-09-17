@@ -1,4 +1,6 @@
-const MODEL_RELEASE = 'phase10-step002000-29d4a51adc71'
+import { prepareTypLensPixels } from './typlens-preprocess'
+
+const MODEL_RELEASE = 'typlens-v1-int8-10f682efb979'
 const MAX_FILE_BYTES = 20 * 1_000_000
 const MAX_IMAGE_PIXELS = 50_000_000
 const SUPPORTED_IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp'])
@@ -21,13 +23,7 @@ export interface RecognizerProgress {
   tokenCount?: number
 }
 
-export type RecognitionSafetyIssue =
-  | 'empty-output'
-  | 'missing-eos'
-  | 'numeric-normalization'
-  | 'output-policy'
-  | 'repetition-guard'
-  | 'syntax-repair'
+export type RecognitionSafetyIssue = 'empty-output' | 'missing-eos' | 'reserved-token' | 'invalid-utf8'
 
 export interface RecognitionResult {
   accepted: boolean
@@ -35,7 +31,6 @@ export interface RecognitionResult {
   encoderMilliseconds: number
   inputHeight: number
   inputWidth: number
-  outputPolicyReason: string
   safetyIssue: RecognitionSafetyIssue | null
   text: string
   tokenCount: number
@@ -44,10 +39,6 @@ export interface RecognitionResult {
 }
 
 export interface RecognizerInfo {
-  compileRate: number
-  exactMatch: number
-  inputHeight: number
-  maxInputWidth: number
   modelBytes: number
   modelName: string
   parameters: number
@@ -58,100 +49,54 @@ interface ArtifactRecord {
   sha256: string
 }
 
+interface AssetManifest {
+  release: string
+  model_variant: string
+  model: Record<string, ArtifactRecord>
+}
+
 interface ModelConfig {
-  attention_heads: number
-  bos_id: number
-  d_model: number
-  decoder_layers: number
-  eos_id: number
-  input_height: number
-  max_image_width: number
-  max_sequence_length: number
-  schema_version: string
-  vocabulary_size: number
-}
-
-interface PreprocessConfig {
-  auto_crop: boolean
-  crop_margin_ratio: number
-  crop_min_margin: number
-  crop_threshold: number
-  input_height: number
-  max_width: number
-  minimum_foreground_pixels: number
-  normalize_polarity: boolean
-  resize_mode: string
-  schema_version: string
-  vertical_alignment: string
-  width_buckets: number[]
-}
-
-interface Vocabulary {
-  schema_version: string
-  tokens: string[]
-}
-
-interface OutputPolicy {
-  allowed_calls: string[]
-  allowed_quoted?: string[]
-  schema_version: string
-  [key: string]: unknown
-}
-
-interface Deployment {
-  artifacts: Record<string, ArtifactRecord>
-  cached_inference_implementation: string
-  dataset: Record<string, unknown>
-  evaluation: {
-    metrics: {
-      compile_rate: number
-      greedy_exact_match: number
-    }
+  decoder: {
+    d_model: number
+    decoder_attention_heads: number
+    decoder_layers: number
+    max_position_embeddings: number
+    vocab_size: number
   }
-  formula_repair_implementation: string
-  max_output_tokens: number
-  model_name: string
-  numeric_lexeme_normalization: string
-  parameters: number
-  parity: { int8_all_match: boolean }
-  qualification: string
-  schema_version: string
-  variants: {
-    wasm: {
-      decoder: string
-      encoder: string
-      precision: string
-    }
-  }
-  [key: string]: unknown
+  encoder: { image_size: number; num_channels: number }
+  decoder_start_token_id: number
+  eos_token_id: number
+  vocab_size: number
 }
 
-interface PreparedImage {
-  bucket: number
-  height: number
-  pixelWidth: number
-  tensorData: Float32Array
+interface GenerationConfig {
+  decoder_start_token_id: number
+  eos_token_id: number
+  max_new_tokens: number
 }
 
-interface RawRecognitionResult {
-  confidence: { geometricMeanProbability: number }
-  decoderMilliseconds: number
-  encoderMilliseconds: number
-  eosReached: boolean
-  numericNormalizationCount: number
-  repetitionGuardTriggered: boolean
-  syntaxRepairCount: number
-  text: string
-  tokenIds: number[]
-  totalMilliseconds: number
+interface PreprocessorConfig {
+  do_center_crop: boolean
+  do_normalize: boolean
+  do_rescale: boolean
+  do_resize: boolean
+  image_mean: number[]
+  image_std: number[]
+  resample: number
+  rescale_factor: number
+  size: { height: number; width: number }
 }
+
+type TokenBytes = (number[] | null)[]
 
 interface OrtTensor {
-  dispose?: () => void
+  data: Float32Array
+  dispose: () => void
 }
 
 interface OrtSession {
   run: (feeds: Record<string, OrtTensor>) => Promise<Record<string, OrtTensor>>
+  release: () => Promise<void>
 }
 
 interface OrtApi {
@@ -176,77 +121,14 @@ interface OrtApi {
   ) => OrtTensor
 }
 
-interface CoreRuntime {
-  cropToForeground: (
-    pixels: Uint8Array,
-    width: number,
-    height: number,
-    options: {
-      marginRatio: number
-      minimumMargin: number
-      minimumPixels: number
-      threshold: number
-    }
-  ) => { height: number; pixels: Uint8Array; width: number }
-  grayscaleFromRgba: (rgba: Uint8ClampedArray) => Uint8Array
-  normalizePolarity: (
-    pixels: Uint8Array,
-    width: number,
-    height: number,
-    enabled: boolean
-  ) => { inverted: boolean; pixels: Uint8Array }
-  outputPolicyDecision: (
-    text: string,
-    policy: OutputPolicy
-  ) => { accepted: boolean; reason: string }
-  outputPolicyIdentityMatchesDataset: (
-    policy: OutputPolicy,
-    dataset: Record<string, unknown>
-  ) => boolean
-  resizeGeometry: (
-    width: number,
-    height: number,
-    targetHeight: number,
-    maxWidth: number,
-    resizeMode: string
-  ) => { height: number; top: number; width: number }
-  selectWidthBucket: (
-    scaledWidth: number,
-    widthBuckets: number[],
-    maxWidth: number
-  ) => number
-  sha256Hex: (bytes: Uint8Array) => Promise<string>
-  teacherTrialQualificationDecision: (deployment: Deployment) => {
-    compileRate: number
-    exactMatch: number
-    sampleCount: number
-  }
-}
-
-interface InferenceRuntime {
-  runCachedGreedy: (
-    model: RecognizerModel,
-    prepared: PreparedImage,
-    onProgress: (progress: { phase: string; tokenCount: number }) => void
-  ) => Promise<RawRecognitionResult>
-}
-
-interface RecognizerModel {
+interface LoadedRecognizer {
   config: ModelConfig
   decoder: OrtSession
-  deployment: Deployment
   encoder: OrtSession
-  ort: OrtApi
-  outputPolicy: OutputPolicy
-  preprocess: PreprocessConfig
-  vocabulary: Vocabulary
-}
-
-interface LoadedRecognizer {
-  core: CoreRuntime
-  inference: InferenceRuntime
+  generation: GenerationConfig
   info: RecognizerInfo
-  model: RecognizerModel
+  ort: OrtApi
+  tokenBytes: TokenBytes
 }
 
 type ProgressListener = (progress: RecognizerProgress) => void
@@ -254,6 +136,8 @@ type ProgressListener = (progress: RecognizerProgress) => void
 const progressListeners = new Set<ProgressListener>()
 let latestProgress: RecognizerProgress | null = null
 let recognizerPromise: Promise<LoadedRecognizer> | null = null
+let runtimeScriptPromise: Promise<void> | null = null
+let recognitionRunning = false
 
 function emitProgress(progress: RecognizerProgress): void {
   latestProgress = progress
@@ -266,20 +150,12 @@ export function subscribeToRecognizerProgress(listener: ProgressListener): () =>
   return () => progressListeners.delete(listener)
 }
 
-function assetUrl(relativePath: string, versioned = true): string {
-  const basePath = `${import.meta.env.BASE_URL}im2typst/`
-  const base = new URL(basePath, window.location.origin)
+function assetUrl(relativePath: string): string {
+  const base = new URL(`${import.meta.env.BASE_URL}im2typst/`, window.location.origin)
   const url = new URL(relativePath, base)
-  if (versioned) url.searchParams.set('release', MODEL_RELEASE)
+  url.searchParams.set('release', MODEL_RELEASE)
   return url.href
 }
-
-async function importBrowserModule<T>(relativePath: string): Promise<T> {
-  const source = assetUrl(relativePath)
-  return import(/* @vite-ignore */ source) as Promise<T>
-}
-
-let runtimeScriptPromise: Promise<void> | null = null
 
 async function ensureOnnxRuntime(): Promise<OrtApi> {
   const existing = (globalThis as typeof globalThis & { ort?: OrtApi }).ort
@@ -287,9 +163,8 @@ async function ensureOnnxRuntime(): Promise<OrtApi> {
 
   if (!runtimeScriptPromise) {
     runtimeScriptPromise = new Promise<void>((resolve, reject) => {
-      const source = assetUrl('ort/ort.wasm.min.js')
       const script = document.createElement('script')
-      script.src = source
+      script.src = assetUrl('ort/ort.wasm.min.js')
       script.async = true
       script.dataset.typstpadIm2typstRuntime = MODEL_RELEASE
       script.onload = () => resolve()
@@ -310,31 +185,43 @@ async function ensureOnnxRuntime(): Promise<OrtApi> {
   return loaded
 }
 
-async function fetchJson<T>(relativePath: string): Promise<T> {
+async function fetchAsset(relativePath: string): Promise<Response> {
   const response = await fetch(assetUrl(relativePath))
   if (!response.ok) {
     throw new Error(`Could not load ${relativePath} (${response.status} ${response.statusText}).`)
   }
-  return response.json() as Promise<T>
+  return response
 }
 
-async function fetchBytes(
-  relativePath: string,
+async function verifyArtifact(bytes: Uint8Array, name: string, expected?: ArtifactRecord): Promise<void> {
+  if (!expected || !Number.isInteger(expected.bytes) || !/^[0-9a-f]{64}$/.test(expected.sha256)) {
+    throw new Error(`The model manifest has no valid artifact record for ${name}.`)
+  }
+  if (bytes.byteLength !== expected.bytes) {
+    throw new Error(`${name} size mismatch: expected ${expected.bytes}, received ${bytes.byteLength}.`)
+  }
+  const digest = await crypto.subtle.digest('SHA-256', new Uint8Array(bytes))
+  const hash = [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('')
+  if (hash !== expected.sha256) throw new Error(`${name} failed SHA-256 verification.`)
+}
+
+async function fetchMetadata<T>(name: string, manifest: AssetManifest): Promise<T> {
+  const bytes = new Uint8Array(await (await fetchAsset(`model/${name}`)).arrayBuffer())
+  await verifyArtifact(bytes, name, manifest.model[name])
+  return JSON.parse(new TextDecoder().decode(bytes)) as T
+}
+
+async function fetchWeights(
+  name: string,
   stage: RecognizerStage,
   startPercent: number,
-  endPercent: number
+  endPercent: number,
+  manifest: AssetManifest
 ): Promise<Uint8Array> {
-  const response = await fetch(assetUrl(relativePath))
-  if (!response.ok) {
-    throw new Error(`Could not load ${relativePath} (${response.status} ${response.statusText}).`)
-  }
-
-  const total = Number(response.headers.get('content-length')) || 0
-  if (!response.body || !total) {
-    const bytes = new Uint8Array(await response.arrayBuffer())
-    emitProgress({ stage, percent: endPercent })
-    return bytes
-  }
+  emitProgress({ stage, percent: startPercent })
+  const response = await fetchAsset(`model/${name}`)
+  const total = manifest.model[name]?.bytes ?? 0
+  if (!response.body || !total) return new Uint8Array(await response.arrayBuffer())
 
   const reader = response.body.getReader()
   const chunks: Uint8Array[] = []
@@ -344,13 +231,11 @@ async function fetchBytes(
     if (done) break
     chunks.push(value)
     loaded += value.byteLength
-    const fraction = Math.min(loaded / total, 1)
     emitProgress({
       stage,
-      percent: startPercent + Math.round((endPercent - startPercent) * fraction),
+      percent: startPercent + Math.round((endPercent - startPercent) * Math.min(loaded / total, 1)),
     })
   }
-
   const bytes = new Uint8Array(loaded)
   let offset = 0
   for (const chunk of chunks) {
@@ -360,93 +245,41 @@ async function fetchBytes(
   return bytes
 }
 
-async function verifyArtifact(
-  core: CoreRuntime,
-  bytes: Uint8Array,
-  name: string,
-  expected: ArtifactRecord | undefined
-): Promise<void> {
-  if (!expected || !Number.isInteger(expected.bytes) || !/^[0-9a-f]{64}$/.test(expected.sha256)) {
-    throw new Error(`The deployment has no valid artifact record for ${name}.`)
-  }
-  if (bytes.byteLength !== expected.bytes) {
-    throw new Error(`${name} size mismatch: expected ${expected.bytes}, received ${bytes.byteLength}.`)
-  }
-  const received = await core.sha256Hex(bytes)
-  if (received !== expected.sha256) throw new Error(`${name} failed SHA-256 verification.`)
-}
-
-function validateRelease(
-  core: CoreRuntime,
+function validateMetadata(
   config: ModelConfig,
-  preprocess: PreprocessConfig,
-  vocabulary: Vocabulary,
-  outputPolicy: OutputPolicy,
-  deployment: Deployment
+  generation: GenerationConfig,
+  preprocess: PreprocessorConfig,
+  tokenBytes: TokenBytes
 ): void {
-  if (config.schema_version !== 'recognizer-model-v5') {
-    throw new Error(`Unsupported model schema: ${config.schema_version}.`)
-  }
   if (
-    preprocess.schema_version !== 'image-preprocess-v3' ||
-    preprocess.resize_mode !== 'contain' ||
-    preprocess.vertical_alignment !== 'center'
+    config.encoder.image_size !== 384 || config.encoder.num_channels !== 3 ||
+    config.decoder.d_model !== 256 || config.decoder.decoder_attention_heads !== 8 ||
+    config.decoder.decoder_layers !== 6 || config.decoder.vocab_size !== 1199 ||
+    config.vocab_size !== 1199 || config.decoder_start_token_id !== 1 || config.eos_token_id !== 2 ||
+    generation.decoder_start_token_id !== 1 || generation.eos_token_id !== 2 ||
+    generation.max_new_tokens !== 1023 || config.decoder.max_position_embeddings < 1024 ||
+    preprocess.size.height !== 384 || preprocess.size.width !== 384 ||
+    preprocess.do_center_crop !== false || !preprocess.do_normalize ||
+    !preprocess.do_rescale || !preprocess.do_resize || preprocess.resample !== 3 ||
+    preprocess.rescale_factor !== 1 / 255 ||
+    preprocess.image_mean.length !== 3 || preprocess.image_mean.some((value) => value !== 0.5) ||
+    preprocess.image_std.length !== 3 || preprocess.image_std.some((value) => value !== 0.5) ||
+    !Array.isArray(tokenBytes) || tokenBytes.length !== 1199 ||
+    tokenBytes.some((bytes, index) => index < 5
+      ? bytes !== null
+      : !Array.isArray(bytes) || !bytes.length || bytes.some((byte) =>
+          !Number.isInteger(byte) || byte < 0 || byte > 255))
   ) {
-    throw new Error('The model preprocessing geometry is not supported.')
+    throw new Error('The bundled metadata does not match the TypLens-V1 inference contract.')
   }
-  if (
-    preprocess.input_height !== config.input_height ||
-    preprocess.max_width !== config.max_image_width
-  ) {
-    throw new Error('The model and preprocessing dimensions are inconsistent.')
-  }
-  if (
-    vocabulary.schema_version !== 'typst-vocabulary-v1' ||
-    vocabulary.tokens.length !== config.vocabulary_size ||
-    config.d_model % config.attention_heads !== 0
-  ) {
-    throw new Error('The model dimensions and vocabulary are inconsistent.')
-  }
-  if (
-    deployment.schema_version !== 'browser-deployment-v1' ||
-    deployment.variants?.wasm?.encoder !== 'encoder.int8.onnx' ||
-    deployment.variants?.wasm?.decoder !== 'decoder-step.int8.onnx' ||
-    deployment.cached_inference_implementation !== 'cached-transformer-step-v2' ||
-    deployment.formula_repair_implementation !== 'formula-syntax-repair-v8' ||
-    deployment.numeric_lexeme_normalization !== 'formula-numeric-lexeme-v2' ||
-    deployment.qualification !== 'experimental-teacher-local-testing-only' ||
-    deployment.parity?.int8_all_match !== true
-  ) {
-    throw new Error('The deployment manifest does not describe the approved experimental INT8 pipeline.')
-  }
-  if (
-    !Number.isInteger(deployment.max_output_tokens) ||
-    deployment.max_output_tokens < 4 ||
-    deployment.max_output_tokens > config.max_sequence_length
-  ) {
-    throw new Error('The deployment output limit is incompatible with the model.')
-  }
-  if (
-    !core.outputPolicyDecision('x', outputPolicy).accepted ||
-    !core.outputPolicyIdentityMatchesDataset(outputPolicy, deployment.dataset)
-  ) {
-    throw new Error('The formula output policy is incompatible with this release.')
-  }
-
-  // This call verifies that the manifest preserves the model's explicitly
-  // uncalibrated, non-production qualification evidence.
-  core.teacherTrialQualificationDecision(deployment)
 }
 
 async function loadRecognizer(): Promise<LoadedRecognizer> {
   emitProgress({ stage: 'loadingRuntime', percent: 3 })
-  const [ort, core, inference] = await Promise.all([
-    ensureOnnxRuntime(),
-    importBrowserModule<CoreRuntime>('runtime/core.js'),
-    importBrowserModule<InferenceRuntime>('runtime/inference-runtime.js'),
-  ])
-
-  ort.env.wasm.numThreads = 1
+  const ort = await ensureOnnxRuntime()
+  ort.env.wasm.numThreads = globalThis.crossOriginIsolated
+    ? Math.min(4, navigator.hardwareConcurrency || 1)
+    : 1
   ort.env.wasm.proxy = false
   ort.env.wasm.wasmPaths = {
     mjs: assetUrl('ort/ort-wasm-simd-threaded.mjs'),
@@ -455,65 +288,45 @@ async function loadRecognizer(): Promise<LoadedRecognizer> {
   ort.env.logLevel = 'warning'
 
   emitProgress({ stage: 'loadingMetadata', percent: 8 })
-  const [config, preprocess, vocabulary, outputPolicy, deployment] = await Promise.all([
-    fetchJson<ModelConfig>('model/model-config.json'),
-    fetchJson<PreprocessConfig>('model/preprocess-config.json'),
-    fetchJson<Vocabulary>('model/vocabulary.json'),
-    fetchJson<OutputPolicy>('model/output-policy.json'),
-    fetchJson<Deployment>('model/deployment.json'),
+  const manifest = await (await fetchAsset('asset-manifest.json')).json() as AssetManifest
+  if (manifest.release !== MODEL_RELEASE || manifest.model_variant !== 'int8') {
+    throw new Error('TypstPad requires the bundled TypLens-V1 INT8 release.')
+  }
+  const [config, generation, preprocess, tokenBytes] = await Promise.all([
+    fetchMetadata<ModelConfig>('config.json', manifest),
+    fetchMetadata<GenerationConfig>('generation_config.json', manifest),
+    fetchMetadata<PreprocessorConfig>('preprocessor_config.json', manifest),
+    fetchMetadata<TokenBytes>('token-bytes.json', manifest),
   ])
-  validateRelease(core, config, preprocess, vocabulary, outputPolicy, deployment)
+  validateMetadata(config, generation, preprocess, tokenBytes)
 
-  const encoderBytes = await fetchBytes(
-    'model/encoder.int8.onnx',
-    'downloadingEncoder',
-    10,
-    40
-  )
-  const decoderBytes = await fetchBytes(
-    'model/decoder-step.int8.onnx',
-    'downloadingDecoder',
-    40,
-    62
-  )
-
+  const encoderBytes = await fetchWeights('encoder.int8.onnx', 'downloadingEncoder', 10, 45, manifest)
+  const decoderBytes = await fetchWeights('decoder.int8.onnx', 'downloadingDecoder', 45, 62, manifest)
   emitProgress({ stage: 'verifyingModel', percent: 66 })
-  await verifyArtifact(core, encoderBytes, 'encoder.int8.onnx', deployment.artifacts['encoder.int8.onnx'])
-  await verifyArtifact(core, decoderBytes, 'decoder-step.int8.onnx', deployment.artifacts['decoder-step.int8.onnx'])
+  await Promise.all([
+    verifyArtifact(encoderBytes, 'encoder.int8.onnx', manifest.model['encoder.int8.onnx']),
+    verifyArtifact(decoderBytes, 'decoder.int8.onnx', manifest.model['decoder.int8.onnx']),
+  ])
 
   const options = { executionProviders: ['wasm'], graphOptimizationLevel: 'all' }
   emitProgress({ stage: 'initializingModel', percent: 72 })
   const encoder = await ort.InferenceSession.create(encoderBytes, options)
-  emitProgress({ stage: 'initializingModel', percent: 88 })
-  const decoder = await ort.InferenceSession.create(decoderBytes, options)
-
-  const qualification = core.teacherTrialQualificationDecision(deployment)
-  const info: RecognizerInfo = {
-    compileRate: qualification.compileRate,
-    exactMatch: qualification.exactMatch,
-    inputHeight: preprocess.input_height,
-    maxInputWidth: preprocess.max_width,
-    modelBytes:
-      deployment.artifacts['encoder.int8.onnx'].bytes +
-      deployment.artifacts['decoder-step.int8.onnx'].bytes,
-    modelName: deployment.model_name,
-    parameters: deployment.parameters,
+  let decoder: OrtSession
+  try {
+    emitProgress({ stage: 'initializingModel', percent: 88 })
+    decoder = await ort.InferenceSession.create(decoderBytes, options)
+  } catch (error) {
+    await encoder.release()
+    throw error
   }
 
   emitProgress({ stage: 'ready', percent: 100 })
   return {
-    core,
-    inference,
-    info,
-    model: {
-      config,
-      decoder,
-      deployment,
-      encoder,
-      ort,
-      outputPolicy,
-      preprocess,
-      vocabulary,
+    config, decoder, encoder, generation, ort, tokenBytes,
+    info: {
+      modelBytes: manifest.model['encoder.int8.onnx'].bytes + manifest.model['decoder.int8.onnx'].bytes,
+      modelName: 'TypLens-V1 INT8',
+      parameters: 29_403_264,
     },
   }
 }
@@ -529,8 +342,7 @@ function getRecognizer(): Promise<LoadedRecognizer> {
 }
 
 export function preloadImageRecognizer(): Promise<RecognizerInfo> {
-  const recognizer = getRecognizer()
-  return recognizer.then(({ info }) => info)
+  return getRecognizer().then(({ info }) => info)
 }
 
 export function validateFormulaImage(blob: Blob): void {
@@ -541,224 +353,162 @@ export function validateFormulaImage(blob: Blob): void {
   }
 }
 
-interface DecodedImage {
-  close: () => void
-  height: number
-  source: CanvasImageSource
-  width: number
-}
-
-async function decodeImage(blob: Blob): Promise<DecodedImage> {
-  if ('createImageBitmap' in globalThis) {
-    const bitmap = await createImageBitmap(blob, {
-      colorSpaceConversion: 'default',
-      imageOrientation: 'from-image',
-      premultiplyAlpha: 'default',
-    })
-    return {
-      close: () => bitmap.close(),
-      height: bitmap.height,
-      source: bitmap,
-      width: bitmap.width,
-    }
-  }
-
+async function preprocessImage(blob: Blob, size: number): Promise<Float32Array> {
   const url = URL.createObjectURL(blob)
   const image = new Image()
   image.decoding = 'async'
   image.src = url
   try {
     await image.decode()
-  } catch {
+    const width = image.naturalWidth
+    const height = image.naturalHeight
+    if (!width || !height || width * height > MAX_IMAGE_PIXELS || width > 32767 || height > 32767) {
+      throw new Error('Choose an image under 50 megapixels and 32,768 pixels per side.')
+    }
+    const canvas = document.createElement('canvas')
+    canvas.width = width
+    canvas.height = height
+    const context = canvas.getContext('2d', { alpha: false, willReadFrequently: true })
+    if (!context) throw new Error('This browser does not provide a 2D canvas context.')
+    context.fillStyle = '#ffffff'
+    context.fillRect(0, 0, width, height)
+    context.drawImage(image, 0, 0)
+    return prepareTypLensPixels(context.getImageData(0, 0, width, height), size)
+  } finally {
     URL.revokeObjectURL(url)
-    throw new Error('The selected image could not be decoded.')
-  }
-  return {
-    close: () => URL.revokeObjectURL(url),
-    height: image.naturalHeight,
-    source: image,
-    width: image.naturalWidth,
   }
 }
 
-function canvasContext(
-  canvas: HTMLCanvasElement,
-  options?: CanvasRenderingContext2DSettings
-): CanvasRenderingContext2D {
-  const context = canvas.getContext('2d', options)
-  if (!context) throw new Error('This browser does not provide a 2D canvas context.')
-  return context
-}
-
-function grayscaleCanvas(grayscale: Uint8Array, width: number, height: number): HTMLCanvasElement {
-  const canvas = document.createElement('canvas')
-  canvas.width = width
-  canvas.height = height
-  const context = canvasContext(canvas, { alpha: false, willReadFrequently: true })
-  const imageData = context.createImageData(width, height)
-  for (let source = 0, target = 0; source < grayscale.length; source += 1) {
-    const value = grayscale[source]
-    imageData.data[target] = value
-    imageData.data[target + 1] = value
-    imageData.data[target + 2] = value
-    imageData.data[target + 3] = 255
-    target += 4
-  }
-  context.putImageData(imageData, 0, 0)
-  return canvas
-}
-
-async function preprocessImage(
-  blob: Blob,
-  config: PreprocessConfig,
-  core: CoreRuntime
-): Promise<PreparedImage> {
-  const decoded = await decodeImage(blob)
+function safeDispose(tensor: OrtTensor | undefined): void {
   try {
-    if (
-      decoded.width < 1 ||
-      decoded.height < 1 ||
-      decoded.width * decoded.height > MAX_IMAGE_PIXELS
-    ) {
-      throw new Error('The decoded image is empty or larger than 50 megapixels.')
-    }
+    tensor?.dispose()
+  } catch {
+    // A failed run may already have released its tensors.
+  }
+}
 
-    const sourceCanvas = document.createElement('canvas')
-    sourceCanvas.width = decoded.width
-    sourceCanvas.height = decoded.height
-    const sourceContext = canvasContext(sourceCanvas, {
-      alpha: false,
-      willReadFrequently: true,
-    })
-    sourceContext.fillStyle = '#ffffff'
-    sourceContext.fillRect(0, 0, decoded.width, decoded.height)
-    sourceContext.drawImage(decoded.source, 0, 0)
-    const sourcePixels = sourceContext.getImageData(0, 0, decoded.width, decoded.height).data
-    const grayscale = core.grayscaleFromRgba(sourcePixels)
-    const polarity = core.normalizePolarity(
-      grayscale,
-      decoded.width,
-      decoded.height,
-      config.normalize_polarity
-    )
-    const cropped = config.auto_crop
-      ? core.cropToForeground(polarity.pixels, decoded.width, decoded.height, {
-          marginRatio: config.crop_margin_ratio,
-          minimumMargin: config.crop_min_margin,
-          minimumPixels: config.minimum_foreground_pixels,
-          threshold: config.crop_threshold,
+async function runRecognition(model: LoadedRecognizer, pixels: Float32Array): Promise<RecognitionResult> {
+  const { config, decoder, encoder, generation, ort, tokenBytes } = model
+  const size = config.encoder.image_size
+  const image = new ort.Tensor('float32', pixels, [1, 3, size, size])
+  const cacheShape = [config.decoder.decoder_layers, 1, config.decoder.decoder_attention_heads, 0,
+    config.decoder.d_model / config.decoder.decoder_attention_heads]
+  let selfKeys: OrtTensor | undefined
+  let selfValues: OrtTensor | undefined
+  let encoded: Record<string, OrtTensor> | undefined
+  const bytes: number[] = []
+  let tokenCount = 0
+  let scoredTokens = 0
+  let logProbability = 0
+  let eosReached = false
+  let safetyIssue: RecognitionSafetyIssue | null = null
+  const totalStarted = performance.now()
+
+  try {
+    emitProgress({ stage: 'encoding', percent: 8 })
+    const encoderStarted = performance.now()
+    encoded = await encoder.run({ pixel_values: image })
+    const encoderMilliseconds = performance.now() - encoderStarted
+    selfKeys = new ort.Tensor('float32', new Float32Array(0), cacheShape)
+    selfValues = new ort.Tensor('float32', new Float32Array(0), cacheShape)
+    let current = generation.decoder_start_token_id
+    const decoderStarted = performance.now()
+
+    for (let position = 0; position < generation.max_new_tokens; position += 1) {
+      const token = new ort.Tensor('int64', BigInt64Array.from([BigInt(current)]), [1, 1])
+      let result: Record<string, OrtTensor>
+      try {
+        result = await decoder.run({
+          token_ids: token,
+          self_keys: selfKeys,
+          self_values: selfValues,
+          cross_keys: encoded.cross_keys,
+          cross_values: encoded.cross_values,
         })
-      : {
-          height: decoded.height,
-          pixels: polarity.pixels,
-          width: decoded.width,
-        }
-
-    const geometry = core.resizeGeometry(
-      cropped.width,
-      cropped.height,
-      config.input_height,
-      config.max_width,
-      config.resize_mode
-    )
-    const bucket = core.selectWidthBucket(
-      geometry.width,
-      config.width_buckets,
-      config.max_width
-    )
-
-    const normalizedCanvas = grayscaleCanvas(cropped.pixels, cropped.width, cropped.height)
-    const resizedCanvas = document.createElement('canvas')
-    resizedCanvas.width = geometry.width
-    resizedCanvas.height = geometry.height
-    const resizedContext = canvasContext(resizedCanvas, {
-      alpha: false,
-      willReadFrequently: true,
-    })
-    resizedContext.fillStyle = '#ffffff'
-    resizedContext.fillRect(0, 0, geometry.width, geometry.height)
-    resizedContext.imageSmoothingEnabled = true
-    resizedContext.imageSmoothingQuality = 'high'
-    resizedContext.drawImage(
-      normalizedCanvas,
-      0,
-      0,
-      cropped.width,
-      cropped.height,
-      0,
-      0,
-      geometry.width,
-      geometry.height
-    )
-
-    const resizedPixels = resizedContext.getImageData(
-      0,
-      0,
-      geometry.width,
-      geometry.height
-    ).data
-    const tensorData = new Float32Array(config.input_height * bucket)
-    for (let y = 0; y < geometry.height; y += 1) {
-      for (let x = 0; x < geometry.width; x += 1) {
-        const sourceIndex = (y * geometry.width + x) * 4
-        tensorData[(y + geometry.top) * bucket + x] =
-          (255 - resizedPixels[sourceIndex]) / 255
+      } finally {
+        safeDispose(token)
       }
+      const previousKeys = selfKeys
+      const previousValues = selfValues
+      selfKeys = result.self_keys_out
+      selfValues = result.self_values_out
+      safeDispose(previousKeys)
+      safeDispose(previousValues)
+      try {
+        const logits = result.logits.data
+        if (logits.length !== config.vocab_size || !logits.every(Number.isFinite)) {
+          throw new Error('TypLens returned invalid token scores.')
+        }
+        current = 0
+        for (let index = 1; index < logits.length; index += 1) {
+          if (logits[index] > logits[current]) current = index
+        }
+        let denominator = 0
+        for (const value of logits) denominator += Math.exp(value - logits[current])
+        logProbability -= Math.log(denominator)
+        scoredTokens += 1
+      } finally {
+        safeDispose(result.logits)
+      }
+
+      if (current === generation.eos_token_id) {
+        eosReached = true
+        break
+      }
+      const content = tokenBytes[current]
+      if (current < 5 || !content) {
+        safetyIssue = 'reserved-token'
+        break
+      }
+      bytes.push(...content)
+      tokenCount += 1
+      if (tokenCount === 1 || tokenCount % 4 === 0) {
+        emitProgress({
+          stage: 'decoding',
+          percent: Math.min(12 + Math.round((tokenCount / generation.max_new_tokens) * 88), 99),
+          tokenCount,
+        })
+      }
+      if (tokenCount % 8 === 0) await new Promise((resolve) => globalThis.setTimeout(resolve, 0))
     }
+
+    const decoderMilliseconds = performance.now() - decoderStarted
+    let text = ''
+    try {
+      text = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(Uint8Array.from(bytes))
+    } catch {
+      safetyIssue ??= 'invalid-utf8'
+    }
+    if (!eosReached) safetyIssue ??= 'missing-eos'
+    if (!text.trim()) safetyIssue ??= 'empty-output'
 
     return {
-      bucket,
-      height: config.input_height,
-      pixelWidth: geometry.width,
-      tensorData,
+      accepted: safetyIssue === null,
+      decoderMilliseconds, encoderMilliseconds,
+      inputHeight: size, inputWidth: size,
+      safetyIssue, text, tokenCount,
+      tokenScore: scoredTokens ? Math.exp(logProbability / scoredTokens) : 0,
+      totalMilliseconds: performance.now() - totalStarted,
     }
   } finally {
-    decoded.close()
+    safeDispose(image)
+    safeDispose(selfKeys)
+    safeDispose(selfValues)
+    if (encoded) Object.values(encoded).forEach(safeDispose)
   }
 }
 
 export async function recognizeFormulaImage(blob: Blob): Promise<RecognitionResult> {
   validateFormulaImage(blob)
-  const loaded = await getRecognizer()
-
-  emitProgress({ stage: 'preprocessing', percent: 2 })
-  const prepared = await preprocessImage(blob, loaded.model.preprocess, loaded.core)
-  emitProgress({ stage: 'encoding', percent: 8 })
-  const raw = await loaded.inference.runCachedGreedy(
-    loaded.model,
-    prepared,
-    ({ phase, tokenCount }) => {
-      if (phase === 'decoder') {
-        emitProgress({
-          stage: 'decoding',
-          percent: Math.min(12 + Math.round((tokenCount / 256) * 88), 99),
-          tokenCount,
-        })
-      }
-    }
-  )
-
-  const outputPolicy = loaded.core.outputPolicyDecision(raw.text, loaded.model.outputPolicy)
-  let safetyIssue: RecognitionSafetyIssue | null = null
-  if (!raw.text.trim()) safetyIssue = 'empty-output'
-  else if (raw.repetitionGuardTriggered) safetyIssue = 'repetition-guard'
-  else if (!raw.eosReached) safetyIssue = 'missing-eos'
-  else if (!outputPolicy.accepted) safetyIssue = 'output-policy'
-  else if (raw.syntaxRepairCount > 0) safetyIssue = 'syntax-repair'
-  else if (raw.numericNormalizationCount > 0) safetyIssue = 'numeric-normalization'
-
-  return {
-    accepted: safetyIssue === null,
-    decoderMilliseconds: raw.decoderMilliseconds,
-    encoderMilliseconds: raw.encoderMilliseconds,
-    inputHeight: prepared.height,
-    inputWidth: prepared.pixelWidth,
-    outputPolicyReason: outputPolicy.reason,
-    safetyIssue,
-    text: raw.text,
-    tokenCount: raw.tokenIds.length,
-    tokenScore: raw.confidence.geometricMeanProbability,
-    totalMilliseconds: raw.totalMilliseconds,
+  if (recognitionRunning) throw new Error('A formula is still being recognized. Please wait and try again.')
+  recognitionRunning = true
+  try {
+    const model = await getRecognizer()
+    emitProgress({ stage: 'preprocessing', percent: 2 })
+    const pixels = await preprocessImage(blob, model.config.encoder.image_size)
+    return await runRecognition(model, pixels)
+  } finally {
+    recognitionRunning = false
   }
 }
 

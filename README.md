@@ -210,11 +210,16 @@ JPEG, or WebP image containing one tightly cropped printed formula. Recognition
 runs locally in the browser; the image is not uploaded. Review every generated
 token before placing the draft in the editor.
 
-The included Phase 10 IBEM model is experimental and is substantially less
-accurate on long or displayed formulas. It is not intended for handwriting,
-full-page segmentation, photographs, or arbitrary screenshots. See the bundled
-model card and third-party notices under `public/im2typst` for qualification,
-provenance, and license details.
+TypstPad includes only the compact **TypLens-V1 INT8** model (33.9 MB of weights),
+running with ONNX Runtime WASM. The full-precision model is not bundled or
+downloaded. Use one tightly cropped, dark-on-light printed formula; this is an
+experimental model, not handwriting recognition or full-document OCR.
+
+Images are resized to 384 × 384 RGB with Pillow-compatible bicubic interpolation.
+The model generates native Typst directly, with no LaTeX conversion or automatic
+syntax repair. Incomplete generation and invalid tokens are withheld from insertion.
+See the bundled model card, inference contract, and third-party notices under
+`public/im2typst` for provenance and license details.
 
 ### Settings
 
@@ -243,6 +248,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - [Typst](https://typst.app/) - The typesetting system
 - [typst.ts](https://github.com/Myriad-Dreamin/typst.ts) - Typst WebAssembly compiler
+- [TypLens](https://github.com/dbccccccc/TypLens) - Native image-to-Typst recognition (compact INT8 model)
 - [IBEM](https://zenodo.org/records/7963703) - Mathematical-expression training dataset (CC BY 4.0)
 - [ONNX Runtime](https://github.com/microsoft/onnxruntime) - Local browser model execution
 - [Monaco Editor](https://microsoft.github.io/monaco-editor/) - Code editor

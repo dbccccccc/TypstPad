@@ -1,0 +1,86 @@
+{
+  "repository_name": "TypLens",
+  "model_name": "TypLens-V1",
+  "version": "v1",
+  "license": "MIT",
+  "parameters": 29403264,
+  "output_language": "typst",
+  "inference_conversion": "none",
+  "source_model_sha256": "900938e6cca81d62448fa8693a78a42d91aeea328b998887da7f1d65d7b11258",
+  "base_model": "breezedeus/pix2text-mfr-1.5",
+  "base_model_revision": "1cef9f0bdcd6a4c63df7de1311fb0894593340cc",
+  "training_code_included": false,
+  "training_data_included": false,
+  "optimizer_state_included": false,
+  "release_qualified": false,
+  "independent_accuracy": false,
+  "variants": {
+    "fp32": {
+      "bytes": 117963783,
+      "files": {
+        "encoder.onnx": {
+          "bytes": 92124508,
+          "sha256": "161ffc099440106b8b731c4929bc80ccf72b638a7cbdd53ffdc5f936105581c2"
+        },
+        "decoder.onnx": {
+          "bytes": 25839275,
+          "sha256": "59a8dd86000058ad5f2b76951afd1219fcff4226ceb3fb33e6f1eb604d3c928d"
+        }
+      },
+      "previous_browser_development_results": {
+        "paper47": {
+          "count": 47,
+          "correct": 38,
+          "wrong": 8,
+          "uncertain": 1,
+          "compile_success": 47,
+          "natural_eos": 47,
+          "reserved_outputs": 0
+        },
+        "validation135": {
+          "count": 135,
+          "correct": 128,
+          "wrong": 7,
+          "uncertain": 0,
+          "compile_success": 134,
+          "natural_eos": 135,
+          "reserved_outputs": 0
+        }
+      }
+    },
+    "int8": {
+      "bytes": 33907198,
+      "files": {
+        "encoder.onnx": {
+          "bytes": 25268437,
+          "sha256": "5f306ecf3e2a2cc79cae5b73adfe6bd1c681fd39782365820a16d9949b12ffb9"
+        },
+        "decoder.onnx": {
+          "bytes": 8638761,
+          "sha256": "6271b3a3f49b56293430473db956692f136c8384036bcef334815fe9edf949b2"
+        }
+      },
+      "previous_browser_development_results": {
+        "paper47": {
+          "count": 47,
+          "correct": 38,
+          "wrong": 8,
+          "uncertain": 1,
+          "compile_success": 47,
+          "natural_eos": 47,
+          "reserved_outputs": 0
+        },
+        "validation135": {
+          "count": 135,
+          "correct": 127,
+          "wrong": 8,
+          "uncertain": 0,
+          "compile_success": 133,
+          "natural_eos": 134,
+          "reserved_outputs": 0
+        }
+      }
+    }
+  },
+  "metadata_adjustment": "generation_config.max_new_tokens=1023; weights unchanged"
+}

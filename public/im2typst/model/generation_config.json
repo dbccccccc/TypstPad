@@ -1,0 +1,10 @@
+{
+  "_from_model_config": true,
+  "bos_token_id": 1,
+  "decoder_start_token_id": 1,
+  "eos_token_id": 2,
+  "max_new_tokens": 1023,
+  "pad_token_id": 0,
+  "transformers_version": "4.52.3",
+  "use_cache": false
+}

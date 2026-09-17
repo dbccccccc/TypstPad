@@ -1,96 +1,75 @@
-# IBEM Semantic Length33 Phase 10 — Experimental Browser Trial
 
-## Status
+# TypLens-V1
 
-This is the strongest validation-selected checkpoint currently preserved in
-the IBEM production-continuation lineage. It is being exported for local,
-hands-on browser testing only. It is **not** release-qualified or production
-ready, and its displayed token score is not a calibrated probability of
-correctness.
+**A small image-to-Typst model for printed formula screenshots.** It generates
+native Typst formula text directly and can run entirely in a browser.
 
-Phase 13 is newer but was rejected because it regressed the production-critical
-33–64-token slice. This bundle therefore deliberately uses the Phase 10
-step-2,000 checkpoint selected on the document-disjoint validation split.
+This is a separate model release from [IBEM-im2typst](https://huggingface.co/dbcccc/IBEM-im2typst).
+It uses the best current native SX checkpoint, not the latest experimental run.
+This is an **experimental weights-only release**; training code is not included.
 
-## Identity
+| Format | Location | Model file size |
+| --- | --- | ---: |
+| Full precision, FP32 | model.safetensors | 117.7 MB |
+| Full precision, cached ONNX | onnx/fp32/ | 118.0 MB |
+| Compact, INT8 weight quantization | onnx/int8/ | 33.9 MB |
 
-- Model name: `ibem-semantic-length33-phase10-step002000`
-- Checkpoint: `checkpoint-step-002000.pt`
-- Checkpoint SHA-256:
-  `29d4a51adc71526f395750bb12a1783fbfd9bfa5a4c68fc9bfb665b68c633d52`
-- Training run ID:
-  `64e092c2013ed43e35d3573e3e2a161c9948f12279ebb92513ab6b15c8811814`
-- Parameters: 14,157,152
-- Model implementation: `cnn-transformer-v3`
-- Training implementation: `deterministic-trainer-v17`
-- Vocabulary tokens: 528, including UTF-8 byte fallback
-- Maximum trained output length: 512 tokens
+Sizes use decimal MB and exclude configuration and the consuming application's
+runtime. The compact variant is 71.3% smaller than the full ONNX variant.
+All variants share the same 29,403,264-parameter source checkpoint.
 
-## Architecture and preprocessing
+## Intended use
 
-The recognizer uses a compact convolutional image encoder, depthwise axial 2-D
-context, a height-4 learned horizontal-preserving pool, and a three-layer
-autoregressive Transformer decoder. It uses `d_model=384`, six attention
-heads, a 1,280-wide feed-forward block, 256-pixel input height, and up to
-2,048 pixels of input width.
+Input: a single tightly cropped, dark-on-light printed mathematical formula,
+such as a PDF or paper screenshot. Output: native Typst math content. This is
+formula recognition, not document conversion, page layout detection or general OCR.
+The tokenizer, byte mapping and preprocessing configuration are required assets.
 
-Input is polarity-normalized, foreground-cropped, resized while preserving
-aspect ratio, and padded. The app is intended for one tightly cropped printed
-formula at a time; it is not a page segmenter or general OCR system.
+Use the full ONNX variant for best reviewed quality or the INT8 variant for a
+smaller download. See [INFERENCE.md](INFERENCE.md) for the input, cache and decoding
+contract. The graphs run in ONNX Runtime; the package does not bundle runtime
+libraries or executable inference/training source.
 
-## Training data and initialization
+## Existing development results
 
-- 129,303 real training crops from the IBEM dataset, covering 480 training
-  documents.
-- Validation uses 16,899 crops from 60 different documents.
-- Targets are deterministically converted package-free Typst with semantic
-  spacing canonicalization.
-- No Fusion dataset, synthetic formula corpus, teacher-generated labels,
-  external pretrained model, or fused training samples are used.
-- The lineage began from explicit seeded random initialization. Phase 10 is a
-  same-lineage continuation from earlier IBEM checkpoints; it does not import
-  external pretrained weights.
+| Measure | Full precision | Compact |
+| --- | ---: | ---: |
+| Paper screenshots correct in content and symbol style | 38/47 (80.9%) | 38/47 (80.9%) |
+| Other validation formulas correct in content and symbol style | 128/135 (94.8%) | 127/135 (94.1%) |
+| Generation ended normally | 182/182 | 181/182 |
+| Desktop browser median inference | 399 ms | 332 ms |
+| Desktop browser P95 inference | 662 ms | 602 ms |
 
-IBEM is published under CC BY 4.0 at
-<https://zenodo.org/records/7963703>. The dataset itself is not included in
-the model bundle.
+The results above come from the existing September 16, 2026 browser experiment,
+using Chromium 152 on Windows with four WASM threads. Time excludes preprocessing,
+model initialization and network download. It is not a promise for other devices.
+The same development examples were used repeatedly, and content/style judgments
+were made by one Codex reviewer, without an independent second reviewer. These
+are **not independent test accuracy** and are not comparable to the old release's
+92.63% strict text score on its different IBEM validation set.
 
-## Validation evidence
+The compact model failed to terminate on one validation example. Both variants
+can produce mathematically wrong formulas, even when their Typst compiles.
+Long expressions, subscripts, symbols and style distinctions remain error sources.
+The checkpoint has not passed the project's existing release-quality gate;
+publishing it as experimental does not change that result. Review outputs.
 
-The Phase 10 step-2,000 checkpoint was selected without opening calibration or
-test data. On the complete 16,899-image validation split:
+## Model and data provenance
 
-| Metric | FP32 result |
-| --- | ---: |
-| Exact match | 92.6268% |
-| Package-free Typst compile rate | 99.5680% |
-| Mean token similarity | 98.9404% |
-| Embedded exact match | 96.8576% |
-| Displayed exact match | 70.1197% |
-| At most 32 tokens | 97.8519% |
-| 33–64 tokens | 88.4282% |
-| 65–128 tokens | 80.1895% |
-| 129–256 tokens | 61.4443% |
-| Over 256 tokens | 25.8675% |
+Base: Pix2Text-MFR-1.5, revision
+`1cef9f0bdcd6a4c63df7de1311fb0894593340cc`, adapted to native Typst targets.
+The screenshot-adaptation stage used 268,346 training pairs drawn from UniMER
+and IBEM. Source LaTeX annotations were used in data preparation; the released
+model generates Typst directly and has no inference-time conversion bridge.
 
-The strict production gate requires at least 90% exact match for the 33–64
-slice, so this checkpoint fails one production requirement. A smaller runtime
-compact 33–64 probe scored 105/145 exact. These failures are why this model is
-presented only as an experimental local trial.
+Source checkpoint SHA-256:
+`900938e6cca81d62448fa8693a78a42d91aeea328b998887da7f1d65d7b11258`.
+Version: **v1**. This release renames and packages the existing weights;
+it does not retrain, merge, or otherwise change them.
 
-## Known limitations
+## License
 
-- Small top attachments, dot accents, matrices, and alignment structures remain
-  the dominant compact-formula errors.
-- Long and multiline displayed formulas are substantially weaker than short
-  inline formulas.
-- Handwriting, photographs, perspective distortion, surrounding prose, and
-  arbitrary screenshot styles are not qualified.
-- Exact-match evaluation is strict: one wrong token makes the formula
-  non-exact even if it compiles.
-- ONNX compression and built-in parity results are recorded in the generated
-  `deployment.json`; they do not replace a full quantized-domain evaluation.
-- Calibration and held-out test remain unopened for this candidate.
-
-Always inspect and compile the returned Typst before relying on it.
-
+MIT for the released project contributions, with the upstream MIT notices
+retained. See [LICENSE](LICENSE), [NOTICE.md](NOTICE.md), and `licenses/`.
+Training datasets retain their own terms and are not included. The model license
+does not provide rights to third-party images or annotations.
