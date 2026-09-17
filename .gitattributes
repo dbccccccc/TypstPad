@@ -1,2 +1,6 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# These vendored assets have byte counts and SHA-256 checksums. Preserve their
+# original bytes, including upstream line endings, on every platform.
+public/im2typst/** -text
