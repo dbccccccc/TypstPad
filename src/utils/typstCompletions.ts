@@ -49,8 +49,8 @@ export function registerTypstCompletions(
                 : monaco.languages.CompletionItemKind.Constant,
               detail: `${symbol.display} - ${categoryLabel}`,
               documentation: tooltip,
-              insertText: symbol.code,
-              insertTextRules: isFunction
+              insertText: symbol.snippet ?? symbol.code,
+              insertTextRules: symbol.snippet
                 ? monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
                 : undefined,
               range,

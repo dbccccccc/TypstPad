@@ -9,7 +9,6 @@ describe('app routes', () => {
   })
 
   it('normalizes trailing slashes for navigable pages', () => {
-    expect(resolveAppPage('/docs/')).toBe('docs')
     expect(resolveAppPage('/about/')).toBe('about')
   })
 

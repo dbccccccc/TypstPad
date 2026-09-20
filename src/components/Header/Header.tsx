@@ -11,7 +11,6 @@ import {
   Languages,
   PanelsTopLeft,
   Code2,
-  BookOpenText,
   Info,
   ChevronDown,
 } from 'lucide-react'
@@ -26,11 +25,10 @@ interface HeaderProps {
 
 const pageOptions: Array<{
   value: NavigablePage
-  labelKey: 'navigation.editor' | 'navigation.docs' | 'navigation.about'
+  labelKey: 'navigation.editor' | 'navigation.about'
   Icon: typeof Code2
 }> = [
   { value: 'editor', labelKey: 'navigation.editor', Icon: Code2 },
-  { value: 'docs', labelKey: 'navigation.docs', Icon: BookOpenText },
   { value: 'about', labelKey: 'navigation.about', Icon: Info },
 ]
 

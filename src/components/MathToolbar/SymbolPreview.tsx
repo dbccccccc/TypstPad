@@ -38,7 +38,7 @@ export default function SymbolPreview({ code, fallback, className }: SymbolPrevi
   return (
     <span
       className={cn(
-        "inline-flex items-center justify-center rounded",
+        "inline-flex min-w-0 max-w-full items-center justify-center rounded",
         theme === 'dark' && 'invert',
         className
       )}

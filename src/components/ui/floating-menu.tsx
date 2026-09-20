@@ -84,7 +84,7 @@ type VerticalPlacement = "top" | "bottom"
 type FloatingMenuTriggerProps = {
   onClick: React.MouseEventHandler<HTMLElement>
   "aria-expanded": boolean
-  "aria-haspopup": "menu"
+  "aria-haspopup": "menu" | "dialog"
 }
 
 type FloatingMenuTriggerRenderProps = {
@@ -105,6 +105,8 @@ interface FloatingMenuProps {
   containerClassName?: string
   contentClassName?: string
   contentStyle?: React.CSSProperties
+  contentRole?: "menu" | "dialog"
+  contentLabel?: string
   portal?: boolean
 }
 
@@ -121,6 +123,8 @@ function FloatingMenu({
   containerClassName,
   contentClassName,
   contentStyle,
+  contentRole = "menu",
+  contentLabel,
   portal = true,
 }: FloatingMenuProps) {
   const { activeMenu, isClosing, openMenu, closeMenu } = useMenuGroup()
@@ -341,7 +345,7 @@ function FloatingMenu({
   const triggerProps: FloatingMenuTriggerProps = {
     onClick: handleTriggerClick,
     "aria-expanded": isOpen,
-    "aria-haspopup": "menu",
+    "aria-haspopup": contentRole,
   }
 
   const triggerElement = typeof trigger === "function"
@@ -360,7 +364,8 @@ function FloatingMenu({
   const menuContent = (
     <div
       ref={menuRef}
-      role="menu"
+      role={contentRole}
+      aria-label={contentLabel}
       tabIndex={-1}
       className={cn(
         "fixed z-[9999] rounded-md border bg-popover text-popover-foreground shadow-md",

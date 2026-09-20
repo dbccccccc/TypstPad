@@ -1,11 +1,11 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import Editor, { EditorRef } from './components/Editor/Editor'
 import MathToolbar from './components/MathToolbar'
+import type { MathSymbol } from './data/mathSymbols'
 import Preview from './components/Preview/Preview'
 import ExportPanel from './components/ExportPanel/ExportPanel'
 import SettingsDialog, { Settings, defaultSettings } from './components/SettingsDialog/SettingsDialog'
 import Header from './components/Header/Header'
-import DocsPage from './pages/DocsPage'
 import AboutPage from './pages/AboutPage'
 import NotFoundPage from './pages/NotFoundPage'
 import { useTheme } from './contexts/ThemeContext'
@@ -144,10 +144,6 @@ function App() {
   }, [])
 
   useEffect(() => {
-    if (activePage === 'docs') {
-      document.title = t('app.titleDocs')
-      return
-    }
     if (activePage === 'about') {
       document.title = t('app.titleAbout')
       return
@@ -163,8 +159,8 @@ function App() {
     setSvg(newSvg)
   }, [])
 
-  const handleInsertSymbol = useCallback((code: string) => {
-    editorRef.current?.insertText(code)
+  const handleInsertSymbol = useCallback((symbol: MathSymbol) => {
+    editorRef.current?.insertText(symbol.code, symbol.snippet, symbol.selectionPlaceholder, symbol.groupSelection)
   }, [])
 
   const handleFontsChanged = useCallback(() => {
@@ -457,10 +453,8 @@ function App() {
             onUseFormula={handleUseRecognizedFormula}
           />
         </>
-      ) : activePage === 'docs' ? (
-        <DocsPage />
       ) : activePage === 'about' ? (
-        <AboutPage />
+        <AboutPage onBackToEditor={() => handleNavigate('editor')} />
       ) : (
         <NotFoundPage onBackToEditor={() => handleNavigate('editor')} />
       )}

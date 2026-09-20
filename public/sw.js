@@ -14,6 +14,9 @@ const CACHE_PATTERNS = [
 
 // Check if URL should be cached
 function shouldCache(pathname) {
+  // Vite's development modules contain values that change between server runs.
+  if (pathname.startsWith('/node_modules/vite/')) return false
+
   return CACHE_PATTERNS.some(pattern => pattern.test(pathname))
 }
 

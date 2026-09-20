@@ -1,9 +1,8 @@
-export type NavigablePage = 'editor' | 'docs' | 'about'
+export type NavigablePage = 'editor' | 'about'
 export type AppPage = NavigablePage | 'not-found'
 
 export const APP_PAGE_PATHS: Record<NavigablePage, string> = {
   editor: '/',
-  docs: '/docs',
   about: '/about',
 }
 
@@ -18,10 +17,6 @@ export function resolveAppPage(pathname: string): AppPage {
 
   if (normalized === '/' || normalized === '/index.html') {
     return 'editor'
-  }
-
-  if (normalized === '/docs') {
-    return 'docs'
   }
 
   if (normalized === '/about') {

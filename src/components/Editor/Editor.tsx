@@ -17,7 +17,11 @@ interface EditorProps {
 }
 
 export interface EditorRef {
-  insertText: (text: string) => void
+  insertText: (text: string, snippet?: string, selectionPlaceholder?: number, groupSelection?: boolean) => void
+}
+
+interface SnippetController extends editor.IEditorContribution {
+  insert: (template: string) => void
 }
 
 // Custom loading component that matches the theme
@@ -67,13 +71,32 @@ const Editor = forwardRef<EditorRef, EditorProps>(({
   }, [monaco, theme])
 
   useImperativeHandle(ref, () => ({
-    insertText: (text: string) => {
+    insertText: (text: string, snippet?: string, selectionPlaceholder = 1, groupSelection = false) => {
       const editor = editorRef.current
       if (!editor) return
 
       const selection = editor.getSelection()
-      if (!selection) return
+      const model = editor.getModel()
+      if (!selection || !model) return
 
+      editor.focus()
+      const snippetController = editor.getContribution<SnippetController>('snippetController2')
+      if (snippet && snippetController) {
+        let selectedText = model.getValueInRange(selection)
+        if (selectedText && selectionPlaceholder > 0) {
+          // A selected expression must stay a single operand in a / b or x^n.
+          if (groupSelection && !/^(?:[\p{L}\p{N}]+(?:\.[\p{L}\p{N}]+)*)$/u.test(selectedText)) {
+            selectedText = `(${selectedText})`
+          }
+          const escapedSelection = selectedText.replace(/[\\$}]/g, '\\$&')
+          const placeholder = new RegExp(`\\$\\{${selectionPlaceholder}:[^}]*\\}`)
+          snippet = snippet.replace(placeholder, () => `\${${selectionPlaceholder}:${escapedSelection}}`)
+        }
+        snippetController.insert(snippet)
+        return
+      }
+
+      editor.pushUndoStop()
       editor.executeEdits('toolbar', [
         {
           range: selection,
@@ -81,8 +104,7 @@ const Editor = forwardRef<EditorRef, EditorProps>(({
           forceMoveMarkers: true,
         },
       ])
-
-      editor.focus()
+      editor.pushUndoStop()
     },
   }))
 
