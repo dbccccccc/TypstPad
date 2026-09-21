@@ -3,6 +3,8 @@ import { createPortal } from "react-dom"
 
 import { cn } from "@/lib/utils"
 
+const useBrowserLayoutEffect = typeof window === 'undefined' ? React.useEffect : React.useLayoutEffect
+
 type MenuGroupContextValue = {
   activeMenu: string | null
   isClosing: boolean
@@ -220,7 +222,7 @@ function FloatingMenu({
     }
   }, [])
 
-  React.useLayoutEffect(() => {
+  useBrowserLayoutEffect(() => {
     if (!isOpen) return
     updatePosition()
     if (typeof window === "undefined") return

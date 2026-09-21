@@ -1,5 +1,8 @@
 /// <reference types="vite/client" />
 
+declare const __SITE_URL__: string
+declare const __SITE_INDEXABLE__: boolean
+
 // Type declarations for WASM imports
 declare module '*.wasm?url' {
   const url: string

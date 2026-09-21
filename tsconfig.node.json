@@ -1,11 +1,16 @@
 {
   "compilerOptions": {
     "composite": true,
+    "noEmit": true,
+    "tsBuildInfoFile": "./.vite/tsconfig.node.tsbuildinfo",
+    "target": "ES2020",
+    "lib": ["ES2020"],
+    "types": ["node"],
     "skipLibCheck": true,
     "module": "ESNext",
     "moduleResolution": "bundler",
     "allowSyntheticDefaultImports": true,
     "strict": true
   },
-  "include": ["vite.config.ts"]
+  "include": ["vite.config.ts", "src/seo/metadata.ts", "src/navigation/routes.ts"]
 }

@@ -5,6 +5,7 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+  workflow_call:
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -40,3 +41,20 @@ jobs:
 
       - name: Build production assets
         run: npm run build
+
+      - name: Check self-hosted SEO output
+        run: npm run test:seo
+
+      - name: Build official website
+        run: npm run build:site
+
+      - name: Check official website SEO output
+        run: npm run test:seo -- --site-url https://typstpad.com
+
+      - name: Check Nginx routing and headers
+        run: |
+          docker build --build-arg BUILD_MODE=site -t typstpad-seo-check .
+          docker run -d --name typstpad-seo-check -p 127.0.0.1:8080:80 typstpad-seo-check
+          trap 'docker rm -f typstpad-seo-check' EXIT
+          docker exec typstpad-seo-check nginx -t
+          npm run test:seo -- --site-url https://typstpad.com --base-url http://127.0.0.1:8080

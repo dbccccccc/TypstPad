@@ -1,29 +1,28 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import App from './App'
+import PublicApp from './PublicApp'
 import { ThemeProvider } from './contexts/ThemeContext'
 import './index.css'
-import { configureMonacoLoader } from './utils/monacoConfig'
 import { I18nProvider } from './i18n'
+import { resolveAppPage } from './navigation/routes'
 
-// Register Service Worker for caching WASM and fonts
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch(() => {
-      // Service Worker registration failed, continue without caching
-    })
-  })
+async function start() {
+  const page = resolveAppPage(window.location.pathname)
+  // Leave the readable, pre-rendered HTML in place while the editor downloads.
+  const content = page === 'editor'
+    ? React.createElement((await import('./App')).default)
+    : <PublicApp page={page} />
+
+  ReactDOM.createRoot(document.getElementById('root')!).render(
+    <React.StrictMode>
+      <I18nProvider>
+        <ThemeProvider>{content}</ThemeProvider>
+      </I18nProvider>
+    </React.StrictMode>,
+  )
 }
 
-// Configure Monaco to use local files before any editor initialization
-configureMonacoLoader()
-
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <I18nProvider>
-      <ThemeProvider>
-        <App />
-      </ThemeProvider>
-    </I18nProvider>
-  </React.StrictMode>,
-)
+start().catch((error) => {
+  // Keep the pre-rendered content and working links if application loading fails.
+  console.error('Failed to start TypstPad:', error)
+})

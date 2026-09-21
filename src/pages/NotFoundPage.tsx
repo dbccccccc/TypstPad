@@ -1,12 +1,14 @@
 import { ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useI18n } from '@/i18n'
+import PageLink from '@/navigation/PageLink'
+import type { NavigablePage } from '@/navigation/routes'
 
 interface NotFoundPageProps {
-  onBackToEditor: () => void
+  onNavigate?: (page: NavigablePage) => void
 }
 
-export default function NotFoundPage({ onBackToEditor }: NotFoundPageProps) {
+export default function NotFoundPage({ onNavigate }: NotFoundPageProps) {
   const { t } = useI18n()
 
   return (
@@ -22,13 +24,14 @@ export default function NotFoundPage({ onBackToEditor }: NotFoundPageProps) {
           {t('notFound.description')}
         </p>
         <Button
-          type="button"
+          asChild
           variant="outline"
-          onClick={onBackToEditor}
           className="mt-6 gap-2"
         >
-          <ArrowLeft className="h-4 w-4" />
-          {t('notFound.backToEditor')}
+          <PageLink page="editor" onNavigate={onNavigate}>
+            <ArrowLeft className="h-4 w-4" />
+            {t('notFound.backToEditor')}
+          </PageLink>
         </Button>
       </div>
     </main>

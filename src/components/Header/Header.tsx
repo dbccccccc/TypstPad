@@ -13,22 +13,25 @@ import {
   Code2,
   Info,
   ChevronDown,
+  BookOpenText,
 } from 'lucide-react'
 import { useI18n, type Locale } from '@/i18n'
 import type { AppPage, NavigablePage } from '@/navigation/routes'
+import PageLink from '@/navigation/PageLink'
 
 interface HeaderProps {
-  onSettingsClick: () => void
-  onNavigate: (page: NavigablePage) => void
+  onSettingsClick?: () => void
+  onNavigate?: (page: NavigablePage) => void
   activePage: AppPage
 }
 
 const pageOptions: Array<{
   value: NavigablePage
-  labelKey: 'navigation.editor' | 'navigation.about'
+  labelKey: 'navigation.editor' | 'navigation.guide' | 'navigation.about'
   Icon: typeof Code2
 }> = [
   { value: 'editor', labelKey: 'navigation.editor', Icon: Code2 },
+  { value: 'guide', labelKey: 'navigation.guide', Icon: BookOpenText },
   { value: 'about', labelKey: 'navigation.about', Icon: Info },
 ]
 
@@ -90,24 +93,21 @@ function PageMenu({
   onNavigate,
 }: {
   activePage: AppPage
-  onNavigate: (page: NavigablePage) => void
+  onNavigate?: (page: NavigablePage) => void
 }) {
   const { closeMenu } = useMenuGroup()
   const { t } = useI18n()
 
-  const handleSelect = (page: NavigablePage) => {
-    onNavigate(page)
-    closeMenu()
-  }
-
   return (
     <div className="flex min-w-[10rem] flex-col gap-1 p-1">
       {pageOptions.map(({ value, labelKey, Icon }) => (
-        <button
+        <PageLink
           key={value}
-          type="button"
+          page={value}
+          onNavigate={onNavigate}
           role="menuitem"
-          onClick={() => handleSelect(value)}
+          aria-current={activePage === value ? 'page' : undefined}
+          onClick={closeMenu}
           className={cn(
             'relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none',
             'transition-colors hover:bg-accent hover:text-accent-foreground',
@@ -118,7 +118,7 @@ function PageMenu({
           <Icon className="h-4 w-4" />
           <span className="flex-1 text-left">{t(labelKey)}</span>
           {activePage === value && <Check className="h-4 w-4 text-green-500" />}
-        </button>
+        </PageLink>
       ))}
     </div>
   )
@@ -150,13 +150,13 @@ function Header({
     <MenuGroupProvider>
       <header className="flex items-center justify-between gap-2 border-b bg-background px-3 py-2 sm:px-6 sm:py-3">
       <div className="flex min-w-0 flex-1 items-center gap-2">
-        <button
-          type="button"
-          onClick={() => onNavigate('editor')}
+        <PageLink
+          page="editor"
+          onNavigate={onNavigate}
           className="truncate text-left text-base font-semibold sm:text-lg"
         >
           TypstPad
-        </button>
+        </PageLink>
 
         <FloatingMenu
           menuId="pages"
@@ -191,14 +191,15 @@ function Header({
           {pageOptions.map(({ value, labelKey, Icon }) => (
             <Button
               key={value}
-              type="button"
+              asChild
               variant={activePage === value ? 'secondary' : 'ghost'}
               size="sm"
-              onClick={() => onNavigate(value)}
               className="h-8 gap-1.5 px-2.5"
             >
-              <Icon className="h-4 w-4" />
-              <span>{t(labelKey)}</span>
+              <PageLink page={value} onNavigate={onNavigate} aria-current={activePage === value ? 'page' : undefined}>
+                <Icon className="h-4 w-4" />
+                <span>{t(labelKey)}</span>
+              </PageLink>
             </Button>
           ))}
         </nav>
@@ -262,7 +263,7 @@ function Header({
             </div>
           </FloatingMenu>
 
-          <Button
+          {onSettingsClick && <Button
             variant="ghost"
             size="icon"
             className="h-9 w-9 sm:h-10 sm:w-10"
@@ -270,7 +271,7 @@ function Header({
             title={t('header.settings')}
           >
             <Settings className="h-5 w-5" />
-          </Button>
+          </Button>}
       </div>
     </header>
   </MenuGroupProvider>

@@ -23,6 +23,12 @@ import { Code, Image, Save as SaveIcon, FolderOpen, ScanText, Type } from 'lucid
 import { Button } from '@/components/ui/button'
 import { useI18n } from '@/i18n'
 import { APP_PAGE_PATHS, resolveAppPage, type AppPage, type NavigablePage } from './navigation/routes'
+import HomeContent, { EditorIntro } from './components/HomeContent'
+import GuidePage from './pages/GuidePage'
+import { usePageMetadata } from './seo/usePageMetadata'
+import { configureMonacoLoader } from './utils/monacoConfig'
+
+configureMonacoLoader()
 
 function readStorageItem(key: string): string | null {
   if (typeof window === 'undefined') return null
@@ -116,13 +122,19 @@ function App() {
   const [editorHeight, setEditorHeight] = useState(() => loadEditorHeightFromStorage())
   const [isResizingEditor, setIsResizingEditor] = useState(false)
   const resizeStateRef = useRef<{ startY: number; startHeight: number } | null>(null)
+  usePageMetadata(activePage)
 
   // Auto-save draft (debounced)
   useEffect(() => {
     const timer = setTimeout(() => {
       saveDraft(code)
     }, 500)
-    return () => clearTimeout(timer)
+    const flushDraft = () => saveDraft(code)
+    window.addEventListener('pagehide', flushDraft)
+    return () => {
+      clearTimeout(timer)
+      window.removeEventListener('pagehide', flushDraft)
+    }
   }, [code])
 
   // Start preloading WASM in background (non-blocking)
@@ -130,6 +142,11 @@ function App() {
     preloadTypst().catch((err) => {
       console.error('Failed to preload typst:', err)
     })
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(() => {
+        // The editor still works when caching is unavailable.
+      })
+    }
   }, [])
 
   useEffect(() => {
@@ -142,18 +159,6 @@ function App() {
     window.addEventListener('popstate', handlePopState)
     return () => window.removeEventListener('popstate', handlePopState)
   }, [])
-
-  useEffect(() => {
-    if (activePage === 'about') {
-      document.title = t('app.titleAbout')
-      return
-    }
-    if (activePage === 'not-found') {
-      document.title = t('app.titleNotFound')
-      return
-    }
-    document.title = t('app.title')
-  }, [activePage, t])
 
   const handleCompiled = useCallback((newSvg: string | null, _diagnostics: unknown) => {
     setSvg(newSvg)
@@ -258,6 +263,7 @@ function App() {
       {isEditorPage ? (
         <>
           <main className="flex-1 min-h-0 overflow-auto p-3 sm:p-6">
+            <EditorIntro />
             <div className={`mx-auto ${
               settings.layoutMode === 'side-by-side'
                 ? 'max-w-full lg:flex lg:gap-6 lg:h-full space-y-6 lg:space-y-0'
@@ -426,6 +432,7 @@ function App() {
                 </div>
               </section>
             </div>
+            <HomeContent onNavigate={handleNavigate} />
           </main>
 
           <FormulasDialog
@@ -454,9 +461,11 @@ function App() {
           />
         </>
       ) : activePage === 'about' ? (
-        <AboutPage onBackToEditor={() => handleNavigate('editor')} />
+        <AboutPage onNavigate={handleNavigate} />
+      ) : activePage === 'guide' ? (
+        <GuidePage onNavigate={handleNavigate} />
       ) : (
-        <NotFoundPage onBackToEditor={() => handleNavigate('editor')} />
+        <NotFoundPage onNavigate={handleNavigate} />
       )}
 
       <SettingsDialog

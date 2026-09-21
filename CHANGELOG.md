@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.0] - 2026-09-21
+
+### Added
+- **Guide** - One page for formula exports, Image to Typst, saving, and sharing, with a worked example and section links in English and Simplified Chinese
+- **Search Metadata** - Pre-rendered public pages, page-specific titles and descriptions, canonical URLs, structured data, and a generated sitemap
+- **Build Variants** - Domain-neutral self-hosted and official website builds, with separate Docker release tags and automated SEO checks
+
+### Changed
+- **About** - Rewritten project introduction, browser storage and processing details, and open-source resources
+- **Navigation** - Editor, Guide, and About links; old export and image guide URLs redirect to the unified Guide
+- **Public Page Loading** - Direct visits to informational pages avoid loading the editor and Typst compiler
+
+### Fixed
+- **Missing Pages** - Unknown URLs return a real 404 response with indexing disabled
+
 ## [0.10.0] - 2026-08-22
 
 ### Added

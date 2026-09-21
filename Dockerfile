@@ -14,7 +14,10 @@ RUN npm ci
 COPY . .
 
 # Build the application
-RUN npm run build
+ARG BUILD_MODE=production
+ARG SITE_URL
+ARG SITE_INDEXABLE=true
+RUN npm run build -- --mode "$BUILD_MODE"
 
 # Stage 2: Production image with Nginx (with Brotli support)
 FROM fholzer/nginx-brotli:v1.28.0

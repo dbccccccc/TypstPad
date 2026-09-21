@@ -2,12 +2,14 @@
 
 [English](README.md) · 简体中文
 
-![版本](https://img.shields.io/badge/version-0.12.0-blue)
+![版本](https://img.shields.io/badge/version-0.13.0-blue)
 [![许可证：MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 在浏览器中编写、预览和分享 Typst 公式。直接输入表达式、改写一个模板，或从印刷体公式图片开始。保留可编辑源码，再将排版结果带到需要的地方。
 
 ## 主要功能
+
+访问 **[typstpad.com](https://typstpad.com/)** 使用在线编辑器。[使用指南](https://typstpad.com/guide)涵盖公式导出、图片转 Typst、保存和分享。
 
 - **实时预览。** 使用 Monaco 编辑器，支持语法高亮和 Typst 自动补全。
 - **快捷选择。** 在统一面板中搜索符号、结构、函数和模板。
@@ -112,12 +114,14 @@ npm run dev
 | 命令 | 用途 |
 | --- | --- |
 | `npm run dev` | 启动开发服务器 |
-| `npm run build` | 检查类型，并将生产构建输出到 `dist/` |
+| `npm run build` | 检查类型、构建并预渲染不绑定域名的生产文件到 `dist/` |
+| `npm run build:site` | 构建 typstpad.com 官方网站版本 |
 | `npm run preview` | 在本地预览生产构建 |
 | `npm test` | 运行现有 Vitest 测试 |
 | `npm run lint` | 运行 ESLint |
+| `npm run test:seo` | 检查不绑定域名构建的 HTML、元数据、路由和索引文件 |
 
-编辑器与关于页面分别位于 `/` 和 `/about`。
+编辑器、使用指南与关于页面分别位于 `/`、`/guide` 和 `/about`。这些页面使用与浏览器相同的 React 组件进行预渲染。直接访问介绍和指南页面时，不会加载 Monaco 或 Typst 编译器。Vite 和 Nginx 会将原来的导出指南与图片识别指南网址永久重定向到 `/guide`。
 
 ## 部署
 
@@ -138,7 +142,22 @@ docker run -d --name typstpad -p 8080:80 typstpad
 docker run -d --name typstpad -p 8080:80 ghcr.io/dbccccccc/typstpad:latest
 ```
 
-本地镜像和已发布镜像两种方式任选其一。如需固定版本，将 `latest` 替换为已存在的数字版本标签。发布工作流会在 GitHub Release 发布时构建并推送 `linux/amd64` 镜像。
+本地镜像和已发布镜像两种方式任选其一。如需固定版本，将 `latest` 替换为已存在的数字版本标签。GitHub Release 发布并通过验证后，工作流会从同一份源码推送两种 `linux/amd64` 镜像：
+
+| 版本 | 版本标签 | 稳定标签 | 站点元数据 |
+| --- | --- | --- | --- |
+| 自托管 | `<version>` | `latest` | 不固定规范域名，不生成站点地图 |
+| 官方网站 | `<version>-site` | `site-latest` | 为 typstpad.com 生成规范网址、结构化数据和站点地图 |
+
+预发布版本只生成版本标签。该工作流负责构建和推送镜像，部署到服务器需要另行完成。
+
+使用自定义域名时，在构建阶段设置站点地址：
+
+```bash
+docker build --build-arg SITE_URL=https://math.example.org -t typstpad .
+```
+
+官方网站使用 `--build-arg BUILD_MODE=site`。若不希望安装实例被搜索引擎索引，添加 `--build-arg SITE_INDEXABLE=false`。这些参数均在**构建时**生效，`docker run -e` 不会重写已有镜像中的静态文件。
 
 使用 Docker Compose 时，将以下内容保存为 `compose.yaml`：
 
@@ -155,7 +174,7 @@ services:
 
 ### 静态托管
 
-托管 `npm run build` 的完整输出，包括内置字体和识别资源。为 `/about` 等应用路由配置回退到 `index.html`，并添加以下跨源隔离响应头：
+托管完整的 `dist/` 输出，包括页面子目录、内置字体和识别资源。将 `/about` 解析为 `/about/index.html`，将 `/guide` 解析为 `/guide/index.html`。为 `/guides/typst-to-png-svg` 和 `/guides/image-to-typst`（含结尾斜杠及 `/index.html` 形式）配置到 `/guide` 的 HTTP **301** 重定向；构建也包含即时 HTML 重定向，供静态托管回退使用。未知路径必须返回 HTTP **404**，可使用 `404.html` 作为错误页面，但需保留 404 状态码。请勿将未知路径回退到首页。添加以下跨源隔离响应头：
 
 ```http
 Cross-Origin-Opener-Policy: same-origin
@@ -166,6 +185,19 @@ Vite 开发服务器和内置的 [Nginx 配置](nginx.conf)已经设置这些响
 
 公式编译与图片识别在本地运行，但应用仍需下载必要资源；使用 Typst 包导入时，也可能从 `packages.typst.org` 获取包。
 
+### 网站元数据与验证
+
+`npm run build` 默认生成自托管版本。在构建环境或对应的 Vite `.env` 文件中设置 `SITE_URL`，即可生成规范网址和站点地图。地址必须为 HTTP(S) 来源，不含子路径、查询参数或片段。`npm run build:site` 默认使用 `https://typstpad.com`，也可通过 `SITE_URL` 覆盖。设置 `SITE_INDEXABLE=false` 会为所有页面添加 `noindex` 并省略站点地图；robots.txt 仍允许抓取，以便搜索引擎读取此指令。
+
+```bash
+npm run build:site
+npm run test:seo -- --site-url https://typstpad.com
+```
+
+自定义域名请向 `test:seo` 传入相同的地址。关闭索引的构建需额外添加 `--noindex`。CI 会验证两种构建，并通过 Docker 检查实际 HTTP 响应，包括未知路径及跨源隔离响应头。
+
+部署官方网站后，在 Google Search Console 中验证域名，提交 `https://typstpad.com/sitemap.xml`，并检查首页、关于页面和指南的渲染结果。按页面和搜索词观察展示次数与点击次数。分享公式的查询参数不会加入站点地图，编辑器的规范网址保持为 `/`。
+
 ## 仓库结构
 
 | 位置 | 职责 |
@@ -175,7 +207,8 @@ Vite 开发服务器和内置的 [Nginx 配置](nginx.conf)已经设置这些响
 | `src/services/` | Typst 编译和图片识别 |
 | `src/utils/` | 本地存储、分享、导出和编辑器辅助功能 |
 | `src/i18n/` | 英文与简体中文界面文案 |
-| `src/pages/`、`src/navigation/` | 关于页面、未找到页面及路由 |
+| `src/pages/`、`src/navigation/` | 关于、指南、未找到页面及可抓取的导航 |
+| `src/seo/`、`scripts/build.mjs` | 页面元数据与静态 HTML、站点地图生成 |
 | `public/` | 字体、识别资源和静态资源缓存 |
 
 界面使用 React、TypeScript、Vite、Tailwind CSS、Radix UI 和 Lucide 图标；Monaco 与 Shiki 提供编辑和高亮能力，typst.ts 负责浏览器端编译。

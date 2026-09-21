@@ -35,7 +35,7 @@ function matchLocale(input: string | null | undefined): Locale | null {
 }
 
 function getSystemLocale(): Locale | null {
-  if (typeof navigator === 'undefined') return null
+  if (typeof window === 'undefined' || typeof navigator === 'undefined') return null
   const candidates = navigator.languages?.length ? navigator.languages : [navigator.language]
   for (const candidate of candidates) {
     const matched = matchLocale(candidate)
@@ -156,7 +156,6 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   }, [messages])
 
   useEffect(() => {
-    document.title = t('app.title')
     const loaderText = document.querySelector('.loader-text')
     if (loaderText) {
       loaderText.textContent = t('common.loading')

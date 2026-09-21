@@ -1,4 +1,4 @@
-name: Build and Push Docker Image on Release
+name: Build and Push Docker Images on Release
 
 on:
   release:
@@ -9,8 +9,28 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
+  validate:
+    uses: ./.github/workflows/ci.yml
+    permissions:
+      contents: read
+
   build-and-push:
+    needs: validate
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - flavor: selfhost
+            mode: production
+            suffix: ''
+            stable_tag: latest
+            site_url: ''
+          - flavor: site
+            mode: site
+            suffix: '-site'
+            stable_tag: site-latest
+            site_url: https://typstpad.com
     permissions:
       contents: read
       packages: write
@@ -34,9 +54,10 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          flavor: latest=false
           tags: |
-            type=semver,pattern={{version}}
-            type=raw,value=latest,enable=${{ !github.event.release.prerelease }}
+            type=semver,pattern={{version}},suffix=${{ matrix.suffix }}
+            type=raw,value=${{ matrix.stable_tag }},enable=${{ !github.event.release.prerelease }}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
@@ -45,6 +66,9 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          build-args: |
+            BUILD_MODE=${{ matrix.mode }}
+            SITE_URL=${{ matrix.site_url }}
+          cache-from: type=gha,scope=${{ matrix.flavor }}
+          cache-to: type=gha,scope=${{ matrix.flavor }},mode=max
           platforms: linux/amd64

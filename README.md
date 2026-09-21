@@ -2,10 +2,12 @@
 
 English · [简体中文](README.zh-CN.md)
 
-![Version](https://img.shields.io/badge/version-0.12.0-blue)
+![Version](https://img.shields.io/badge/version-0.13.0-blue)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 A browser workspace for writing, previewing, and sharing Typst formulas. Type a short expression, adapt a template, or recognize a printed formula from an image. Keep the source editable and export the result wherever you need it.
+
+Use the hosted editor at **[typstpad.com](https://typstpad.com/)**. The [Guide](https://typstpad.com/guide) covers formula exports, Image to Typst, saving, and sharing.
 
 ## At a glance
 
@@ -112,12 +114,14 @@ Open the local URL printed by Vite, usually [http://localhost:5173](http://local
 | Command | Purpose |
 | --- | --- |
 | `npm run dev` | Start the development server |
-| `npm run build` | Type-check and build production files into `dist/` |
+| `npm run build` | Type-check, build, and pre-render domain-neutral production files into `dist/` |
+| `npm run build:site` | Build the official typstpad.com website |
 | `npm run preview` | Preview the production build locally |
 | `npm test` | Run the existing Vitest tests |
 | `npm run lint` | Run ESLint |
+| `npm run test:seo` | Check a domain-neutral build's HTML, metadata, routes, and indexing files |
 
-The editor and About page are available at `/` and `/about`.
+The editor, Guide, and About page are available at `/`, `/guide`, and `/about`. These pages are pre-rendered from the same React components used by the browser. Informational pages do not load Monaco or the Typst compiler on a direct visit. The previous export and image guide URLs permanently redirect to `/guide` in Vite and Nginx.
 
 ## Deployment
 
@@ -138,7 +142,22 @@ To use a published build from GitHub Container Registry:
 docker run -d --name typstpad -p 8080:80 ghcr.io/dbccccccc/typstpad:latest
 ```
 
-Choose either the local image or the published image. To pin a published release, replace `latest` with an available numeric version tag. The release workflow publishes `linux/amd64` images when a GitHub release is published.
+Choose either the local image or the published image. To pin a published release, replace `latest` with an available numeric version tag. After validation, the release workflow publishes two `linux/amd64` variants from the same source:
+
+| Variant | Version tag | Stable tag | Site metadata |
+| --- | --- | --- | --- |
+| Self-hosted | `<version>` | `latest` | No fixed canonical domain or sitemap |
+| Official website | `<version>-site` | `site-latest` | Canonical URLs, structured data, and sitemap for typstpad.com |
+
+Prereleases receive version tags only. The workflow builds and publishes images; deploying one to a server is a separate step.
+
+For a custom domain, build with its origin:
+
+```bash
+docker build --build-arg SITE_URL=https://math.example.org -t typstpad .
+```
+
+For the official website, use `--build-arg BUILD_MODE=site`. To exclude an installation from search indexing, use `--build-arg SITE_INDEXABLE=false`. These are **build arguments**; setting environment variables with `docker run -e` does not rewrite the static files in an existing image.
 
 For Docker Compose, save this as `compose.yaml`:
 
@@ -155,7 +174,7 @@ Then run `docker compose up -d`.
 
 ### Static hosting
 
-Serve the output of `npm run build`, including the bundled fonts and recognition assets. Configure a fallback to `index.html` for application routes such as `/about`, and include these cross-origin isolation headers:
+Serve the complete `dist/` output, including nested page directories, bundled fonts, and recognition assets. Resolve `/about` to `/about/index.html` and `/guide` to `/guide/index.html`. Configure HTTP **301** redirects from `/guides/typst-to-png-svg` and `/guides/image-to-typst` (including trailing-slash and `/index.html` variants) to `/guide`; the build includes instant HTML redirects as a fallback for static hosts. Unknown paths must return HTTP **404**; use `404.html` as the error body while preserving that status. Do not fall back to the homepage for unknown paths. Include these cross-origin isolation headers:
 
 ```http
 Cross-Origin-Opener-Policy: same-origin
@@ -166,6 +185,19 @@ The Vite development server and bundled [Nginx configuration](nginx.conf) alread
 
 Formula compilation and recognition run locally. The app still downloads required assets, and Typst package imports can fetch packages from `packages.typst.org`.
 
+### Website metadata and verification
+
+`npm run build` defaults to a self-hosted build. Set `SITE_URL` to an absolute HTTP(S) origin, with no subpath, query, or fragment, to generate canonical URLs and a sitemap. `npm run build:site` defaults to `https://typstpad.com`; `SITE_URL` can override it. Set these variables in the build environment or an appropriate Vite `.env` file. `SITE_INDEXABLE=false` adds `noindex` to every page and omits the sitemap; robots.txt still allows crawling so crawlers can read that directive.
+
+```bash
+npm run build:site
+npm run test:seo -- --site-url https://typstpad.com
+```
+
+For a custom domain, pass that same origin to `test:seo`. Add `--noindex` when testing a build with indexing disabled. CI verifies both variants and checks real HTTP responses from the Docker image, including missing paths and the cross-origin isolation headers.
+
+After deploying the official build, verify the domain in Google Search Console, submit `https://typstpad.com/sitemap.xml`, and inspect the rendered homepage, Guide, and About page. Track impressions and clicks by page and search query. Shared formula query strings are not sitemap entries; the editor's canonical stays `/`.
+
 ## Repository map
 
 | Location | Responsibility |
@@ -175,7 +207,8 @@ Formula compilation and recognition run locally. The app still downloads require
 | `src/services/` | Typst compilation and image recognition |
 | `src/utils/` | Local storage, sharing, exports, and editor support |
 | `src/i18n/` | English and Simplified Chinese interface text |
-| `src/pages/`, `src/navigation/` | About page, not-found page, and routing |
+| `src/pages/`, `src/navigation/` | Guide, About, not-found page, and crawlable navigation |
+| `src/seo/`, `scripts/build.mjs` | Page metadata and static HTML/sitemap generation |
 | `public/` | Fonts, recognition assets, and asset caching |
 
 The interface uses React, TypeScript, Vite, Tailwind CSS, Radix UI, and Lucide icons. Monaco and Shiki provide editing and highlighting; typst.ts provides browser compilation.

@@ -1,6 +1,6 @@
 {
   "name": "typstpad",
-  "version": "0.12.0",
+  "version": "0.13.0",
   "type": "module",
   "description": "A simple and elegant online Typst formula editor with real-time preview",
   "engines": {
@@ -8,9 +8,11 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "tsc && tsc -p tsconfig.node.json && node scripts/build.mjs",
+    "build:site": "npm run build -- --mode site",
     "preview": "vite preview",
     "test": "vitest run",
+    "test:seo": "node scripts/check-seo.mjs",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
   },
   "dependencies": {
@@ -39,6 +41,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.18",
+    "@types/node": "^20.19.43",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@typescript-eslint/eslint-plugin": "^8.53.0",
