@@ -2,7 +2,7 @@
 
 English · [简体中文](README.zh-CN.md)
 
-![Version](https://img.shields.io/badge/version-0.13.0-blue)
+![Version](https://img.shields.io/badge/version-0.14.0-blue)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 A browser workspace for writing, previewing, and sharing Typst formulas. Type a short expression, adapt a template, or recognize a printed formula from an image. Keep the source editable and export the result wherever you need it.
@@ -92,9 +92,9 @@ Settings includes a 1×–4× export scale for raster images.
 
 ## Image to Typst · experimental
 
-Choose **Image to Typst** in the input panel, then select, drop, or paste a PNG, JPEG, or WebP image. Use one tightly cropped, dark-on-light printed formula.
+Choose **Image to Typst** in the input panel, then select, drop, or paste a PNG, JPEG, or WebP image. Use one tightly cropped printed formula; light and dark backgrounds are supported.
 
-Recognition runs in the browser without uploading the image. The first use downloads the bundled **TypLens-V1 INT8** model and runtime; the model weights are approximately 33.9 MB. Check the generated source and preview before choosing **Use in editor**, which replaces the current editor content. Handwriting and full-page documents are outside the intended input.
+Recognition runs in the browser without uploading the image. The first use downloads the bundled **TypLens V1.1 INT8** model and runtime; the model weights are approximately 33.1 MB. Images are converted to grayscale, normalized for background polarity, and cropped around formula content before recognition. Check the generated source and preview before choosing **Use in editor**, which replaces the current editor content. Handwriting and full-page documents are outside the intended input.
 
 The model produces native Typst directly. Incomplete generation and invalid tokens are blocked from insertion. For model details and attribution, see the [model card](public/im2typst/model/MODEL_CARD.md), [inference contract](public/im2typst/model/INFERENCE.md), and [third-party notices](public/im2typst/THIRD_PARTY_NOTICES.md).
 

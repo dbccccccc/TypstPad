@@ -1,5 +1,5 @@
 // Service Worker for TypstPad - Caches WASM and font files
-const CACHE_NAME = 'typstpad-v3-typlens'
+const CACHE_NAME = 'typstpad-v4-typlens-v1.1'
 
 // Resources to cache (large files that benefit most from caching)
 const CACHE_PATTERNS = [

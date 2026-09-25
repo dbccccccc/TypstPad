@@ -1,6 +1,6 @@
-import { prepareTypLensPixels } from './typlens-preprocess'
+import { prepareTypLensPixels, TYPLENS_PREPROCESSING } from './typlens-preprocess'
 
-const MODEL_RELEASE = 'typlens-v1-int8-10f682efb979'
+const MODEL_RELEASE = 'typlens-v1.1-int8-f98216362a14'
 const MAX_FILE_BYTES = 20 * 1_000_000
 const MAX_IMAGE_PIXELS = 50_000_000
 const SUPPORTED_IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp'])
@@ -71,8 +71,11 @@ interface ModelConfig {
 
 interface GenerationConfig {
   decoder_start_token_id: number
+  do_sample: boolean
   eos_token_id: number
+  forced_eos_token_id: number | null
   max_new_tokens: number
+  num_beams: number
 }
 
 interface PreprocessorConfig {
@@ -84,7 +87,9 @@ interface PreprocessorConfig {
   image_std: number[]
   resample: number
   rescale_factor: number
+  requires_custom_preprocessing: boolean
   size: { height: number; width: number }
+  typlens_preprocessing: Record<string, unknown>
 }
 
 type TokenBytes = (number[] | null)[]
@@ -252,25 +257,35 @@ function validateMetadata(
   tokenBytes: TokenBytes
 ): void {
   if (
-    config.encoder.image_size !== 384 || config.encoder.num_channels !== 3 ||
+    config.encoder.image_size !== 384 || config.encoder.num_channels !== 1 ||
     config.decoder.d_model !== 256 || config.decoder.decoder_attention_heads !== 8 ||
     config.decoder.decoder_layers !== 6 || config.decoder.vocab_size !== 1199 ||
     config.vocab_size !== 1199 || config.decoder_start_token_id !== 1 || config.eos_token_id !== 2 ||
     generation.decoder_start_token_id !== 1 || generation.eos_token_id !== 2 ||
     generation.max_new_tokens !== 1023 || config.decoder.max_position_embeddings < 1024 ||
+    generation.do_sample !== false || generation.num_beams !== 1 ||
+    generation.forced_eos_token_id !== null ||
     preprocess.size.height !== 384 || preprocess.size.width !== 384 ||
     preprocess.do_center_crop !== false || !preprocess.do_normalize ||
     !preprocess.do_rescale || !preprocess.do_resize || preprocess.resample !== 3 ||
     preprocess.rescale_factor !== 1 / 255 ||
-    preprocess.image_mean.length !== 3 || preprocess.image_mean.some((value) => value !== 0.5) ||
-    preprocess.image_std.length !== 3 || preprocess.image_std.some((value) => value !== 0.5) ||
+    preprocess.image_mean.length !== 1 || preprocess.image_mean[0] !== 0.5 ||
+    preprocess.image_std.length !== 1 || preprocess.image_std[0] !== 0.5 ||
+    preprocess.requires_custom_preprocessing !== true ||
+    !Object.entries(TYPLENS_PREPROCESSING).every(([key, expected]) => {
+      const actual = preprocess.typlens_preprocessing?.[key]
+      return Array.isArray(expected)
+        ? Array.isArray(actual) && actual.length === expected.length &&
+          actual.every((value, index) => value === expected[index])
+        : actual === expected
+    }) ||
     !Array.isArray(tokenBytes) || tokenBytes.length !== 1199 ||
     tokenBytes.some((bytes, index) => index < 5
       ? bytes !== null
       : !Array.isArray(bytes) || !bytes.length || bytes.some((byte) =>
           !Number.isInteger(byte) || byte < 0 || byte > 255))
   ) {
-    throw new Error('The bundled metadata does not match the TypLens-V1 inference contract.')
+    throw new Error('The bundled metadata does not match the TypLens V1.1 inference contract.')
   }
 }
 
@@ -290,7 +305,7 @@ async function loadRecognizer(): Promise<LoadedRecognizer> {
   emitProgress({ stage: 'loadingMetadata', percent: 8 })
   const manifest = await (await fetchAsset('asset-manifest.json')).json() as AssetManifest
   if (manifest.release !== MODEL_RELEASE || manifest.model_variant !== 'int8') {
-    throw new Error('TypstPad requires the bundled TypLens-V1 INT8 release.')
+    throw new Error('TypstPad requires the bundled TypLens V1.1 INT8 release.')
   }
   const [config, generation, preprocess, tokenBytes] = await Promise.all([
     fetchMetadata<ModelConfig>('config.json', manifest),
@@ -325,8 +340,8 @@ async function loadRecognizer(): Promise<LoadedRecognizer> {
     config, decoder, encoder, generation, ort, tokenBytes,
     info: {
       modelBytes: manifest.model['encoder.int8.onnx'].bytes + manifest.model['decoder.int8.onnx'].bytes,
-      modelName: 'TypLens-V1 INT8',
-      parameters: 29_403_264,
+      modelName: 'TypLens V1.1 INT8',
+      parameters: 29_206_656,
     },
   }
 }
@@ -354,28 +369,24 @@ export function validateFormulaImage(blob: Blob): void {
 }
 
 async function preprocessImage(blob: Blob, size: number): Promise<Float32Array> {
-  const url = URL.createObjectURL(blob)
-  const image = new Image()
-  image.decoding = 'async'
-  image.src = url
+  const image = await createImageBitmap(blob, {
+    colorSpaceConversion: 'none',
+    premultiplyAlpha: 'none',
+  })
   try {
-    await image.decode()
-    const width = image.naturalWidth
-    const height = image.naturalHeight
+    const { width, height } = image
     if (!width || !height || width * height > MAX_IMAGE_PIXELS || width > 32767 || height > 32767) {
       throw new Error('Choose an image under 50 megapixels and 32,768 pixels per side.')
     }
     const canvas = document.createElement('canvas')
     canvas.width = width
     canvas.height = height
-    const context = canvas.getContext('2d', { alpha: false, willReadFrequently: true })
+    const context = canvas.getContext('2d', { willReadFrequently: true })
     if (!context) throw new Error('This browser does not provide a 2D canvas context.')
-    context.fillStyle = '#ffffff'
-    context.fillRect(0, 0, width, height)
     context.drawImage(image, 0, 0)
     return prepareTypLensPixels(context.getImageData(0, 0, width, height), size)
   } finally {
-    URL.revokeObjectURL(url)
+    image.close()
   }
 }
 
@@ -390,7 +401,7 @@ function safeDispose(tensor: OrtTensor | undefined): void {
 async function runRecognition(model: LoadedRecognizer, pixels: Float32Array): Promise<RecognitionResult> {
   const { config, decoder, encoder, generation, ort, tokenBytes } = model
   const size = config.encoder.image_size
-  const image = new ort.Tensor('float32', pixels, [1, 3, size, size])
+  const image = new ort.Tensor('float32', pixels, [1, config.encoder.num_channels, size, size])
   const cacheShape = [config.decoder.decoder_layers, 1, config.decoder.decoder_attention_heads, 0,
     config.decoder.d_model / config.decoder.decoder_attention_heads]
   let selfKeys: OrtTensor | undefined

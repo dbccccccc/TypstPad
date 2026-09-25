@@ -1,86 +1,105 @@
 {
+  "schema_version": "typlens-weights-release-v1",
   "repository_name": "TypLens",
-  "model_name": "TypLens-V1",
-  "version": "v1",
+  "model_name": "TypLens V1.1",
+  "version": "v1.1",
+  "release_date": "2026-09-24",
   "license": "MIT",
-  "parameters": 29403264,
-  "output_language": "typst",
-  "inference_conversion": "none",
-  "source_model_sha256": "900938e6cca81d62448fa8693a78a42d91aeea328b998887da7f1d65d7b11258",
+  "parameters": 29206656,
+  "source_model_sha256": "d42cfd2da242a11ecdb1fe8727ee01e6896a116cd46f74357c4fdce90eebe788",
+  "checkpoint_step": 33544,
+  "training_epochs": 8,
+  "training_examples": 268346,
   "base_model": "breezedeus/pix2text-mfr-1.5",
   "base_model_revision": "1cef9f0bdcd6a4c63df7de1311fb0894593340cc",
-  "training_code_included": false,
-  "training_data_included": false,
-  "optimizer_state_included": false,
-  "release_qualified": false,
-  "independent_accuracy": false,
-  "variants": {
-    "fp32": {
-      "bytes": 117963783,
-      "files": {
-        "encoder.onnx": {
-          "bytes": 92124508,
-          "sha256": "161ffc099440106b8b731c4929bc80ccf72b638a7cbdd53ffdc5f936105581c2"
-        },
-        "decoder.onnx": {
-          "bytes": 25839275,
-          "sha256": "59a8dd86000058ad5f2b76951afd1219fcff4226ceb3fb33e6f1eb604d3c928d"
-        }
-      },
-      "previous_browser_development_results": {
-        "paper47": {
-          "count": 47,
-          "correct": 38,
-          "wrong": 8,
-          "uncertain": 1,
-          "compile_success": 47,
-          "natural_eos": 47,
-          "reserved_outputs": 0
-        },
-        "validation135": {
-          "count": 135,
-          "correct": 128,
-          "wrong": 7,
-          "uncertain": 0,
-          "compile_success": 134,
-          "natural_eos": 135,
-          "reserved_outputs": 0
-        }
-      }
-    },
-    "int8": {
-      "bytes": 33907198,
-      "files": {
-        "encoder.onnx": {
-          "bytes": 25268437,
-          "sha256": "5f306ecf3e2a2cc79cae5b73adfe6bd1c681fd39782365820a16d9949b12ffb9"
-        },
-        "decoder.onnx": {
-          "bytes": 8638761,
-          "sha256": "6271b3a3f49b56293430473db956692f136c8384036bcef334815fe9edf949b2"
-        }
-      },
-      "previous_browser_development_results": {
-        "paper47": {
-          "count": 47,
-          "correct": 38,
-          "wrong": 8,
-          "uncertain": 1,
-          "compile_success": 47,
-          "natural_eos": 47,
-          "reserved_outputs": 0
-        },
-        "validation135": {
-          "count": 135,
-          "correct": 127,
-          "wrong": 8,
-          "uncertain": 0,
-          "compile_success": 133,
-          "natural_eos": 134,
-          "reserved_outputs": 0
-        }
-      }
+  "initialization": "Upstream-derived native-vocabulary initializer; not the released V1 checkpoint. RGB patch kernels summed into one channel before training.",
+  "output_language": "typst",
+  "inference_conversion": "none",
+  "vocabulary_size": 1199,
+  "input": {
+    "name": "pixel_values",
+    "dtype": "float32",
+    "shape": [
+      1,
+      1,
+      384,
+      384
+    ]
+  },
+  "preprocessing": {
+    "version": "native-content-box-gray-v2",
+    "channels": 1,
+    "width": 384,
+    "height": 384,
+    "grayscale_weights": [
+      77,
+      150,
+      29
+    ],
+    "grayscale_divisor": 256,
+    "alpha_background": 255,
+    "foreground_delta": 12,
+    "margin_ratio": 0.02,
+    "min_margin": 1,
+    "polarity": "perimeter-median-below-128",
+    "resampler": "pillow-bicubic-u8-v1",
+    "mean": [
+      0.5
+    ],
+    "std": [
+      0.5
+    ]
+  },
+  "generation": {
+    "bos_token_id": 1,
+    "eos_token_id": 2,
+    "pad_token_id": 0,
+    "max_new_tokens": 1023,
+    "strategy": "greedy",
+    "forced_eos": false
+  },
+  "quantization": {
+    "algorithm": "onnxruntime.quantization.quantize_dynamic",
+    "weight_type": "QInt8",
+    "per_channel": true,
+    "op_types_to_quantize": [
+      "MatMul",
+      "Gemm"
+    ],
+    "extra_options": {
+      "MatMulConstBOnly": true
     }
   },
-  "metadata_adjustment": "generation_config.max_new_tokens=1023; weights unchanged"
+  "artifacts": {
+    "model.safetensors": {
+      "bytes": 116870000,
+      "sha256": "d42cfd2da242a11ecdb1fe8727ee01e6896a116cd46f74357c4fdce90eebe788"
+    },
+    "onnx/fp32/encoder.onnx": {
+      "bytes": 91338076,
+      "sha256": "acca3ad0660b30d8292b657e3164e54e66d75b594fc05d7d005cb94044579087"
+    },
+    "onnx/fp32/decoder.onnx": {
+      "bytes": 25839275,
+      "sha256": "c974116f76b518aa9b7dcd7e310cdaf55054a889433a395a62e0df009daf6caf"
+    },
+    "onnx/int8/encoder.onnx": {
+      "bytes": 24482005,
+      "sha256": "844a4aee1e22ca0a71d0a5b29c7d9fec00f976f7528a50af2ce1c141deb37ab1"
+    },
+    "onnx/int8/decoder.onnx": {
+      "bytes": 8638761,
+      "sha256": "9bf4bfd55786c45b7fe92221c0b752c70bb405d028f5e7d4f066814e839b70df"
+    }
+  },
+  "artifact_paths_relative_to": "Hugging Face repository root",
+  "token_bytes": {
+    "bytes": 50278,
+    "sha256": "56dda3b8c135390aef1c8e6ca86f5f3598576c4f4bc61184639a1abfb22c5a9d"
+  },
+  "metadata_changes": "generation_config: max_new_tokens=1023, do_sample=false, num_beams=1, forced_eos_token_id=null; learned parameters and graphs unchanged.",
+  "training_code_included": false,
+  "optimizer_state_included": false,
+  "datasets_included": false,
+  "runtime_binaries_included": false
 }

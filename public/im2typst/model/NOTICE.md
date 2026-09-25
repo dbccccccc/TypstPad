@@ -2,7 +2,7 @@
 
 ## Released weights and metadata
 
-TypLens-V1 is a fine-tuned derivative of Pix2Text-MFR-1.5, not the original
+TypLens V1.1 is a fine-tuned derivative of Pix2Text-MFR-1.5, not the original
 random-initialized IBEM-im2typst Phase10 model. The FP32 and INT8 exports are
 variants of the same fine-tuned checkpoint. Copyright (c) 2026 dbcccc.
 
@@ -25,8 +25,11 @@ require publication of training code. No training source is included.
   [TrOCR project](https://github.com/microsoft/unilm/tree/master/trocr),
   [license](https://github.com/microsoft/unilm/blob/master/LICENSE).
 
-Changes include native Typst output targets and vocabulary, fine-tuning, screenshot
-augmentation, a cached ONNX decoder export, and an optional INT8 weight export.
+Changes include native Typst output targets and vocabulary, a single-channel
+grayscale image projection, matched content-box preprocessing, retraining from
+the upstream-derived initializer, screenshot augmentation, a cached ONNX decoder
+export, and an optional dynamic INT8 weight export. V1.1 is the final 33,544-step
+checkpoint; it was not initialized from the released V1 checkpoint.
 
 ## Training-data attribution (datasets are not redistributed)
 

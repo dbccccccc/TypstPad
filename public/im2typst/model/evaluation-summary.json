@@ -1,0 +1,62 @@
+{
+  "model_name": "TypLens V1.1",
+  "source_model_sha256": "d42cfd2da242a11ecdb1fe8727ee01e6896a116cd46f74357c4fdce90eebe788",
+  "server_fp32": {
+    "split": "reused IBEM development set",
+    "independent_test": false,
+    "reviewer": "AI assistant",
+    "independent_second_annotator": false,
+    "newly_reviewed_cases": 38,
+    "inherited_identical_image_and_prediction_cases": 97,
+    "decoding": {
+      "strategy": "greedy",
+      "max_new_tokens": 1023,
+      "forced_eos": false
+    },
+    "content_review": "Compare source symbols, indices, accents and structure; allow equivalent Typst syntax and nonessential spacing.",
+    "results": {
+      "step": 33544,
+      "total": 135,
+      "correct": 127,
+      "incorrect": 8,
+      "unresolved": 0,
+      "compile_success": 135,
+      "complete_generation": 135,
+      "exact_text_matches": 76,
+      "exact_reference_render_matches": 88,
+      "accepted_despite_text_difference": 51,
+      "accepted_despite_pixel_difference": 39,
+      "exact_text_but_content_failure": 0
+    }
+  },
+  "browser_smoke": {
+    "browser": "Microsoft Edge 153.0.4234.48",
+    "provider": "wasm",
+    "threads": 4,
+    "images_per_variant": 3,
+    "variants": [
+      "fp32",
+      "int8"
+    ],
+    "completed_runs": 6,
+    "preprocessing_matches_training": true,
+    "tokens_match_cpu_onnx": true,
+    "tokens_match_server_fp32_on_these_images": true,
+    "known_content_error_present": "tilde accent recognized as hat on one smoke-test image",
+    "full_accuracy_evaluation": false
+  },
+  "export_versions": {
+    "torch": "2.8.0+cu128",
+    "transformers": "4.52.3",
+    "onnx": "1.18.0",
+    "onnxruntime": "1.22.0"
+  },
+  "controlled_v1_vs_v1_1_accuracy_comparison": false,
+  "quantized_full_accuracy_evaluation": false,
+  "source_record_sha256": {
+    "evaluation-full-generation-v1/completion-summary.json": "d889c42d2cb3f1333d84b77e7d86793d32660a491244be48eaf39eec50270b40",
+    "evaluation-full-generation-v1/source-review.json": "8b2a23a519889066591ab97c952493daaadf7fd4dcdee126be66d8e5215d4ab0",
+    "browser-final-v1/export-smoke.json": "63eb0c9acec09a71930bc8da1d300c7bcde0740cfa77f7cba12f104da2dcee77",
+    "browser-final-v1/browser-smoke.json": "c1904f5727209744b778604ec2d7aa65dcbeec3247f34bce3b36c179d285593a"
+  }
+}

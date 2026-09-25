@@ -23,7 +23,7 @@ import { Code, Image, Save as SaveIcon, FolderOpen, ScanText, Type } from 'lucid
 import { Button } from '@/components/ui/button'
 import { useI18n } from '@/i18n'
 import { APP_PAGE_PATHS, resolveAppPage, type AppPage, type NavigablePage } from './navigation/routes'
-import HomeContent, { EditorIntro } from './components/HomeContent'
+import { EditorIntro } from './components/HomeContent'
 import GuidePage from './pages/GuidePage'
 import { usePageMetadata } from './seo/usePageMetadata'
 import { configureMonacoLoader } from './utils/monacoConfig'
@@ -432,7 +432,6 @@ function App() {
                 </div>
               </section>
             </div>
-            <HomeContent onNavigate={handleNavigate} />
           </main>
 
           <FormulasDialog

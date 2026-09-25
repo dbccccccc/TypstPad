@@ -1,5 +1,5 @@
 import Header from './components/Header/Header'
-import HomeContent, { EditorIntro } from './components/HomeContent'
+import { EditorIntro } from './components/HomeContent'
 import { useI18n } from './i18n'
 import type { AppPage } from './navigation/routes'
 import AboutPage from './pages/AboutPage'
@@ -19,7 +19,6 @@ export default function PublicApp({ page }: { page: AppPage }) {
           <EditorIntro />
           <p className="mx-auto max-w-6xl py-6 text-sm text-muted-foreground" role="status">{t('common.loading')}</p>
           <noscript><p className="mx-auto max-w-6xl text-sm">{t('home.requiresJs')}</p></noscript>
-          <HomeContent />
         </main>
       ) : page === 'about' ? (
         <AboutPage />

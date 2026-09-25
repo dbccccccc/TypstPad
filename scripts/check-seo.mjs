@@ -46,7 +46,6 @@ for (const route of routes) {
   }
   if (route === '/') {
     for (const destination of routes.slice(1)) assert.ok(tags(html, 'a').some((tag) => tag.href === destination), `Homepage links to ${destination}`)
-    assert.ok(html.includes('sum_(i=1)^n'), 'Homepage includes a readable formula example')
   }
   assert.ok(!tags(html, 'a').some((tag) => retiredGuides.includes(tag.href)), `${route}: no links to retired pages`)
   if (route === '/guide') {

@@ -241,7 +241,7 @@ function ImageToTypstDialog({
               {modelState === 'error' && <AlertTriangle className="h-3.5 w-3.5 text-destructive" />}
               <span>
                 {modelState === 'ready'
-                  ? t('imageToTypst.modelReady', { name: info?.modelName ?? 'TypLens-V1 INT8', size: modelSize ?? '33.9 MB' })
+                  ? t('imageToTypst.modelReady', { name: info?.modelName ?? 'TypLens V1.1 INT8', size: modelSize ?? '33.1 MB' })
                   : modelState === 'error'
                     ? t('imageToTypst.modelFailed')
                     : stageLabel}

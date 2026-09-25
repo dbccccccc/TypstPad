@@ -6,5 +6,8 @@
   "max_new_tokens": 1023,
   "pad_token_id": 0,
   "transformers_version": "4.52.3",
-  "use_cache": false
+  "use_cache": false,
+  "do_sample": false,
+  "num_beams": 1,
+  "forced_eos_token_id": null
 }

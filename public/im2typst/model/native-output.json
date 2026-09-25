@@ -1,5 +1,7 @@
 {
+  "model_name": "TypLens V1.1",
+  "version": "v1.1",
   "output_language": "typst",
   "inference_conversion": "none",
-  "plan_sha256": "2029f380508774c53f343ca3e8929a04cd822aa09644c6ef74eca0f24a02c2ac"
+  "source_model_sha256": "d42cfd2da242a11ecdb1fe8727ee01e6896a116cd46f74357c4fdce90eebe788"
 }

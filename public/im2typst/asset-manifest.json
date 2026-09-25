@@ -1,41 +1,53 @@
 {
   "schema_version": "local-browser-assets-v1",
-  "release": "typlens-v1-int8-10f682efb979",
-  "model_name": "TypLens-V1",
+  "release": "typlens-v1.1-int8-f98216362a14",
+  "model_name": "TypLens V1.1",
   "model_variant": "int8",
   "qualification": "experimental",
   "execution_provider": "wasm",
   "onnxruntime_web_version": "1.22.0",
   "source": {
     "repository": "https://huggingface.co/dbcccc/TypLens",
-    "revision": "10f682efb9791d57fd36d12f7baa8736bc5d92ae",
-    "github_revision": "32fad5443f7075301ea4a0458556ee21dd665bcb",
-    "source_model_sha256": "900938e6cca81d62448fa8693a78a42d91aeea328b998887da7f1d65d7b11258"
+    "revision": "f98216362a14a3b218f228ed7c007d31825d0ab1",
+    "github_revision": "3d19c7d09c60c22913494efa0e803f2967ae14e6",
+    "source_model_sha256": "d42cfd2da242a11ecdb1fe8727ee01e6896a116cd46f74357c4fdce90eebe788"
   },
   "model": {
-    "config.json": {
-      "bytes": 1633,
-      "sha256": "2e7708da4ed42f164dfdd245f48203508187e86b2797c36c9a639ce359db05b9"
-    },
-    "decoder.int8.onnx": {
-      "bytes": 8638761,
-      "sha256": "6271b3a3f49b56293430473db956692f136c8384036bcef334815fe9edf949b2"
-    },
-    "encoder.int8.onnx": {
-      "bytes": 25268437,
-      "sha256": "5f306ecf3e2a2cc79cae5b73adfe6bd1c681fd39782365820a16d9949b12ffb9"
-    },
-    "generation_config.json": {
-      "bytes": 221,
-      "sha256": "160611a8925b82bffd45ba85d20f75fab027a1835c162850866f0a748a2b2156"
-    },
     "INFERENCE.md": {
-      "bytes": 3090,
-      "sha256": "03467520bcfd371b00d47e485b505fee14e5d665e8bbdbaa313b60be89f0479e"
+      "bytes": 5580,
+      "sha256": "86f739b83ab247669fb95fe838cb680781f56979f721608bdca59aa8f239eb10"
     },
     "LICENSE": {
       "bytes": 1063,
       "sha256": "f97d1e0ab5068cc84050bc17c63ea8da6861fffc8710f4cb7f69db6c720a4bf6"
+    },
+    "MODEL_CARD.md": {
+      "bytes": 5328,
+      "sha256": "0edb7f8ea77dede3ffd206a95014f565e51230dbd35728527f7523baf14b7f42"
+    },
+    "NOTICE.md": {
+      "bytes": 3100,
+      "sha256": "e0266a29382f136867dd235927f1ca6b2c39cfde398b8b3aeb5b610f4d8c14da"
+    },
+    "config.json": {
+      "bytes": 1573,
+      "sha256": "e8905a6bd0ab94e533a93c63d95748673ff9cb526733f8e6e0d57bdc2eaee4cf"
+    },
+    "decoder.int8.onnx": {
+      "bytes": 8638761,
+      "sha256": "9bf4bfd55786c45b7fe92221c0b752c70bb405d028f5e7d4f066814e839b70df"
+    },
+    "encoder.int8.onnx": {
+      "bytes": 24482005,
+      "sha256": "844a4aee1e22ca0a71d0a5b29c7d9fec00f976f7528a50af2ce1c141deb37ab1"
+    },
+    "evaluation-summary.json": {
+      "bytes": 2272,
+      "sha256": "aabb8c417e847d1c15c81d481c04eb08cfe70f1643b1245245bf0a7793af150d"
+    },
+    "generation_config.json": {
+      "bytes": 282,
+      "sha256": "10abd73c0292bbc134c318aa4a7b5d227386a1b70568c6fdf0b3185b068593fe"
     },
     "licenses/PIX2TEXT-MIT.txt": {
       "bytes": 1088,
@@ -45,25 +57,17 @@
       "bytes": 1094,
       "sha256": "c250d6278f0b47a6439fb7592b08b58a55eb9f535aa49a1db63211c3f982b674"
     },
-    "MODEL_CARD.md": {
-      "bytes": 3873,
-      "sha256": "ec0e7ddb739d2541e8efbddcd87126d2f63fd8ae219a1261d3f185f54244771b"
-    },
     "native-output.json": {
-      "bytes": 152,
-      "sha256": "0d90037c76ca433dcd02d3fb0898568421b84910381697410158442a9acd1e51"
-    },
-    "NOTICE.md": {
-      "bytes": 2924,
-      "sha256": "13da1f2d9f0831c36dc6c3cfe512b6c6333cdad93209a8061bba825c66dfb956"
+      "bytes": 213,
+      "sha256": "b9fe212ccdea3733927b6a8f452bca8652ca92e66d11ce990294a451a2343dd7"
     },
     "preprocessor_config.json": {
-      "bytes": 450,
-      "sha256": "36a945a7cc645688b9ef64dabae16979cf5f7c1c448569cc306694edc0598b9b"
+      "bytes": 838,
+      "sha256": "2f71d5b17c35ff83d3d5bc2e4a2cda3bf87b3184600a2ea957f3ca4bb9d9050d"
     },
     "release-manifest.json": {
-      "bytes": 2536,
-      "sha256": "00efdc1263e5d7fffd221fc5e89326d71233910805b6881ab39f78cf71951eec"
+      "bytes": 3041,
+      "sha256": "2cb78ce66c3448de305d29703c09f395f302416dcb1eb3f7f0270f8890063d79"
     },
     "special_tokens_map.json": {
       "bytes": 964,
@@ -73,17 +77,17 @@
       "bytes": 50278,
       "sha256": "56dda3b8c135390aef1c8e6ca86f5f3598576c4f4bc61184639a1abfb22c5a9d"
     },
-    "tokenizer_config.json": {
-      "bytes": 1244,
-      "sha256": "f5cc321e8545940295fba11e9a59f4f2a208a23af3d63cc8c355c78593645b99"
-    },
     "tokenizer.json": {
       "bytes": 66360,
       "sha256": "5af9f7879cf2b6ce9b0c5951cd0a5221abce412b2f5cb377e56d678b8fe459e0"
     },
+    "tokenizer_config.json": {
+      "bytes": 1244,
+      "sha256": "f5cc321e8545940295fba11e9a59f4f2a208a23af3d63cc8c355c78593645b99"
+    },
     "SHA256SUMS": {
-      "bytes": 1431,
-      "sha256": "7b6060ea0b234bcd8092effd399260b31151cd678be196605b1de3739613c09c"
+      "bytes": 1521,
+      "sha256": "9d570a47df3ff395644943bff15091c7082154089932e18623384d53f0bf03f9"
     }
   },
   "runtime": {

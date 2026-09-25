@@ -2,7 +2,7 @@
 
 [English](README.md) · 简体中文
 
-![版本](https://img.shields.io/badge/version-0.13.0-blue)
+![版本](https://img.shields.io/badge/version-0.14.0-blue)
 [![许可证：MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 在浏览器中编写、预览和分享 Typst 公式。直接输入表达式、改写一个模板，或从印刷体公式图片开始。保留可编辑源码，再将排版结果带到需要的地方。
@@ -92,9 +92,9 @@ x &= y + z
 
 ## 图片转 Typst · 实验功能
 
-在输入区选择**图片转 Typst**，然后选择、拖入或粘贴 PNG、JPEG、WebP 图片。建议使用裁切紧凑、浅底深色的单个印刷体公式。
+在输入区选择**图片转 Typst**，然后选择、拖入或粘贴 PNG、JPEG、WebP 图片。建议使用裁切紧凑的单个印刷体公式，支持浅色和深色背景。
 
-识别在浏览器中运行，不会上传图片。首次使用会下载内置的 **TypLens-V1 INT8** 模型和运行时，其中模型权重约为 33.9 MB。检查生成的源码和预览后，再选择**在编辑器中使用**；此操作会替换当前编辑器内容。该功能暂不适合手写内容或整页文档。
+识别在浏览器中运行，不会上传图片。首次使用会下载内置的 **TypLens V1.1 INT8** 模型和运行时，其中模型权重约为 33.1 MB。识别前会将图片转换为灰度、统一背景明暗方向，并围绕公式内容裁切。检查生成的源码和预览后，再选择**在编辑器中使用**；此操作会替换当前编辑器内容。该功能暂不适合手写内容或整页文档。
 
 模型直接生成原生 Typst。未完整生成或包含无效词元的结果会被阻止插入。模型细节与来源可查阅[模型说明](public/im2typst/model/MODEL_CARD.md)、[推理规范](public/im2typst/model/INFERENCE.md)和[第三方声明](public/im2typst/THIRD_PARTY_NOTICES.md)。
 

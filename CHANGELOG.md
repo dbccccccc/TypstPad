@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.14.0] - 2026-09-25
+
+### Changed
+- **Image to Typst Model** - Upgrade the bundled INT8 encoder and decoder to TypLens V1.1, pinned to Hugging Face revision `f98216362a14a3b218f228ed7c007d31825d0ab1`, with 33.1 MB of model weights
+- **Image Preprocessing** - Match V1.1's single-channel grayscale input, white alpha compositing, background polarity normalization, content crop, and Pillow-compatible bicubic resizing
+- **Model Assets and Caching** - Refresh model metadata, checksums, provenance, English and Chinese descriptions, and browser cache keys for the new release
+- **Guide Layout** - Organize exports, image recognition, and saving/sharing into separate topics with shorter steps and expandable examples and tips in English and Simplified Chinese
+
+### Removed
+- **Editor Guide Section** - Remove the extra Guide card and example formula below the editor
+
 ## [0.13.0] - 2026-09-21
 
 ### Added

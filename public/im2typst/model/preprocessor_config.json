@@ -1,28 +1,44 @@
 {
-  "crop_size": {
-    "height": 224,
-    "width": 224
-  },
-  "do_center_crop": false,
-  "do_normalize": true,
-  "do_rescale": true,
-  "do_resize": true,
-  "image_mean": [
-    0.5,
-    0.5,
-    0.5
-  ],
   "image_processor_type": "DeiTImageProcessor",
-  "image_std": [
-    0.5,
-    0.5,
-    0.5
-  ],
-  "processor_class": "TrOCRProcessor",
-  "resample": 3,
-  "rescale_factor": 0.00392156862745098,
+  "do_resize": true,
   "size": {
     "height": 384,
     "width": 384
+  },
+  "resample": 3,
+  "do_center_crop": false,
+  "do_rescale": true,
+  "rescale_factor": 0.00392156862745098,
+  "do_normalize": true,
+  "image_mean": [
+    0.5
+  ],
+  "image_std": [
+    0.5
+  ],
+  "requires_custom_preprocessing": true,
+  "typlens_preprocessing": {
+    "version": "native-content-box-gray-v2",
+    "channels": 1,
+    "width": 384,
+    "height": 384,
+    "grayscale_weights": [
+      77,
+      150,
+      29
+    ],
+    "grayscale_divisor": 256,
+    "alpha_background": 255,
+    "foreground_delta": 12,
+    "margin_ratio": 0.02,
+    "min_margin": 1,
+    "polarity": "perimeter-median-below-128",
+    "resampler": "pillow-bicubic-u8-v1",
+    "mean": [
+      0.5
+    ],
+    "std": [
+      0.5
+    ]
   }
 }
