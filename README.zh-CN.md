@@ -2,7 +2,7 @@
 
 [English](README.md) · 简体中文
 
-![版本](https://img.shields.io/badge/version-0.14.0-blue)
+![版本](https://img.shields.io/badge/version-0.15.0-blue)
 [![许可证：MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 在浏览器中编写、预览和分享 Typst 公式。直接输入表达式、改写一个模板，或从印刷体公式图片开始。保留可编辑源码，再将排版结果带到需要的地方。
@@ -88,7 +88,7 @@ x &= y + z
 
 设置中可选择 1×–4× 的位图导出倍率。
 
-**分享**会生成包含公式源码的网址，任何获得链接的人都可以读取公式。链接不包含本地公式收藏、自定义字体或设置；如需重现相同结果，对方可能需要使用相同的字体和公式模式。
+**分享**会生成包含公式源码及其公式模式的网址，因此无论对方使用简化公式模式还是普通 Typst 模式，显示结果都相同。任何获得链接的人都可以读取公式。链接不包含本地公式收藏、自定义字体或其他设置；如需重现相同结果，对方可能需要使用相同的字体。打开链接会替换编辑器内容，之前的草稿会保留在收藏中。
 
 ## 图片转 Typst · 实验功能
 
@@ -100,7 +100,7 @@ x &= y + z
 
 ## 本地开发
 
-需要 **Node.js 20 或更新版本**及 npm。
+需要 **Node.js 22 或更新版本**及 npm。
 
 ```bash
 git clone https://github.com/dbccccccc/TypstPad.git
@@ -135,6 +135,8 @@ docker run -d --name typstpad -p 8080:80 typstpad
 ```
 
 打开 [http://localhost:8080](http://localhost:8080)。
+
+构建镜像时会以最高 Brotli 压缩率预压缩资源，约需两分钟。本地构建可添加 `--build-arg BROTLI_QUALITY=5` 以加快速度。
 
 也可以使用 GitHub Container Registry 中已经发布的镜像：
 
@@ -181,7 +183,7 @@ Cross-Origin-Opener-Policy: same-origin
 Cross-Origin-Embedder-Policy: require-corp
 ```
 
-Vite 开发服务器和内置的 [Nginx 配置](nginx.conf)已经设置这些响应头。公开部署时请使用 HTTPS，以便使用浏览器剪贴板和 Service Worker 等能力。
+Vite 开发服务器和内置的 [Nginx 配置](nginx.conf)已经设置这些响应头。Nginx 配置从 [nginx-security-headers.conf](nginx-security-headers.conf) 引入共用响应头；在 Docker 之外使用该配置时，请将此文件放到 `/etc/nginx/snippets/typstpad-security-headers.conf`。公开部署时请使用 HTTPS，以便使用浏览器剪贴板和 Service Worker 等能力。
 
 公式编译与图片识别在本地运行，但应用仍需下载必要资源；使用 Typst 包导入时，也可能从 `packages.typst.org` 获取包。
 

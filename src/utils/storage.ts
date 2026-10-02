@@ -1,4 +1,5 @@
 import type { SavedFormula, FormulaStorage } from '../types/formula'
+import { createRandomId } from './id'
 
 const STORAGE_KEY = 'typst-editor-formulas'
 const CURRENT_VERSION = 1
@@ -27,7 +28,8 @@ function isSavedFormula(value: unknown): value is SavedFormula {
     typeof value.name === 'string' &&
     typeof value.content === 'string' &&
     typeof value.createdAt === 'number' &&
-    typeof value.updatedAt === 'number'
+    typeof value.updatedAt === 'number' &&
+    (value.simplifiedFormulaMode === undefined || typeof value.simplifiedFormulaMode === 'boolean')
   )
 }
 
@@ -96,19 +98,41 @@ export function saveDraft(content: string): void {
 export function addFormula(
   name: string,
   content: string,
-  options?: { fallbackName?: string }
+  options?: { fallbackName?: string; simplifiedFormulaMode?: boolean }
 ): SavedFormula {
   const storage = loadFormulaStorage()
   const formula: SavedFormula = {
-    id: createFormulaId(),
+    id: createRandomId(),
     name: name || generateDefaultName(content, options?.fallbackName),
     content,
     createdAt: Date.now(),
     updatedAt: Date.now(),
   }
+  if (options?.simplifiedFormulaMode !== undefined) {
+    formula.simplifiedFormulaMode = options.simplifiedFormulaMode
+  }
   storage.savedFormulas.unshift(formula)
   saveFormulaStorage(storage)
   return formula
+}
+
+/**
+ * Copy the autosaved draft into the collection before a shared link replaces it,
+ * unless the draft is empty, identical to the replacement, or already saved.
+ */
+export function preserveDraft(
+  replacement: string,
+  options?: { simplifiedFormulaMode?: boolean }
+): SavedFormula | null {
+  const { currentDraft, savedFormulas } = loadFormulaStorage()
+  if (
+    !currentDraft.trim() ||
+    currentDraft === replacement ||
+    savedFormulas.some(formula => formula.content === currentDraft)
+  ) {
+    return null
+  }
+  return addFormula('', currentDraft, options)
 }
 
 export function deleteFormula(id: string): void {
@@ -134,30 +158,6 @@ export function updateFormula(id: string, updates: Partial<Pick<SavedFormula, 'n
     }
     saveFormulaStorage(storage)
   }
-}
-
-function createFormulaId(): string {
-  const cryptoApi = globalThis.crypto
-  if (typeof cryptoApi?.randomUUID === 'function') {
-    return cryptoApi.randomUUID()
-  }
-
-  if (typeof cryptoApi?.getRandomValues === 'function') {
-    const bytes = new Uint8Array(16)
-    cryptoApi.getRandomValues(bytes)
-    bytes[6] = (bytes[6] & 0x0f) | 0x40
-    bytes[8] = (bytes[8] & 0x3f) | 0x80
-    const hex = Array.from(bytes, byte => byte.toString(16).padStart(2, '0'))
-    return [
-      hex.slice(0, 4).join(''),
-      hex.slice(4, 6).join(''),
-      hex.slice(6, 8).join(''),
-      hex.slice(8, 10).join(''),
-      hex.slice(10, 16).join(''),
-    ].join('-')
-  }
-
-  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`
 }
 
 function generateDefaultName(content: string, fallbackName = 'Untitled'): string {

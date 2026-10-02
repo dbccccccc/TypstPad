@@ -1,8 +1,9 @@
 import { useI18n } from '../i18n'
-import { encodeBase64Utf8 } from '../utils/base64'
+import { createShareQuery } from '../utils/share'
 
+// Written for Simplified Formula Mode; the link records that mode.
 export const EXAMPLE_FORMULA = 'sum_(i=1)^n i = (n (n + 1)) / 2'
-export const EXAMPLE_URL = `/?formula=${encodeURIComponent(encodeBase64Utf8(EXAMPLE_FORMULA))}`
+export const EXAMPLE_URL = `/${createShareQuery(EXAMPLE_FORMULA, true)}`
 
 export function EditorIntro() {
   const { t } = useI18n()

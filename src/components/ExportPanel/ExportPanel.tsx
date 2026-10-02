@@ -21,19 +21,21 @@ interface ExportPanelProps {
   svg: string | null
   code: string
   pngScale: number
-  onDownloadPNG: () => void
-  onDownloadJPG: () => void
-  onDownloadSVG: () => void
+  onDownloadPNG: DownloadAction
+  onDownloadJPG: DownloadAction
+  onDownloadSVG: DownloadAction
   onCopyPNG: () => Promise<boolean> | boolean
   onCopyTypst: () => Promise<boolean> | boolean
-  onDownloadTypst: () => void
+  onDownloadTypst: DownloadAction
   onCopySVG: () => Promise<boolean> | boolean
   onCopyHTML: () => Promise<boolean> | boolean
-  onDownloadHTML: () => void
+  onDownloadHTML: DownloadAction
   onCopyShareLink: () => Promise<boolean> | boolean
 }
 
 type CopyAction = () => Promise<boolean> | boolean
+
+type DownloadAction = () => Promise<void> | void
 
 type CopyState = {
   [key: string]: boolean
@@ -129,6 +131,15 @@ export default function ExportPanel({
     }, 2000)
   }, [t])
 
+  const handleDownload = useCallback(async (action: DownloadAction) => {
+    try {
+      await action()
+    } catch (error) {
+      console.error('Export failed:', error)
+      alert(t('export.error.downloadFailed'))
+    }
+  }, [t])
+
   const imageSections: MenuSection[] = [
     {
       icon: <Copy className="h-3.5 w-3.5" />,
@@ -152,19 +163,25 @@ export default function ExportPanel({
           icon: <FileImage className="h-4 w-4 text-blue-500" />,
           label: t('export.download.png'),
           suffix: t('export.download.transparent'),
-          onClick: onDownloadPNG,
+          onClick: () => {
+            void handleDownload(onDownloadPNG)
+          },
         },
         {
           icon: <FileImage className="h-4 w-4 text-orange-500" />,
           label: t('export.download.jpg'),
           suffix: t('export.download.whiteBg'),
-          onClick: onDownloadJPG,
+          onClick: () => {
+            void handleDownload(onDownloadJPG)
+          },
         },
         {
           icon: <FileType className="h-4 w-4 text-purple-500" />,
           label: t('export.download.svg'),
           suffix: t('export.download.vector'),
-          onClick: onDownloadSVG,
+          onClick: () => {
+            void handleDownload(onDownloadSVG)
+          },
         },
       ],
     },
@@ -209,19 +226,25 @@ export default function ExportPanel({
           icon: <FileCode className="h-4 w-4 text-cyan-500" />,
           label: t('export.download.typst'),
           suffix: '.typ',
-          onClick: onDownloadTypst,
+          onClick: () => {
+            void handleDownload(onDownloadTypst)
+          },
         },
         {
           icon: <FileType className="h-4 w-4 text-purple-500" />,
           label: t('export.download.svgFile'),
           suffix: '.svg',
-          onClick: onDownloadSVG,
+          onClick: () => {
+            void handleDownload(onDownloadSVG)
+          },
         },
         {
           icon: <Globe className="h-4 w-4 text-orange-500" />,
           label: t('export.download.html'),
           suffix: '.html',
-          onClick: onDownloadHTML,
+          onClick: () => {
+            void handleDownload(onDownloadHTML)
+          },
         },
       ],
     },

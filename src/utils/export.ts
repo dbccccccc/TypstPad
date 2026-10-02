@@ -1,16 +1,26 @@
 import { sanitizeSvgForXml } from './svg'
 
-/**
- * Download text file
- */
-export function downloadText(content: string, filename: string, mimeType = 'text/plain') {
-  const blob = new Blob([content], { type: mimeType })
+// Some browsers, notably Safari, start the download after the click returns and
+// fail if its object URL has already been revoked.
+const REVOKE_URL_DELAY_MS = 40_000
+
+function downloadBlob(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
   a.download = filename
+  a.style.display = 'none'
+  document.body.appendChild(a)
   a.click()
-  URL.revokeObjectURL(url)
+  a.remove()
+  window.setTimeout(() => URL.revokeObjectURL(url), REVOKE_URL_DELAY_MS)
+}
+
+/**
+ * Download text file
+ */
+export function downloadText(content: string, filename: string, mimeType = 'text/plain') {
+  downloadBlob(new Blob([content], { type: mimeType }), filename)
 }
 
 /**
@@ -18,13 +28,7 @@ export function downloadText(content: string, filename: string, mimeType = 'text
  */
 export function downloadSVG(svgString: string, filename = 'formula.svg') {
   const cleanSvg = sanitizeSvgForXml(svgString)
-  const blob = new Blob([cleanSvg], { type: 'image/svg+xml' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = filename
-  a.click()
-  URL.revokeObjectURL(url)
+  downloadBlob(new Blob([cleanSvg], { type: 'image/svg+xml' }), filename)
 }
 
 /**
@@ -62,13 +66,7 @@ function getSvgDimensions(svgString: string): { width: number; height: number } 
  * Download PNG file
  */
 export async function downloadPNG(svgString: string, filename = 'formula.png', scale = 2): Promise<void> {
-  const blob = await svgToPngBlob(svgString, scale)
-  const pngUrl = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = pngUrl
-  a.download = filename
-  a.click()
-  URL.revokeObjectURL(pngUrl)
+  downloadBlob(await svgToPngBlob(svgString, scale), filename)
 }
 
 /**
@@ -131,9 +129,10 @@ export async function copyPNGToClipboard(svgString: string, scale = 2): Promise<
     return false
   }
   try {
-    const blob = await svgToPngBlob(svgString, scale)
+    // Pass the pending image instead of awaiting it first: Safari only allows
+    // clipboard writes that start while handling the click.
     await navigator.clipboard.write([
-      new ClipboardItem({ 'image/png': blob })
+      new ClipboardItem({ 'image/png': svgToPngBlob(svgString, scale) })
     ])
     return true
   } catch (error) {
@@ -146,13 +145,7 @@ export async function copyPNGToClipboard(svgString: string, scale = 2): Promise<
  * Download JPG file (with white background)
  */
 export async function downloadJPG(svgString: string, filename = 'formula.jpg', scale = 2): Promise<void> {
-  const blob = await svgToPngBlob(svgString, scale, '#ffffff')
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = filename
-  a.click()
-  URL.revokeObjectURL(url)
+  downloadBlob(await svgToPngBlob(svgString, scale, '#ffffff'), filename)
 }
 
 /**

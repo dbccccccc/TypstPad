@@ -105,8 +105,19 @@ function Preview({ code, onCompiled, simplifiedFormulaMode, fontRevision }: Prev
     }
   }
 
+  // Font loading reports file counts, so only the WebAssembly downloads show bytes.
+  // Compressed responses have no usable total, so only the downloaded size is shown.
+  const getDownloadProgress = (progress: LoadingProgress) => {
+    if (progress.phase !== 'loadingCompiler' && progress.phase !== 'loadingRenderer') return null
+    if (progress.loaded === undefined) return null
+    if (!progress.total) return formatBytes(progress.loaded)
+    const percent = Math.round((progress.loaded / progress.total) * 100)
+    return `${formatBytes(progress.loaded)} / ${formatBytes(progress.total)} (${percent}%)`
+  }
+
   const errorDiagnostics = diagnostics?.filter(diagnostic => diagnostic.severity === 'error') ?? []
   const hasErrors = errorDiagnostics.length > 0
+  const downloadProgress = loading ? getDownloadProgress(loading) : null
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center w-full min-w-0 gap-3" ref={containerRef}>
@@ -114,10 +125,8 @@ function Preview({ code, onCompiled, simplifiedFormulaMode, fontRevision }: Prev
       {loading && (
         <div className="flex flex-col items-center gap-2 text-neutral-500">
           <div className="text-sm">{getLoadingLabel(loading)}</div>
-          {loading.loaded !== undefined && loading.total !== undefined && loading.total > 0 && (
-            <div className="text-xs tabular-nums">
-              {formatBytes(loading.loaded)} / {formatBytes(loading.total)} ({Math.round((loading.loaded / loading.total) * 100)}%)
-            </div>
+          {downloadProgress && (
+            <div className="text-xs tabular-nums">{downloadProgress}</div>
           )}
         </div>
       )}

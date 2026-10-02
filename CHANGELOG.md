@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.15.0] - 2026-10-02
+
+### Fixed
+- **Shared Links** - Reloading after opening a shared link keeps your edits; the link is removed from the address bar once the formula loads, and the previous draft is kept in your collection
+- **Formula Mode** - Shared links and saved formulas record their formula mode, so they render the same in Simplified Formula Mode and plain Typst mode
+- **Error Messages** - Show every compiler error instead of only the first, and keep quotes and other escaped characters in messages and hints
+- **Plain-HTTP Self-Hosting** - Font upload and Image to Typst work on installations served without HTTPS
+- **Exports** - Keep download links valid long enough for Safari, copy PNG images in Safari, and report failed PNG and JPG exports
+- **Loading Progress** - Show download progress for compressed responses and stop showing font counts as byte sizes
+- **Nginx Headers** - Send the security headers with scripts, styles, WebAssembly, and the service worker, not only with pages
+- **Caching** - Revalidate pages and unversioned public files after each deployment instead of caching some of them for a year
+
+### Changed
+- **Font Changes** - Reuse the compiled Typst compiler when fonts change instead of compiling it again
+- **Docker Image** - Precompress assets at build time so Nginx no longer compresses the 28 MB compiler on every request
+- **Node.js** - Require Node.js 22 or newer; CI and the Docker build use Node.js 24
+- **Dependencies** - Update DOMPurify and brace-expansion to fix security advisories
+
+### Removed
+- **Unused Dependencies** - Remove unused Radix UI packages, `tailwindcss-animate`, `autoprefixer`, `eslint-plugin-react-refresh`, and the unused Tailwind v3 configuration
+
 ## [0.14.0] - 2026-09-25
 
 ### Changed

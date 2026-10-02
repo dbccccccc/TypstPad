@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import Editor, { EditorRef } from './components/Editor/Editor'
 import MathToolbar from './components/MathToolbar'
 import type { MathSymbol } from './data/mathSymbols'
@@ -10,9 +10,11 @@ import AboutPage from './pages/AboutPage'
 import NotFoundPage from './pages/NotFoundPage'
 import { useTheme } from './contexts/ThemeContext'
 import { downloadSVG, downloadPNG, downloadJPG, downloadText, copyToClipboard, copyPNGToClipboard } from './utils/export'
-import { generateShareUrl, getFormulaFromUrl } from './utils/share'
-import { loadFormulaStorage, saveDraft, addFormula } from './utils/storage'
+import { generateShareUrl, takeSharedFormulaFromUrl } from './utils/share'
+import { loadFormulaStorage, saveDraft, addFormula, preserveDraft } from './utils/storage'
+import { adaptFormulaToMode } from './utils/formulaMode'
 import { svgToDataUri } from './utils/svg'
+import type { SavedFormula } from './types/formula'
 import FormulasDialog from './components/FormulasDialog'
 import SaveFormulaDialog from './components/FormulasDialog/SaveFormulaDialog'
 import FontManagerDialog from './components/FontManagerDialog'
@@ -61,6 +63,39 @@ function loadSettingsFromStorage(): Settings {
   }
 }
 
+interface InitialEditorState {
+  code: string
+  settings: Settings
+}
+
+function loadInitialEditorState(): InitialEditorState {
+  const settings = loadSettingsFromStorage()
+
+  // URL formula always takes priority
+  const shared = typeof window === 'undefined' ? null : takeSharedFormulaFromUrl()
+  if (shared) {
+    const formula = adaptFormulaToMode(shared.code, shared.simplifiedFormulaMode, settings.simplifiedFormulaMode)
+    // The link replaces the editor content; keep the previous draft in the collection.
+    preserveDraft(formula.code, { simplifiedFormulaMode: settings.simplifiedFormulaMode })
+    return { code: formula.code, settings: { ...settings, simplifiedFormulaMode: formula.simplifiedFormulaMode } }
+  }
+
+  // Check startup behavior setting
+  if (settings.startupBehavior === 'blank') {
+    return { code: '', settings }
+  }
+  return { code: loadFormulaStorage().currentDraft, settings }
+}
+
+// React calls state initializers twice in development, but a shared link must
+// be read, and the draft preserved, only once per page load.
+let initialEditorState: InitialEditorState | undefined
+
+function getInitialEditorState(): InitialEditorState {
+  initialEditorState ??= loadInitialEditorState()
+  return initialEditorState
+}
+
 const EDITOR_HEIGHT_STORAGE_KEY = 'typst-editor-input-height'
 const DEFAULT_EDITOR_HEIGHT = 300
 const MIN_EDITOR_HEIGHT = 180
@@ -95,20 +130,9 @@ function App() {
   const { theme } = useTheme()
   const { t } = useI18n()
   const editorRef = useRef<EditorRef>(null)
-  const initialSettings = useMemo(() => loadSettingsFromStorage(), [])
-  const [code, setCode] = useState(() => {
-    // URL formula always takes priority
-    const urlFormula = getFormulaFromUrl()
-    if (urlFormula) return urlFormula
-
-    // Check startup behavior setting
-    if (initialSettings.startupBehavior === 'blank') {
-      return ''
-    }
-    return loadFormulaStorage().currentDraft
-  })
+  const [code, setCode] = useState(() => getInitialEditorState().code)
   const [svg, setSvg] = useState<string | null>(null)
-  const [settings, setSettings] = useState<Settings>(initialSettings)
+  const [settings, setSettings] = useState<Settings>(() => getInitialEditorState().settings)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [formulasOpen, setFormulasOpen] = useState(false)
   const [saveDialogOpen, setSaveDialogOpen] = useState(false)
@@ -235,8 +259,19 @@ function App() {
   }, [])
 
   const handleSaveLocal = useCallback((name: string) => {
-    addFormula(name, code, { fallbackName: t('formulas.untitled') })
-  }, [code, t])
+    addFormula(name, code, {
+      fallbackName: t('formulas.untitled'),
+      simplifiedFormulaMode: settings.simplifiedFormulaMode,
+    })
+  }, [code, settings.simplifiedFormulaMode, t])
+
+  const handleLoadFormula = useCallback((formula: SavedFormula) => {
+    const loaded = adaptFormulaToMode(formula.content, formula.simplifiedFormulaMode, settings.simplifiedFormulaMode)
+    setCode(loaded.code)
+    if (loaded.simplifiedFormulaMode !== settings.simplifiedFormulaMode) {
+      setSettings(previous => ({ ...previous, simplifiedFormulaMode: loaded.simplifiedFormulaMode }))
+    }
+  }, [settings.simplifiedFormulaMode])
 
   useEffect(() => {
     writeStorageItem('typst-editor-settings', JSON.stringify(settings))
@@ -405,9 +440,15 @@ function App() {
                     svg={svg}
                     code={code}
                     pngScale={settings.pngScale}
-                    onDownloadPNG={() => svg && downloadPNG(svg, 'formula.png', settings.pngScale)}
-                    onDownloadJPG={() => svg && downloadJPG(svg, 'formula.jpg', settings.pngScale)}
-                    onDownloadSVG={() => svg && downloadSVG(svg)}
+                    onDownloadPNG={async () => {
+                      if (svg) await downloadPNG(svg, 'formula.png', settings.pngScale)
+                    }}
+                    onDownloadJPG={async () => {
+                      if (svg) await downloadJPG(svg, 'formula.jpg', settings.pngScale)
+                    }}
+                    onDownloadSVG={() => {
+                      if (svg) downloadSVG(svg)
+                    }}
                     onCopyPNG={() => {
                       if (!svg) return false
                       return copyPNGToClipboard(svg, settings.pngScale)
@@ -422,12 +463,10 @@ function App() {
                       if (!svg) return false
                       return copyToClipboard(buildFormulaImageHtml(svg))
                     }}
-                    onDownloadHTML={() => svg && downloadText(
-                      buildFormulaDocumentHtml(svg),
-                      'formula.html',
-                      'text/html'
-                    )}
-                    onCopyShareLink={() => copyToClipboard(generateShareUrl(code))}
+                    onDownloadHTML={() => {
+                      if (svg) downloadText(buildFormulaDocumentHtml(svg), 'formula.html', 'text/html')
+                    }}
+                    onCopyShareLink={() => copyToClipboard(generateShareUrl(code, settings.simplifiedFormulaMode))}
                   />
                 </div>
               </section>
@@ -437,7 +476,7 @@ function App() {
           <FormulasDialog
             open={formulasOpen}
             onOpenChange={setFormulasOpen}
-            onLoadFormula={setCode}
+            onLoadFormula={handleLoadFormula}
           />
 
           <SaveFormulaDialog

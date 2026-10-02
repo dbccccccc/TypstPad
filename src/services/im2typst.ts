@@ -1,3 +1,4 @@
+import { sha256Hex } from '../utils/sha256'
 import { prepareTypLensPixels, TYPLENS_PREPROCESSING } from './typlens-preprocess'
 
 const MODEL_RELEASE = 'typlens-v1.1-int8-f98216362a14'
@@ -205,8 +206,7 @@ async function verifyArtifact(bytes: Uint8Array, name: string, expected?: Artifa
   if (bytes.byteLength !== expected.bytes) {
     throw new Error(`${name} size mismatch: expected ${expected.bytes}, received ${bytes.byteLength}.`)
   }
-  const digest = await crypto.subtle.digest('SHA-256', new Uint8Array(bytes))
-  const hash = [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('')
+  const hash = await sha256Hex(bytes)
   if (hash !== expected.sha256) throw new Error(`${name} failed SHA-256 verification.`)
 }
 

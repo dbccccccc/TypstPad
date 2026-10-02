@@ -15,7 +15,7 @@ import { useI18n } from '@/i18n'
 interface FormulasDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onLoadFormula: (content: string) => void
+  onLoadFormula: (formula: SavedFormula) => void
 }
 
 function FormulasDialog({
@@ -36,8 +36,8 @@ function FormulasDialog({
     }
   }, [open, refreshFormulas])
 
-  const handleLoad = useCallback((content: string) => {
-    onLoadFormula(content)
+  const handleLoad = useCallback((formula: SavedFormula) => {
+    onLoadFormula(formula)
     onOpenChange(false)
   }, [onLoadFormula, onOpenChange])
 

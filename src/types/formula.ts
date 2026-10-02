@@ -4,6 +4,8 @@ export interface SavedFormula {
   content: string
   createdAt: number
   updatedAt: number
+  /** The formula mode the content was written in; undefined for older entries. */
+  simplifiedFormulaMode?: boolean
 }
 
 export interface FormulaStorage {

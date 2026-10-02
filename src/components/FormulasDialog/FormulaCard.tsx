@@ -6,7 +6,7 @@ import { useI18n } from '@/i18n'
 
 interface FormulaCardProps {
   formula: SavedFormula
-  onLoad: (content: string) => void
+  onLoad: (formula: SavedFormula) => void
   onDelete: (id: string) => void
   onRename: (id: string, newName: string) => void
 }
@@ -33,7 +33,7 @@ function FormulaCard({ formula, onLoad, onDelete, onRename }: FormulaCardProps) 
         <button
           type="button"
           className="min-w-0 flex-1 cursor-pointer rounded-sm border-0 bg-transparent p-0 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-          onClick={() => onLoad(formula.content)}
+          onClick={() => onLoad(formula)}
         >
           <h4 className="font-medium truncate">{formula.name}</h4>
           <p className="text-xs text-muted-foreground mt-1">
@@ -45,7 +45,7 @@ function FormulaCard({ formula, onLoad, onDelete, onRename }: FormulaCardProps) 
             variant="secondary"
             size="sm"
             className="h-7 gap-1 px-2"
-            onClick={() => onLoad(formula.content)}
+            onClick={() => onLoad(formula)}
           >
             <Download className="h-3.5 w-3.5" />
             {t('formulas.action.load')}

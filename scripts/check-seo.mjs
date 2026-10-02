@@ -14,6 +14,16 @@ const retiredGuides = ['/guides/typst-to-png-svg', '/guides/image-to-typst']
 const titles = new Set()
 const descriptions = new Set()
 
+// Nginx drops server-level add_header directives in any location that sets its
+// own, so every kind of response must still carry the shared headers.
+function assertSharedHeaders(response, label) {
+  assert.equal(response.headers.get('cross-origin-opener-policy'), 'same-origin', `${label}: COOP`)
+  assert.equal(response.headers.get('cross-origin-embedder-policy'), 'require-corp', `${label}: COEP`)
+  assert.match(response.headers.get('content-security-policy') ?? '', /default-src 'self'/, `${label}: CSP`)
+  assert.equal(response.headers.get('x-content-type-options'), 'nosniff', `${label}: nosniff`)
+  assert.ok(response.headers.get('referrer-policy'), `${label}: Referrer-Policy`)
+}
+
 function tags(html, tagName) {
   return [...html.matchAll(new RegExp(`<${tagName}\\b([^>]+)>`, 'g'))].map((match) =>
     Object.fromEntries([...match[1].matchAll(/([\w-]+)="([^"]*)"/g)].map((attribute) => [attribute[1], attribute[2].replace(/&amp;/g, '&')]))
@@ -96,14 +106,31 @@ if (values['base-url']) {
       await new Promise((resolve) => setTimeout(resolve, 250))
     }
   }
+  let entryScript
   for (const route of [...routes, '/about/', '/about/index.html', '/guide/', '/guide/index.html', '/?formula=eF4y']) {
     const response = await fetch(base + route)
     assert.equal(response.status, 200, `${route}: HTTP 200`)
     assert.match(response.headers.get('content-type') ?? '', /text\/html/)
-    assert.equal(response.headers.get('cross-origin-opener-policy'), 'same-origin')
-    assert.equal(response.headers.get('cross-origin-embedder-policy'), 'require-corp')
-    assert.match(await response.text(), /<h1\b/)
+    assertSharedHeaders(response, route)
+    assert.match(response.headers.get('cache-control') ?? '', /no-cache/, `${route}: revalidated after each deployment`)
+    const html = await response.text()
+    assert.match(html, /<h1\b/)
+    entryScript ??= tags(html, 'script').find((tag) => tag.src?.startsWith('/assets/'))?.src
   }
+  for (const script of ['/sw.js', '/theme-init.js']) {
+    const response = await fetch(base + script)
+    assert.equal(response.status, 200, `${script}: HTTP 200`)
+    assertSharedHeaders(response, script)
+    assert.match(response.headers.get('cache-control') ?? '', /no-cache/, `${script}: not cached long-term`)
+  }
+  assert.ok(entryScript, 'Pages load a fingerprinted script from /assets')
+  const asset = await fetch(base + entryScript, { method: 'HEAD', headers: { 'accept-encoding': 'br' } })
+  assert.equal(asset.status, 200, `${entryScript}: HTTP 200`)
+  assertSharedHeaders(asset, entryScript)
+  assert.match(asset.headers.get('cache-control') ?? '', /immutable/, `${entryScript}: long-term cache`)
+  // On-the-fly compression streams without a length; a precompressed file has one.
+  assert.equal(asset.headers.get('content-encoding'), 'br', `${entryScript}: Brotli`)
+  assert.ok(asset.headers.get('content-length'), `${entryScript}: served from the precompressed file`)
   for (const route of retiredGuides) {
     for (const suffix of ['', '/', '/index.html']) {
       const response = await fetch(base + route + suffix + '?source=old-guide', { redirect: 'manual' })

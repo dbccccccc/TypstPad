@@ -4,6 +4,7 @@ import {
   clearAllFormulas,
   deleteFormula,
   loadFormulaStorage,
+  preserveDraft,
   saveDraft,
   updateFormula,
 } from './storage'
@@ -67,6 +68,7 @@ describe('formula storage', () => {
         savedFormulas: [
           validFormula,
           { id: 'broken', name: 'Missing fields' },
+          { ...validFormula, id: 'bad-mode', simplifiedFormulaMode: 'yes' },
         ],
         version: 0,
       }),
@@ -114,6 +116,31 @@ describe('formula storage', () => {
       currentDraft: '$ x $',
       savedFormulas: [],
     })
+  })
+
+  it('records the formula mode a formula was saved in', () => {
+    expect(addFormula('Plain', '$ x $', { simplifiedFormulaMode: false })).toMatchObject({
+      simplifiedFormulaMode: false,
+    })
+    expect(loadFormulaStorage().savedFormulas[0].simplifiedFormulaMode).toBe(false)
+  })
+
+  it('keeps the draft in the collection before a shared formula replaces it', () => {
+    saveDraft('x^2 + y^2')
+
+    expect(preserveDraft('x^2', { simplifiedFormulaMode: true })).toMatchObject({
+      name: 'x^2 + y^2',
+      content: 'x^2 + y^2',
+      simplifiedFormulaMode: true,
+    })
+
+    // Drafts that are already saved, unchanged, or empty are not added again.
+    expect(preserveDraft('z')).toBeNull()
+    saveDraft('z')
+    expect(preserveDraft('z')).toBeNull()
+    saveDraft('  ')
+    expect(preserveDraft('z')).toBeNull()
+    expect(loadFormulaStorage().savedFormulas).toHaveLength(1)
   })
 
   it('falls back to getRandomValues when randomUUID is unavailable', () => {

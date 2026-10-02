@@ -79,7 +79,7 @@ export const messages = {
       exampleTitle: 'Try a formula example',
       exampleHelp: 'This sums the first n integers. Use / for a fraction and _ and ^ for the lower and upper limits.',
       troubleshootingTitle: 'If the export looks different',
-      troubleshooting: 'Check the formula mode and selected fonts. For a sharper PNG or JPG, increase export scale in Settings. Shared links do not carry custom fonts or editor settings.',
+      troubleshooting: 'Check the formula mode and selected fonts. For a sharper PNG or JPG, increase export scale in Settings. Shared links keep the formula mode but not custom fonts or other editor settings.',
     },
     image: {
       title: 'Turn a screenshot into Typst',
@@ -110,7 +110,7 @@ export const messages = {
       localTitle: 'Where are my formulas stored?',
       local: 'Drafts and saved formulas stay in this browser and do not sync across devices. Clearing site data removes them. Download a .typ backup for anything you want to keep.',
       sharingTitle: 'What does a shared link include?',
-      sharing: 'A link contains the current formula source. It does not include your collection, custom fonts, or editor settings. Check the preview when opening it in another browser.',
+      sharing: 'A link contains the current formula source and its formula mode. It does not include your collection, custom fonts, or other editor settings. Opening a link replaces the editor content and keeps your previous draft in your collection. Check the preview when opening it in another browser.',
     },
   },
   settings: {
@@ -233,6 +233,7 @@ export const messages = {
     },
     error: {
       copyFailed: 'Copy failed. Please check clipboard permissions and try again.',
+      downloadFailed: 'Export failed. Please try again.',
     },
   },
   formulas: {

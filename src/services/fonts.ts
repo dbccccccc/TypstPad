@@ -1,5 +1,7 @@
 import { createTypstFontBuilder } from '@myriaddreamin/typst.ts/compiler'
-import compilerWasm from '@myriaddreamin/typst-ts-web-compiler/pkg/typst_ts_web_compiler_bg.wasm?url'
+import { createRandomId } from '../utils/id'
+import { sha256Hex } from '../utils/sha256'
+import { getCompilerModule } from './typstWasm'
 
 export type FontCategory = 'text' | 'math' | 'mono'
 
@@ -281,7 +283,7 @@ async function getFontInfoBuilder() {
     fontInfoBuilderPromise = (async () => {
       const builder = createTypstFontBuilder()
       await builder.init({
-        getModule: () => WebAssembly.compileStreaming(fetch(compilerWasm))
+        getModule: () => getCompilerModule()
       })
       return builder
     })().catch((error) => {
@@ -308,24 +310,8 @@ async function extractFontMetadata(data: Uint8Array): Promise<{
   }
 }
 
-function fallbackFontFingerprint(bytes: Uint8Array): string {
-  let hash = 2166136261
-  for (const byte of bytes) {
-    hash ^= byte
-    hash = Math.imul(hash, 16777619)
-  }
-  const hex = (hash >>> 0).toString(16).padStart(8, '0')
-  return `${hex}-${bytes.length}`
-}
-
-async function createFontFingerprint(data: ArrayBuffer): Promise<string> {
-  if (crypto.subtle?.digest) {
-    const digest = await crypto.subtle.digest('SHA-256', data)
-    return Array.from(new Uint8Array(digest))
-      .map(value => value.toString(16).padStart(2, '0'))
-      .join('')
-  }
-  return fallbackFontFingerprint(new Uint8Array(data))
+function createFontFingerprint(data: ArrayBuffer): Promise<string> {
+  return sha256Hex(new Uint8Array(data))
 }
 
 async function ensureUploadedFontFingerprint(font: UploadedFont): Promise<string> {
@@ -411,7 +397,7 @@ export async function addUploadedFonts(files: File[]): Promise<UploadedFont[]> {
     const data = new Uint8Array(buffer)
     const meta = await extractFontMetadata(data)
     const font: UploadedFont = {
-      id: crypto.randomUUID(),
+      id: createRandomId(),
       fileName: file.name,
       family: meta.family,
       data: buffer,

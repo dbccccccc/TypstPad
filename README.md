@@ -2,7 +2,7 @@
 
 English · [简体中文](README.zh-CN.md)
 
-![Version](https://img.shields.io/badge/version-0.14.0-blue)
+![Version](https://img.shields.io/badge/version-0.15.0-blue)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 A browser workspace for writing, previewing, and sharing Typst formulas. Type a short expression, adapt a template, or recognize a printed formula from an image. Keep the source editable and export the result wherever you need it.
@@ -88,7 +88,7 @@ Use **Export Image** or **Export Code** to choose a format:
 
 Settings includes a 1×–4× export scale for raster images.
 
-**Share** creates a URL containing the formula source. Anyone with the link can read it. The link does not include your formula library, custom fonts, or settings; the recipient may need the same fonts and formula mode to reproduce the result.
+**Share** creates a URL containing the formula source and its formula mode, so it renders the same in Simplified Formula Mode and plain Typst mode. Anyone with the link can read it. The link does not include your formula library, custom fonts, or other settings; the recipient may need the same fonts to reproduce the result. Opening a link replaces the editor content and keeps the previous draft in your collection.
 
 ## Image to Typst · experimental
 
@@ -100,7 +100,7 @@ The model produces native Typst directly. Incomplete generation and invalid toke
 
 ## Local development
 
-Requires **Node.js 20 or newer** and npm.
+Requires **Node.js 22 or newer** and npm.
 
 ```bash
 git clone https://github.com/dbccccccc/TypstPad.git
@@ -135,6 +135,8 @@ docker run -d --name typstpad -p 8080:80 typstpad
 ```
 
 Open [http://localhost:8080](http://localhost:8080).
+
+The image build precompresses assets with maximum Brotli compression, which takes about two minutes. Add `--build-arg BROTLI_QUALITY=5` for a faster local build.
 
 To use a published build from GitHub Container Registry:
 
@@ -181,7 +183,7 @@ Cross-Origin-Opener-Policy: same-origin
 Cross-Origin-Embedder-Policy: require-corp
 ```
 
-The Vite development server and bundled [Nginx configuration](nginx.conf) already set these headers. Use HTTPS for a public deployment so browser clipboard and service-worker features are available.
+The Vite development server and bundled [Nginx configuration](nginx.conf) already set these headers. The Nginx configuration includes its shared response headers from [nginx-security-headers.conf](nginx-security-headers.conf); install that file at `/etc/nginx/snippets/typstpad-security-headers.conf` when using the configuration outside Docker. Use HTTPS for a public deployment so browser clipboard and service-worker features are available.
 
 Formula compilation and recognition run locally. The app still downloads required assets, and Typst package imports can fetch packages from `packages.typst.org`.
 

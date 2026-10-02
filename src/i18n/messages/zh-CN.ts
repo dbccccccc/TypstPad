@@ -81,7 +81,7 @@ const messages: MessageSchema = {
       exampleTitle: '试用一个公式示例',
       exampleHelp: '这个公式计算前 n 个正整数之和。用 / 表示分数，用 _ 和 ^ 添加求和的上下限。',
       troubleshootingTitle: '如果导出效果不同',
-      troubleshooting: '检查公式模式和所选字体。如果 PNG 或 JPG 不够清晰，可在设置中提高导出倍率。分享链接不会携带自定义字体或编辑器设置。',
+      troubleshooting: '检查公式模式和所选字体。如果 PNG 或 JPG 不够清晰，可在设置中提高导出倍率。分享链接会保留公式模式，但不会携带自定义字体或其他编辑器设置。',
     },
     image: {
       title: '将截图转换为 Typst',
@@ -112,7 +112,7 @@ const messages: MessageSchema = {
       localTitle: '公式保存在哪里？',
       local: '草稿和已保存公式留在当前浏览器中，不会跨设备同步。清除网站数据会删除它们，请为需要保留的内容下载 .typ 备份。',
       sharingTitle: '分享链接包含什么？',
-      sharing: '链接包含当前公式源码，不包含本地收藏、自定义字体或编辑器设置。在其他浏览器中打开时，请检查预览。',
+      sharing: '链接包含当前公式源码及其公式模式，不包含本地收藏、自定义字体或其他编辑器设置。打开链接会替换编辑器内容，之前的草稿会保留在收藏中。在其他浏览器中打开时，请检查预览。',
     },
   },
   settings: {
@@ -235,6 +235,7 @@ const messages: MessageSchema = {
     },
     error: {
       copyFailed: '复制失败。请检查剪贴板权限后重试。',
+      downloadFailed: '导出失败，请重试。',
     },
   },
   formulas: {

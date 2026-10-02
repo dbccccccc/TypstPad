@@ -24,7 +24,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
 
       - name: Install dependencies
@@ -53,7 +53,8 @@ jobs:
 
       - name: Check Nginx routing and headers
         run: |
-          docker build --build-arg BUILD_MODE=site -t typstpad-seo-check .
+          # Compression quality doesn't affect routing or headers; keep the check fast.
+          docker build --build-arg BUILD_MODE=site --build-arg BROTLI_QUALITY=5 -t typstpad-seo-check .
           docker run -d --name typstpad-seo-check -p 127.0.0.1:8080:80 typstpad-seo-check
           trap 'docker rm -f typstpad-seo-check' EXIT
           docker exec typstpad-seo-check nginx -t

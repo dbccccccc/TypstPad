@@ -1,9 +1,12 @@
 // Typst compilation service using typst.ts
 import { TypstSnippet } from '@myriaddreamin/typst.ts/contrib/snippet'
 import { loadFonts } from '@myriaddreamin/typst.ts/options.init'
-import compilerWasm from '@myriaddreamin/typst-ts-web-compiler/pkg/typst_ts_web_compiler_bg.wasm?url'
-import rendererWasm from '@myriaddreamin/typst-ts-renderer/pkg/typst_ts_renderer_bg.wasm?url'
+import { toFullTypst } from '../utils/formulaMode'
 import { getFontSources } from './fonts'
+import { extractDiagnostics, type DiagnosticInfo } from './typstDiagnostics'
+import { getCompilerModule, getRendererModule } from './typstWasm'
+
+export type { DiagnosticInfo }
 
 let typstInstance: TypstSnippet | null = null
 
@@ -23,12 +26,6 @@ const fontFetcher: typeof fetch = async (input, init) => {
   const cb = fontProgress.callback
   if (cb) cb(fontsLoaded, fontsTotal)
   return response
-}
-
-export interface DiagnosticInfo {
-  severity: 'error' | 'warning'
-  message: string
-  hints: string[]
 }
 
 export interface CompileResult {
@@ -88,43 +85,6 @@ function notifyLoadingProgress(
   }
 }
 
-// Fetch with progress tracking
-async function fetchWithProgress(url: string, phaseName: LoadingPhase, version: number): Promise<Response> {
-  const response = await fetch(url)
-  if (!response.ok) {
-    throw new Error(`Failed to fetch ${phaseName} (${response.status} ${response.statusText})`)
-  }
-
-  if (!response.body || !response.headers.get('content-length')) {
-    // Fallback if streaming not supported
-    return response
-  }
-
-  const contentLength = parseInt(response.headers.get('content-length') || '0', 10)
-  const reader = response.body.getReader()
-  const chunks: Uint8Array[] = []
-  let loaded = 0
-
-  while (true) {
-    const { done, value } = await reader.read()
-    if (done) break
-
-    chunks.push(value)
-    loaded += value.length
-
-    if (version === initVersion) {
-      notifyLoadingProgress({
-        phase: phaseName,
-        loaded,
-        total: contentLength
-      }, version)
-    }
-  }
-
-  const blob = new Blob(chunks as BlobPart[])
-  return new Response(blob, { headers: response.headers })
-}
-
 async function createTypstInstance(version: number) {
   const { urls, data } = await getFontSources()
   fontsTotal = urls.length + data.length
@@ -138,23 +98,24 @@ async function createTypstInstance(version: number) {
   })
   instance.use(TypstSnippet.fetchPackageRegistry())
   instance.setCompilerInitOptions({
-    getModule: () => {
-      const response = fetchWithProgress(compilerWasm, 'loadingCompiler', version)
-      return response.then(r => WebAssembly.compileStreaming(r))
-    },
+    getModule: () => getCompilerModule((loaded, total) => {
+      notifyLoadingProgress({ phase: 'loadingCompiler', loaded, total }, version)
+    }),
   })
   instance.setRendererInitOptions({
-    getModule: () => {
-      const response = fetchWithProgress(rendererWasm, 'loadingRenderer', version)
-      return response.then(r => WebAssembly.compileStreaming(r))
-    },
+    getModule: () => getRendererModule((loaded, total) => {
+      notifyLoadingProgress({ phase: 'loadingRenderer', loaded, total }, version)
+    }),
   })
   return instance
 }
 
 async function getTypstInstance(version = initVersion) {
   if (!typstInstance) {
-    typstInstance = await createTypstInstance(version)
+    const instance = await createTypstInstance(version)
+    // Fonts may have changed while the font list was loading; don't keep a stale instance.
+    if (version !== initVersion) return instance
+    typstInstance ??= instance
   }
   return typstInstance
 }
@@ -202,99 +163,6 @@ async function initializeTypst() {
   }
 }
 
-interface SourceDiagnostic {
-  severity?: string
-  message?: string
-  hints?: string[]
-}
-
-function parseRustDiagnosticString(str: string): DiagnosticInfo | null {
-  // Parse Rust debug format: SourceDiagnostic { message: "...", hints: [...] }
-  const messageMatch = str.match(/message:\s*"([^"]*(?:\\.[^"]*)*)"/)
-  if (!messageMatch) return null
-
-  const message = messageMatch[1].replace(/\\"/g, '"')
-  const hints: string[] = []
-
-  // Extract severity
-  const severityMatch = str.match(/severity:\s*(\w+)/)
-  const severity = severityMatch?.[1]?.toLowerCase() === 'warning' ? 'warning' : 'error'
-
-  // Extract hints array
-  const hintsMatch = str.match(/hints:\s*\[([\s\S]*?)\]\s*[}\]]/)
-  if (hintsMatch && hintsMatch[1].trim()) {
-    const hintsStr = hintsMatch[1]
-    // Regex that properly handles escaped quotes inside strings
-    const hintRegex = /"((?:[^"\\]|\\.)*)"/g
-    let match
-    while ((match = hintRegex.exec(hintsStr)) !== null) {
-      // Unescape the string: replace \" with " and \` with `
-      const hint = match[1]
-        .replace(/\\"/g, '"')
-        .replace(/\\`/g, '`')
-      hints.push(hint)
-    }
-  }
-
-  return { severity, message, hints }
-}
-
-function extractDiagnostics(error: unknown): DiagnosticInfo[] {
-  const errorStr = error instanceof Error ? error.message : String(error)
-
-  // Try to parse Rust SourceDiagnostic format
-  if (errorStr.includes('SourceDiagnostic')) {
-    const parsed = parseRustDiagnosticString(errorStr)
-    if (parsed) return [parsed]
-  }
-
-  // Handle JavaScript object formats
-  if (Array.isArray(error) && error.length > 0) {
-    const diagnostics = (error as SourceDiagnostic[])
-      .filter(d => d && typeof d === 'object' && d.message)
-      .map(d => {
-        const severity: 'error' | 'warning' = d.severity?.toLowerCase() === 'warning' ? 'warning' : 'error'
-        return {
-          severity,
-          message: d.message || '',
-          hints: d.hints || []
-        }
-      })
-    if (diagnostics.length > 0) return diagnostics
-  }
-
-  if (error && typeof error === 'object' && 'message' in error) {
-    const obj = error as SourceDiagnostic
-    if (obj.message) {
-      const severity: 'error' | 'warning' = obj.severity?.toLowerCase() === 'warning' ? 'warning' : 'error'
-      return [{
-        severity,
-        message: obj.message,
-        hints: obj.hints || []
-      }]
-    }
-  }
-
-  // Fallback: create a generic error diagnostic
-  return [{
-    severity: 'error',
-    message: errorStr,
-    hints: []
-  }]
-}
-
-// Helper function to apply simplified formula mode
-function applySimplifiedFormulaMode(code: string): string {
-  const trimmed = code.trim()
-
-  // In simplified mode, escape all $ symbols to treat them as literal text
-  // This allows users to type $ without it being interpreted as math delimiter
-  const escapedCode = trimmed.replace(/\$/g, '\\$')
-
-  // Wrap content in math mode
-  return `$ ${escapedCode} $`
-}
-
 export async function compileTypst(
   code: string,
   options?: {
@@ -306,11 +174,8 @@ export async function compileTypst(
     await preloadTypst()
     const typst = await getTypstInstance()
 
-    // Apply simplified formula mode if enabled
-    let processedCode = code
-    if (options?.simplifiedFormulaMode && code.trim()) {
-      processedCode = applySimplifiedFormulaMode(code)
-    }
+    // Simplified formula mode wraps the whole input in one display equation
+    const processedCode = options?.simplifiedFormulaMode ? toFullTypst(code) : code
 
     // Wrap code with page settings for auto-sized output
     const wrappedCode = `#set page(width: auto, height: auto, margin: 0.5em)

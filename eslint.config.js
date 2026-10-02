@@ -12,7 +12,6 @@ export default [
       '.vite/**',
       'public/monaco-editor/**',
       'public/im2typst/**',
-      'website-integration-kit/dist/**',
     ],
   },
   js.configs.recommended,
