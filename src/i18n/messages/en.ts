@@ -182,7 +182,7 @@ export const messages = {
       localBody: 'Drafts, saved formulas, preferences, and custom fonts stay in this browser. There is no account or cloud sync. Clearing site data can remove your work; export anything you need to keep.',
       processingTitle: 'Processed in your browser',
       processingBody: 'Typst compilation and TypLens image recognition run locally. Selected images are not uploaded for recognition. Sharing a formula puts its source in a URL that anyone with the link can read.',
-      network: 'The app downloads its fonts, compiler, and recognition assets as needed. Typst package imports may also fetch packages from packages.typst.org.',
+      network: 'The app downloads its fonts, compiler, and recognition assets as needed. Typst package imports may also fetch packages from packages.typst.org. On the official website, typstpad.com, Cloudflare Web Analytics counts visits and measures page load times without cookies.',
     },
     openSource: {
       title: 'Open source and built to be shared',

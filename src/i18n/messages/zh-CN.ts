@@ -184,7 +184,7 @@ const messages: MessageSchema = {
       localBody: '草稿、已保存公式、偏好设置和自定义字体保存在当前浏览器中，没有账号或云同步。清除网站数据可能删除这些内容，请导出需要保留的作品。',
       processingTitle: '在浏览器中处理',
       processingBody: 'Typst 编译和 TypLens 图片识别都在本地运行，所选图片不会被上传用于识别。分享公式会将源码放入网址，任何获得链接的人都能读取。',
-      network: '应用按需下载字体、编译器和识别资源。使用 Typst 包导入时，也可能从 packages.typst.org 获取包。',
+      network: '应用按需下载字体、编译器和识别资源。使用 Typst 包导入时，也可能从 packages.typst.org 获取包。官方网站 typstpad.com 使用 Cloudflare Web Analytics 统计访问量和页面加载时间，不使用 Cookie。',
     },
     openSource: {
       title: '开源，欢迎参与',

@@ -113,6 +113,8 @@ if (values['base-url']) {
     assert.match(response.headers.get('content-type') ?? '', /text\/html/)
     assertSharedHeaders(response, route)
     assert.match(response.headers.get('cache-control') ?? '', /no-cache/, `${route}: revalidated after each deployment`)
+    // Cloudflare injects its Web Analytics beacon into pages on typstpad.com.
+    assert.match(response.headers.get('content-security-policy') ?? '', /script-src [^;]*https:\/\/static\.cloudflareinsights\.com/, `${route}: CSP allows Cloudflare Web Analytics`)
     const html = await response.text()
     assert.match(html, /<h1\b/)
     entryScript ??= tags(html, 'script').find((tag) => tag.src?.startsWith('/assets/'))?.src

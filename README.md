@@ -2,7 +2,7 @@
 
 English · [简体中文](README.zh-CN.md)
 
-![Version](https://img.shields.io/badge/version-0.15.1-blue)
+![Version](https://img.shields.io/badge/version-0.15.2-blue)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 A browser workspace for writing, previewing, and sharing Typst formulas. Type a short expression, adapt a template, or recognize a printed formula from an image. Keep the source editable and export the result wherever you need it.
