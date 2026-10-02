@@ -2,7 +2,7 @@
 
 [English](README.md) · 简体中文
 
-![版本](https://img.shields.io/badge/version-0.15.0-blue)
+![版本](https://img.shields.io/badge/version-0.15.1-blue)
 [![许可证：MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 在浏览器中编写、预览和分享 Typst 公式。直接输入表达式、改写一个模板，或从印刷体公式图片开始。保留可编辑源码，再将排版结果带到需要的地方。

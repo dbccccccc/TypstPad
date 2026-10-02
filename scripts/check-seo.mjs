@@ -131,6 +131,15 @@ if (values['base-url']) {
   // On-the-fly compression streams without a length; a precompressed file has one.
   assert.equal(asset.headers.get('content-encoding'), 'br', `${entryScript}: Brotli`)
   assert.ok(asset.headers.get('content-length'), `${entryScript}: served from the precompressed file`)
+  // nginx's bundled MIME table lacks these; module scripts must have a JavaScript type.
+  for (const [file, type] of [
+    ['/im2typst/ort/ort-wasm-simd-threaded.mjs', /^text\/javascript/],
+    ['/im2typst/model/MODEL_CARD.md', /^text\/plain; charset=utf-8/],
+  ]) {
+    const response = await fetch(base + file, { method: 'HEAD' })
+    assert.equal(response.status, 200, `${file}: HTTP 200`)
+    assert.match(response.headers.get('content-type') ?? '', type, `${file}: content type`)
+  }
   for (const route of retiredGuides) {
     for (const suffix of ['', '/', '/index.html']) {
       const response = await fetch(base + route + suffix + '?source=old-guide', { redirect: 'manual' })
