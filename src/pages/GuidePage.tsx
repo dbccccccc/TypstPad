@@ -118,9 +118,9 @@ export default function GuidePage({ onNavigate }: { onNavigate?: (page: Navigabl
 
           <GuideDetails title={t('guides.export.formatsTitle')}>
             <dl className="space-y-3">
-              {(['png', 'svg', 'jpg', 'html', 'typst'] as const).map((format) => (
+              {(['png', 'svg', 'jpg', 'html', 'mathml', 'typst'] as const).map((format) => (
                 <div key={format} className="grid grid-cols-[3.5rem_1fr] gap-3">
-                  <dt className="font-medium text-foreground">{format === 'typst' ? '.typ' : format.toUpperCase()}</dt>
+                  <dt className="font-medium text-foreground">{format === 'typst' ? '.typ' : format === 'mathml' ? 'MathML' : format.toUpperCase()}</dt>
                   <dd>{t(`guides.export.${format}`)}</dd>
                 </div>
               ))}

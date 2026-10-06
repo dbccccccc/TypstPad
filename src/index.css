@@ -271,3 +271,9 @@ html, body {
 .monaco-editor-container .monaco-editor {
   animation: fadeIn 150ms ease-out;
 }
+
+/* Typlet spaces display formulas from running text; previews fit them exactly.
+   typlet.css is not in a cascade layer, so a Tailwind utility can't override it. */
+.typlet-formula .typlet-display {
+  margin: 0;
+}

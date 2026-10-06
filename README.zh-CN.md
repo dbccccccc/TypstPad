@@ -2,7 +2,7 @@
 
 [English](README.md) · 简体中文
 
-![版本](https://img.shields.io/badge/version-0.15.2-blue)
+![版本](https://img.shields.io/badge/version-0.16.0-blue)
 [![许可证：MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 在浏览器中编写、预览和分享 Typst 公式。直接输入表达式、改写一个模板，或从印刷体公式图片开始。保留可编辑源码，再将排版结果带到需要的地方。
@@ -11,13 +11,14 @@
 
 访问 **[typstpad.com](https://typstpad.com/)** 使用在线编辑器。[使用指南](https://typstpad.com/guide)涵盖公式导出、图片转 Typst、保存和分享。
 
-- **实时预览。** 使用 Monaco 编辑器，支持语法高亮和 Typst 自动补全。
+- **实时预览。** 使用 Monaco 编辑器，支持语法高亮和 Typst 自动补全。公式由 [Typlet](https://github.com/dbccccccc/Typlet) 即时渲染，无需下载编译器。
 - **快捷选择。** 在统一面板中搜索符号、结构、函数和模板。
 - **可编辑模板。** 覆盖方程、代数、微积分、线性代数、统计和概率，按 Tab 逐个填写占位内容。
-- **多种导出方式。** 复制 PNG 图片，或导出 PNG、JPG、SVG、HTML 和 Typst 源码。
+- **多种导出方式。** 复制 PNG 图片，或导出 PNG、JPG、SVG、HTML、MathML 和 Typst 源码。
 - **本地公式收藏。** 自动保存草稿，在浏览器中保存、加载、重命名和删除命名公式。
 - **图片转 Typst。** 通过实验性的 TypLens 模型，在本地识别单个印刷体公式。
-- **可调整的工作区。** 支持浅色、深色和跟随系统主题，中英文界面，上下或左右布局，以及内置和上传字体。
+- **按需使用旧版编译器。** 将渲染器切换为 typst.ts，即可渲染完整的 Typst 文档、使用 Typst 包以及内置和上传字体。
+- **可调整的工作区。** 支持浅色、深色和跟随系统主题，中英文界面，以及上下或左右布局。
 
 无需账号，也无需应用后端。
 
@@ -72,6 +73,17 @@ x &= y + z
 | Enter | 插入当前条目，或搜索时的首个结果 |
 | Esc | 关闭选择面板 |
 
+### 渲染器
+
+在预览上方选择渲染器，选择会保存在当前浏览器中。
+
+| 渲染器 | Typst 版本 | 工作方式 | 可渲染内容 |
+| --- | --- | --- | --- |
+| **Typlet**（默认） | 0.15.1 | [Typlet](https://github.com/dbccccccc/Typlet) 用 JavaScript 按 Typst 的方式排版数学公式，无需 WebAssembly 或编译器 | 公式，包括 `#let` 定义、`#set` 规则和样式 |
+| **typst.ts**（旧版） | 0.14.2 | [typst.ts](https://github.com/Myriad-Dreamin/typst.ts) 使用 WebAssembly 版 Typst 编译器编译文档，首次使用时下载 | 完整的 Typst 文档，包括 Typst 包和自定义字体 |
+
+在普通 Typst 模式下，Typlet 能渲染 `#let`、`#set` 等语句加上一个公式。对于包含文本、多个公式、show 规则、循环或 Typst 包的文档，Typlet 会说明无法渲染的原因，并提供切换到 typst.ts 的按钮。字体设置只作用于 typst.ts；Typlet 始终使用 Typst 默认的 New Computer Modern Math 字体。
+
 ## 保存、导出与分享
 
 当前草稿会自动保存在浏览器中。**保存**会添加一份命名副本，**加载**可将已保存的公式打开到编辑器。数据属于当前站点和浏览器配置文件，不会跨设备同步。需要长期保留的内容，请另外下载为 Typst 文件。
@@ -85,10 +97,14 @@ x &= y + z
 | SVG | 缩放后仍保持清晰的矢量图片 |
 | Typst（`.typ`） | 可继续编辑的公式源码 |
 | HTML | 内嵌公式图片的 HTML 片段或文件 |
+| MathML（Typlet） | 适用于网页和支持 MathML 的工具的公式标记 |
+| Typlet HTML（Typlet） | Typlet 自身的标记，并附带所需 Typlet 样式表的链接 |
 
 设置中可选择 1×–4× 的位图导出倍率。
 
-**分享**会生成包含公式源码及其公式模式的网址，因此无论对方使用简化公式模式还是普通 Typst 模式，显示结果都相同。任何获得链接的人都可以读取公式。链接不包含本地公式收藏、自定义字体或其他设置；如需重现相同结果，对方可能需要使用相同的字体。打开链接会替换编辑器内容，之前的草稿会保留在收藏中。
+使用 Typlet 时，图片导出基于 Typlet 的排版结果绘制，仍属实验功能。图片尺寸与 typst.ts 导出的图片一致：24pt 文字，每点一个像素。SVG 内嵌公式用到的 Typlet 字体子集，因此在浏览器中显示正确，但部分编辑器和办公软件无法正确显示。Typlet 以 MathML 绘制的公式（例如包含其字体缺少的文字）只能通过 typst.ts 导出。
+
+**分享**会生成包含公式源码及其公式模式的网址，因此无论对方使用简化公式模式还是普通 Typst 模式，显示结果都相同。任何获得链接的人都可以读取公式。链接不包含本地公式收藏、渲染器、自定义字体或其他设置；如需重现相同结果，对方可能需要使用相同的字体。打开链接会替换编辑器内容，之前的草稿会保留在收藏中。
 
 ## 图片转 Typst · 实验功能
 
@@ -185,7 +201,7 @@ Cross-Origin-Embedder-Policy: require-corp
 
 Vite 开发服务器和内置的 [Nginx 配置](nginx.conf)已经设置这些响应头。Nginx 配置从 [nginx-security-headers.conf](nginx-security-headers.conf) 引入共用响应头；在 Docker 之外使用该配置时，请将此文件放到 `/etc/nginx/snippets/typstpad-security-headers.conf`。公开部署时请使用 HTTPS，以便使用浏览器剪贴板和 Service Worker 等能力。
 
-公式编译与图片识别在本地运行，但应用仍需下载必要资源；使用 Typst 包导入时，也可能从 `packages.typst.org` 获取包。
+公式渲染与图片识别在本地运行，但应用仍需下载必要资源，选择 typst.ts 渲染器时还会下载 Typst 编译器；在该渲染器中使用 Typst 包导入时，也可能从 `packages.typst.org` 获取包。
 
 ### 网站元数据与验证
 
@@ -206,14 +222,14 @@ npm run test:seo -- --site-url https://typstpad.com
 | --- | --- |
 | `src/components/` | 编辑器、预览、快捷选择、导出及弹窗 |
 | `src/data/` | 符号、模板和补全数据 |
-| `src/services/` | Typst 编译和图片识别 |
+| `src/services/` | Typlet 渲染与导出、typst.ts 编译和图片识别 |
 | `src/utils/` | 本地存储、分享、导出和编辑器辅助功能 |
 | `src/i18n/` | 英文与简体中文界面文案 |
 | `src/pages/`、`src/navigation/` | 关于、指南、未找到页面及可抓取的导航 |
 | `src/seo/`、`scripts/build.mjs` | 页面元数据与静态 HTML、站点地图生成 |
 | `public/` | 字体、识别资源和静态资源缓存 |
 
-界面使用 React、TypeScript、Vite、Tailwind CSS、Radix UI 和 Lucide 图标；Monaco 与 Shiki 提供编辑和高亮能力，typst.ts 负责浏览器端编译。
+界面使用 React、TypeScript、Vite、Tailwind CSS、Radix UI 和 Lucide 图标；Monaco 与 Shiki 提供编辑和高亮能力，Typlet 负责公式渲染，typst.ts 提供旧版浏览器端编译器。
 
 ## 参与贡献
 
@@ -226,6 +242,7 @@ npm run test:seo -- --site-url https://typstpad.com
 TypstPad 源码采用 [MIT 许可证](LICENSE)。第三方依赖和模型资源保留各自的许可证与声明。
 
 - [Typst](https://typst.app/) 与 [typst.ts](https://github.com/Myriad-Dreamin/typst.ts)：数学排版与浏览器端编译。
+- [Typlet](https://github.com/dbccccccc/Typlet)：公式渲染，所附 New Computer Modern Math 字体采用 GUST 字体许可证。
 - [Monaco](https://microsoft.github.io/monaco-editor/) 与 [Shiki](https://shiki.matsu.io/)：编辑器与语法高亮。
 - [TypLens](https://github.com/dbccccccc/TypLens) 与 [ONNX Runtime](https://github.com/microsoft/onnxruntime)：图片转 Typst 识别。
 - [Radix UI](https://www.radix-ui.com/) 与 [Tailwind CSS](https://tailwindcss.com/)：界面基础组件与样式。

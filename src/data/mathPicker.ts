@@ -45,7 +45,7 @@ export const mathPickerGroups: MathPickerGroup[] = [
       { id: 'operators', name: 'Operators', icon: 'Plus', symbols: pickSymbols(['+', '-', 'times', 'div', 'plus.minus', 'minus.plus', 'dot', 'compose', 'infinity', '...']) },
       { id: 'relations', name: 'Relations', icon: 'Equal', symbols: pickSymbols(['=', '!=', '<', '>', '<=', '>=', '<<', '>>', 'approx', 'equiv', 'prop']) },
       ...categories(['greek']),
-      { id: 'sets', name: 'Sets & logic', icon: 'Braces', symbols: pickSymbols(['in', 'in.not', 'subset', 'supset', 'subset.eq', 'supset.eq', 'union', 'sect', 'emptyset', 'forall', 'exists', 'not', 'and', 'or', 'xor']) },
+      { id: 'sets', name: 'Sets & logic', icon: 'Braces', symbols: pickSymbols(['in', 'in.not', 'subset', 'supset', 'subset.eq', 'supset.eq', 'union', 'inter', 'emptyset', 'forall', 'exists', 'not', 'and', 'or', 'xor']) },
       ...categories(['arrows']),
     ],
   },

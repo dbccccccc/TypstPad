@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.16.0] - 2026-10-05
+
+### Added
+- **Typlet Renderer** - Render formulas with [Typlet](https://github.com/dbccccccc/Typlet), a JavaScript renderer of Typst math, by default; the preview and symbol picker appear without downloading the Typst compiler, and errors keep Typst's messages and hints
+- **Renderer Selector** - Choose Typlet or typst.ts (Legacy) above the preview; typst.ts, the previous renderer, is unchanged and downloads only when chosen, and Typlet offers it for documents it cannot render
+- **Plain Typst Mode with Typlet** - Render `#let` definitions, `#set` rules, and other statements followed by one equation
+- **MathML and Typlet HTML** - Copy a formula as MathML or as Typlet's HTML from Export Code when Typlet renders it
+- **Experimental Typlet Image Exports** - Export PNG, JPG, SVG, and HTML from Typlet's own layout, at the size of the typst.ts images
+
+### Changed
+- **Picker Symbols** - Use the symbol names that Typst 0.15 keeps, `inter`, `chevron.l`, and `chevron.r`, which also work in typst.ts
+- **Fonts** - Show the Fonts button with the typst.ts renderer, the only one that uses custom fonts
+
+### Fixed
+- **Big Operators** - The big union, intersection, direct sum, and tensor product picker entries insert the n-ary operators `union.big`, `inter.big`, `plus.o.big`, and `times.o.big` instead of the binary ones
+
 ## [0.15.2] - 2026-10-02
 
 ### Changed

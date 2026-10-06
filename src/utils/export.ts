@@ -1,10 +1,15 @@
 import { sanitizeSvgForXml } from './svg'
 
+/** An export failure whose message explains it to the user. */
+export class ExportError extends Error {
+  override name = 'ExportError'
+}
+
 // Some browsers, notably Safari, start the download after the click returns and
 // fail if its object URL has already been revoked.
 const REVOKE_URL_DELAY_MS = 40_000
 
-function downloadBlob(blob: Blob, filename: string) {
+export function downloadBlob(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url

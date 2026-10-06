@@ -13,6 +13,7 @@ const resources = [
   { id: 'github', icon: Github, href: 'https://github.com/dbccccccc/TypstPad' },
   { id: 'license', icon: ShieldCheck, href: 'https://github.com/dbccccccc/TypstPad/blob/main/LICENSE' },
   { id: 'typstDocs', icon: BookOpenText, href: 'https://typst.app/docs/' },
+  { id: 'typlet', icon: Github, href: 'https://github.com/dbccccccc/Typlet' },
   { id: 'im2typstModel', icon: ScanText, href: 'https://huggingface.co/dbcccc/TypLens' },
   { id: 'im2typstSource', icon: Github, href: 'https://github.com/dbccccccc/TypLens' },
 ] as const

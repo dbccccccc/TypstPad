@@ -3,14 +3,16 @@ import { mathPickerGroups, quickInsertSymbols } from '@/data/mathPicker'
 import type { MathSymbol } from '@/data/mathSymbols'
 import { MenuGroupProvider } from '@/components/ui/floating-menu'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import type { Renderer } from '@/components/SettingsDialog/SettingsDialog'
 import { useI18n } from '@/i18n'
 import { translateMathTooltip } from '@/i18n/mathTooltips'
 
 interface MathToolbarProps {
   onInsertSymbol: (symbol: MathSymbol) => void
+  renderer: Renderer
 }
 
-export default function MathToolbar({ onInsertSymbol }: MathToolbarProps) {
+export default function MathToolbar({ onInsertSymbol, renderer }: MathToolbarProps) {
   const { t, locale } = useI18n()
 
   return (
@@ -18,7 +20,7 @@ export default function MathToolbar({ onInsertSymbol }: MathToolbarProps) {
       <div className="border-b bg-muted/15">
         <div className="flex flex-wrap items-center gap-1 px-2 py-2 sm:px-3">
           {mathPickerGroups.map(group => (
-            <SymbolPanel key={group.id} group={group} onInsertSymbol={onInsertSymbol} />
+            <SymbolPanel key={group.id} group={group} onInsertSymbol={onInsertSymbol} renderer={renderer} />
           ))}
         </div>
         <div className="flex items-center gap-2 overflow-x-auto border-t border-border/60 px-3 py-1.5">

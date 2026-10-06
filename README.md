@@ -2,7 +2,7 @@
 
 English · [简体中文](README.zh-CN.md)
 
-![Version](https://img.shields.io/badge/version-0.15.2-blue)
+![Version](https://img.shields.io/badge/version-0.16.0-blue)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 A browser workspace for writing, previewing, and sharing Typst formulas. Type a short expression, adapt a template, or recognize a printed formula from an image. Keep the source editable and export the result wherever you need it.
@@ -11,13 +11,14 @@ Use the hosted editor at **[typstpad.com](https://typstpad.com/)**. The [Guide](
 
 ## At a glance
 
-- **Live preview.** Edit with Monaco, syntax highlighting, and Typst autocomplete.
+- **Live preview.** Edit with Monaco, syntax highlighting, and Typst autocomplete. Formulas render instantly with [Typlet](https://github.com/dbccccccc/Typlet), with no compiler to download.
 - **Quick selection.** Search symbols, structures, functions, and templates from one place.
 - **Editable templates.** Start with equations, algebra, calculus, linear algebra, statistics, or probability, then move through the fields with Tab.
-- **Practical exports.** Copy a PNG or export PNG, JPG, SVG, HTML, and Typst source.
+- **Practical exports.** Copy a PNG or export PNG, JPG, SVG, HTML, MathML, and Typst source.
 - **Local formula library.** Autosave a draft and save, load, rename, or delete named formulas in your browser.
 - **Image to Typst.** Recognize a single printed formula locally with the experimental TypLens model.
-- **An adjustable workspace.** Choose light, dark, or system theme; English or Simplified Chinese; stacked or side-by-side panels; and bundled or uploaded fonts.
+- **The legacy compiler on demand.** Switch the renderer to typst.ts for complete Typst documents, packages, and bundled or uploaded fonts.
+- **An adjustable workspace.** Choose light, dark, or system theme; English or Simplified Chinese; and stacked or side-by-side panels.
 
 No account or application backend is required.
 
@@ -72,6 +73,17 @@ After inserting a structure or template, replace the selected field and press **
 | Enter | Insert the focused item, or the first result when searching |
 | Esc | Close the picker |
 
+### Renderers
+
+Choose the renderer above the preview. The choice is remembered in this browser.
+
+| Renderer | Typst version | How it works | Renders |
+| --- | --- | --- | --- |
+| **Typlet** (default) | 0.15.1 | [Typlet](https://github.com/dbccccccc/Typlet) lays out Typst math in JavaScript, as Typst does, with no WebAssembly or compiler | Formulas, with `#let` definitions, `#set` rules, and styling |
+| **typst.ts** (Legacy) | 0.14.2 | [typst.ts](https://github.com/Myriad-Dreamin/typst.ts) compiles the document with the Typst compiler in WebAssembly, downloaded on first use | Complete Typst documents, including packages and custom fonts |
+
+In plain Typst mode, Typlet renders a preamble of statements such as `#let` and `#set` followed by a single equation. For documents with text, several equations, show rules, loops, or packages, Typlet explains what it cannot render and offers to switch to typst.ts. Fonts apply to typst.ts; Typlet always uses New Computer Modern Math, Typst's default.
+
 ## Save, export, and share
 
 The current draft is saved automatically in this browser. **Save** adds a named copy to your collection; **Load** opens a saved formula in the editor. Browser storage is local to the site and browser profile, with no cross-device sync. Download a Typst file for work you want to keep beyond browser storage.
@@ -85,10 +97,14 @@ Use **Export Image** or **Export Code** to choose a format:
 | SVG | A vector image that stays sharp when resized |
 | Typst (`.typ`) | Editable formula source |
 | HTML | An HTML snippet or file with the formula image embedded |
+| MathML (Typlet) | Formula markup for web pages and tools that read MathML |
+| Typlet HTML (Typlet) | Typlet's own markup, with a link to the Typlet stylesheet it needs |
 
 Settings includes a 1×–4× export scale for raster images.
 
-**Share** creates a URL containing the formula source and its formula mode, so it renders the same in Simplified Formula Mode and plain Typst mode. Anyone with the link can read it. The link does not include your formula library, custom fonts, or other settings; the recipient may need the same fonts to reproduce the result. Opening a link replaces the editor content and keeps the previous draft in your collection.
+With Typlet, image exports are drawn from Typlet's layout and are experimental. Images keep the size of typst.ts images: 24pt text with a pixel per point. SVG embeds the parts of Typlet's font that the formula uses, so it shows correctly in browsers but not in every editor or office application. A formula that Typlet draws as MathML, such as one with text in a script its font lacks, can only be exported with typst.ts.
+
+**Share** creates a URL containing the formula source and its formula mode, so it renders the same in Simplified Formula Mode and plain Typst mode. Anyone with the link can read it. The link does not include your formula library, renderer, custom fonts, or other settings; the recipient may need the same fonts to reproduce the result. Opening a link replaces the editor content and keeps the previous draft in your collection.
 
 ## Image to Typst · experimental
 
@@ -185,7 +201,7 @@ Cross-Origin-Embedder-Policy: require-corp
 
 The Vite development server and bundled [Nginx configuration](nginx.conf) already set these headers. The Nginx configuration includes its shared response headers from [nginx-security-headers.conf](nginx-security-headers.conf); install that file at `/etc/nginx/snippets/typstpad-security-headers.conf` when using the configuration outside Docker. Use HTTPS for a public deployment so browser clipboard and service-worker features are available.
 
-Formula compilation and recognition run locally. The app still downloads required assets, and Typst package imports can fetch packages from `packages.typst.org`.
+Formula rendering and recognition run locally. The app still downloads required assets, including the Typst compiler when the typst.ts renderer is chosen, and Typst package imports in that renderer can fetch packages from `packages.typst.org`.
 
 ### Website metadata and verification
 
@@ -206,14 +222,14 @@ After deploying the official build, verify the domain in Google Search Console, 
 | --- | --- |
 | `src/components/` | Editor, preview, quick selection, exports, and dialogs |
 | `src/data/` | Symbols, templates, and completion data |
-| `src/services/` | Typst compilation and image recognition |
+| `src/services/` | Typlet rendering and exports, typst.ts compilation, and image recognition |
 | `src/utils/` | Local storage, sharing, exports, and editor support |
 | `src/i18n/` | English and Simplified Chinese interface text |
 | `src/pages/`, `src/navigation/` | Guide, About, not-found page, and crawlable navigation |
 | `src/seo/`, `scripts/build.mjs` | Page metadata and static HTML/sitemap generation |
 | `public/` | Fonts, recognition assets, and asset caching |
 
-The interface uses React, TypeScript, Vite, Tailwind CSS, Radix UI, and Lucide icons. Monaco and Shiki provide editing and highlighting; typst.ts provides browser compilation.
+The interface uses React, TypeScript, Vite, Tailwind CSS, Radix UI, and Lucide icons. Monaco and Shiki provide editing and highlighting; Typlet renders formulas, and typst.ts provides the legacy browser compiler.
 
 ## Contributing
 
@@ -226,6 +242,7 @@ Run the checks relevant to your change. CI runs tests, lint, a dependency audit,
 TypstPad source is available under the [MIT license](LICENSE). Third-party libraries and model assets retain their own licenses and notices.
 
 - [Typst](https://typst.app/) and [typst.ts](https://github.com/Myriad-Dreamin/typst.ts) — typesetting and browser compilation.
+- [Typlet](https://github.com/dbccccccc/Typlet) — formula rendering, with New Computer Modern Math under the GUST Font License.
 - [Monaco](https://microsoft.github.io/monaco-editor/) and [Shiki](https://shiki.matsu.io/) — editing and syntax highlighting.
 - [TypLens](https://github.com/dbccccccc/TypLens) and [ONNX Runtime](https://github.com/microsoft/onnxruntime) — image-to-Typst recognition.
 - [Radix UI](https://www.radix-ui.com/) and [Tailwind CSS](https://tailwindcss.com/) — interface foundations.

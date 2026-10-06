@@ -18,6 +18,9 @@ import { Button } from '@/components/ui/button'
 import { Settings as SettingsIcon, Type, Download, RotateCcw, Calculator } from 'lucide-react'
 import { useI18n } from '@/i18n'
 
+/** Typlet renders formulas in JavaScript; typst.ts, the legacy renderer, compiles them with WebAssembly. */
+export type Renderer = 'typlet' | 'typst-ts'
+
 export interface Settings {
   fontSize: number
   showLineNumbers: boolean
@@ -27,6 +30,7 @@ export interface Settings {
   startupBehavior: 'lastEdit' | 'blank'
   enableAutoComplete: boolean
   layoutMode: 'vertical' | 'side-by-side'
+  renderer: Renderer
 }
 
 export const defaultSettings: Settings = {
@@ -38,6 +42,7 @@ export const defaultSettings: Settings = {
   startupBehavior: 'lastEdit',
   enableAutoComplete: true,
   layoutMode: 'vertical',
+  renderer: 'typlet',
 }
 
 interface SettingsDialogProps {

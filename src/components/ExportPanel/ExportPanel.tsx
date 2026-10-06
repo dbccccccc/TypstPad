@@ -16,9 +16,10 @@ import {
   Globe,
 } from 'lucide-react'
 import { useI18n } from '@/i18n'
+import { ExportError } from '@/utils/export'
 
 interface ExportPanelProps {
-  svg: string | null
+  disabled: boolean
   code: string
   pngScale: number
   onDownloadPNG: DownloadAction
@@ -31,6 +32,9 @@ interface ExportPanelProps {
   onCopyHTML: () => Promise<boolean> | boolean
   onDownloadHTML: DownloadAction
   onCopyShareLink: () => Promise<boolean> | boolean
+  /** Formats only the Typlet renderer offers. */
+  onCopyMathML?: CopyAction
+  onCopyTypletHTML?: CopyAction
 }
 
 type CopyAction = () => Promise<boolean> | boolean
@@ -96,7 +100,7 @@ const MenuContent = memo(function MenuContent({
 })
 
 export default function ExportPanel({
-  svg,
+  disabled: isDisabled,
   onDownloadPNG,
   onDownloadJPG,
   onDownloadSVG,
@@ -107,16 +111,21 @@ export default function ExportPanel({
   onCopyHTML,
   onDownloadHTML,
   onCopyShareLink,
+  onCopyMathML,
+  onCopyTypletHTML,
 }: ExportPanelProps) {
   const [copyState, setCopyState] = useState<CopyState>({})
-  const isDisabled = !svg
   const { t } = useI18n()
 
   const handleCopy = useCallback(async (key: string, action: CopyAction) => {
     let copied = false
     try {
       copied = (await action()) === true
-    } catch {
+    } catch (error) {
+      if (error instanceof ExportError) {
+        alert(error.message)
+        return
+      }
       copied = false
     }
 
@@ -135,6 +144,10 @@ export default function ExportPanel({
     try {
       await action()
     } catch (error) {
+      if (error instanceof ExportError) {
+        alert(error.message)
+        return
+      }
       console.error('Export failed:', error)
       alert(t('export.error.downloadFailed'))
     }
@@ -216,6 +229,22 @@ export default function ExportPanel({
           },
           showCheck: copyState['html-copy'],
         },
+        ...(onCopyMathML ? [{
+          icon: <FileCode className="h-4 w-4 text-emerald-500" />,
+          label: t('export.copy.mathml'),
+          onClick: () => {
+            void handleCopy('mathml-copy', onCopyMathML)
+          },
+          showCheck: copyState['mathml-copy'],
+        }] : []),
+        ...(onCopyTypletHTML ? [{
+          icon: <Globe className="h-4 w-4 text-emerald-500" />,
+          label: t('export.copy.typletHtml'),
+          onClick: () => {
+            void handleCopy('typlet-html-copy', onCopyTypletHTML)
+          },
+          showCheck: copyState['typlet-html-copy'],
+        }] : []),
       ],
     },
     {

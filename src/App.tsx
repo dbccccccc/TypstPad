@@ -1,10 +1,13 @@
-import { useState, useCallback, useEffect, useRef } from 'react'
+import { useState, useCallback, useDeferredValue, useEffect, useMemo, useRef } from 'react'
 import Editor, { EditorRef } from './components/Editor/Editor'
 import MathToolbar from './components/MathToolbar'
 import type { MathSymbol } from './data/mathSymbols'
 import Preview from './components/Preview/Preview'
+import TypletPreview from './components/TypletPreview/TypletPreview'
 import ExportPanel from './components/ExportPanel/ExportPanel'
-import SettingsDialog, { Settings, defaultSettings } from './components/SettingsDialog/SettingsDialog'
+import TypletExportPanel from './components/ExportPanel/TypletExportPanel'
+import RendererSelect from './components/RendererSelect/RendererSelect'
+import SettingsDialog, { Settings, defaultSettings, type Renderer } from './components/SettingsDialog/SettingsDialog'
 import Header from './components/Header/Header'
 import AboutPage from './pages/AboutPage'
 import NotFoundPage from './pages/NotFoundPage'
@@ -20,6 +23,7 @@ import SaveFormulaDialog from './components/FormulasDialog/SaveFormulaDialog'
 import FontManagerDialog from './components/FontManagerDialog'
 import ImageToTypstDialog from './components/ImageToTypstDialog'
 import { preloadTypst } from './services/typst'
+import { renderTyplet } from './services/typlet'
 import { recognitionToEditorCode } from './services/im2typst'
 import { Code, Image, Save as SaveIcon, FolderOpen, ScanText, Type } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -57,7 +61,11 @@ function loadSettingsFromStorage(): Settings {
   try {
     const parsed = JSON.parse(saved)
     if (!parsed || typeof parsed !== 'object') return defaultSettings
-    return { ...defaultSettings, ...(parsed as Partial<Settings>) }
+    const settings = { ...defaultSettings, ...(parsed as Partial<Settings>) }
+    if (settings.renderer !== 'typlet' && settings.renderer !== 'typst-ts') {
+      settings.renderer = defaultSettings.renderer
+    }
+    return settings
   } catch {
     return defaultSettings
   }
@@ -161,17 +169,36 @@ function App() {
     }
   }, [code])
 
-  // Start preloading WASM in background (non-blocking)
   useEffect(() => {
-    preloadTypst().catch((err) => {
-      console.error('Failed to preload typst:', err)
-    })
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').catch(() => {
         // The editor still works when caching is unavailable.
       })
     }
   }, [])
+
+  // Start preloading WASM in background (non-blocking). Only typst.ts, the legacy renderer, needs it.
+  useEffect(() => {
+    if (settings.renderer !== 'typst-ts') return
+    preloadTypst().catch((err) => {
+      console.error('Failed to preload typst:', err)
+    })
+  }, [settings.renderer])
+
+  // Typlet renders synchronously; a deferred value keeps typing responsive on long formulas.
+  const deferredCode = useDeferredValue(code)
+  const typletResult = useMemo(
+    () => (settings.renderer === 'typlet' ? renderTyplet(deferredCode, settings.simplifiedFormulaMode) : null),
+    [deferredCode, settings.renderer, settings.simplifiedFormulaMode]
+  )
+
+  const handleRendererChange = useCallback((renderer: Renderer) => {
+    // typst.ts compiles the current code again when it is chosen; drop its old output.
+    setSvg(null)
+    setSettings(previous => ({ ...previous, renderer }))
+  }, [])
+
+  const handleUseLegacyRenderer = useCallback(() => handleRendererChange('typst-ts'), [handleRendererChange])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -350,23 +377,26 @@ function App() {
                       <FolderOpen className="h-3.5 w-3.5" />
                       <span className="sr-only sm:not-sr-only">{t('common.load')}</span>
                     </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setFontManagerOpen(true)}
-                      className="h-7 gap-1 px-2 sm:gap-1.5 sm:px-2.5"
-                      aria-label={t('common.fonts')}
-                      title={t('common.fonts')}
-                    >
-                      <Type className="h-3.5 w-3.5" />
-                      <span className="sr-only sm:not-sr-only">{t('common.fonts')}</span>
-                    </Button>
+                    {/* Fonts apply to typst.ts; Typlet always uses New Computer Modern Math. */}
+                    {settings.renderer === 'typst-ts' && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setFontManagerOpen(true)}
+                        className="h-7 gap-1 px-2 sm:gap-1.5 sm:px-2.5"
+                        aria-label={t('common.fonts')}
+                        title={t('common.fonts')}
+                      >
+                        <Type className="h-3.5 w-3.5" />
+                        <span className="sr-only sm:not-sr-only">{t('common.fonts')}</span>
+                      </Button>
+                    )}
                   </div>
                 </div>
 
                 {/* Math Symbol Toolbar */}
                 <div className="relative z-10">
-                  <MathToolbar onInsertSymbol={handleInsertSymbol} />
+                  <MathToolbar onInsertSymbol={handleInsertSymbol} renderer={settings.renderer} />
                 </div>
 
                 {/* Editor */}
@@ -412,11 +442,12 @@ function App() {
                   ? 'lg:flex-1 lg:flex lg:flex-col lg:overflow-hidden'
                   : ''
               }`}>
-                <div className="flex items-center justify-between border-b bg-muted/50 px-3 py-2 sm:px-4 sm:py-3">
+                <div className="flex items-center justify-between gap-2 border-b bg-muted/50 px-3 py-2 sm:px-4 sm:py-3">
                   <h2 className="flex items-center gap-2 text-sm font-medium">
                     <Image className="h-4 w-4" />
                     {t('common.output')}
                   </h2>
+                  <RendererSelect value={settings.renderer} onChange={handleRendererChange} />
                 </div>
 
                 <div className={`flex items-center justify-center bg-white p-4 sm:p-8 ${
@@ -426,48 +457,63 @@ function App() {
                     ? 'lg:flex-1 lg:overflow-auto'
                     : 'min-h-[240px] sm:min-h-[300px]'
                 }`}>
-                  <Preview
-                    code={code}
-                    onCompiled={handleCompiled}
-                    simplifiedFormulaMode={settings.simplifiedFormulaMode}
-                    fontRevision={fontRevision}
-                  />
+                  {typletResult ? (
+                    <TypletPreview result={typletResult} onUseLegacy={handleUseLegacyRenderer} />
+                  ) : (
+                    <Preview
+                      code={code}
+                      onCompiled={handleCompiled}
+                      simplifiedFormulaMode={settings.simplifiedFormulaMode}
+                      fontRevision={fontRevision}
+                    />
+                  )}
                 </div>
 
                 {/* Export buttons */}
                 <div className="flex flex-wrap justify-start gap-1.5 border-t px-3 py-2 sm:justify-end sm:gap-2 sm:px-4 sm:py-3">
-                  <ExportPanel
-                    svg={svg}
-                    code={code}
-                    pngScale={settings.pngScale}
-                    onDownloadPNG={async () => {
-                      if (svg) await downloadPNG(svg, 'formula.png', settings.pngScale)
-                    }}
-                    onDownloadJPG={async () => {
-                      if (svg) await downloadJPG(svg, 'formula.jpg', settings.pngScale)
-                    }}
-                    onDownloadSVG={() => {
-                      if (svg) downloadSVG(svg)
-                    }}
-                    onCopyPNG={() => {
-                      if (!svg) return false
-                      return copyPNGToClipboard(svg, settings.pngScale)
-                    }}
-                    onCopyTypst={() => copyToClipboard(code)}
-                    onDownloadTypst={() => downloadText(code, 'formula.typ')}
-                    onCopySVG={() => {
-                      if (!svg) return false
-                      return copyToClipboard(svg)
-                    }}
-                    onCopyHTML={() => {
-                      if (!svg) return false
-                      return copyToClipboard(buildFormulaImageHtml(svg))
-                    }}
-                    onDownloadHTML={() => {
-                      if (svg) downloadText(buildFormulaDocumentHtml(svg), 'formula.html', 'text/html')
-                    }}
-                    onCopyShareLink={() => copyToClipboard(generateShareUrl(code, settings.simplifiedFormulaMode))}
-                  />
+                  {typletResult ? (
+                    <TypletExportPanel
+                      result={typletResult}
+                      code={code}
+                      simplifiedFormulaMode={settings.simplifiedFormulaMode}
+                      pngScale={settings.pngScale}
+                      buildFormulaImageHtml={buildFormulaImageHtml}
+                      buildFormulaDocumentHtml={buildFormulaDocumentHtml}
+                    />
+                  ) : (
+                    <ExportPanel
+                      disabled={!svg}
+                      code={code}
+                      pngScale={settings.pngScale}
+                      onDownloadPNG={async () => {
+                        if (svg) await downloadPNG(svg, 'formula.png', settings.pngScale)
+                      }}
+                      onDownloadJPG={async () => {
+                        if (svg) await downloadJPG(svg, 'formula.jpg', settings.pngScale)
+                      }}
+                      onDownloadSVG={() => {
+                        if (svg) downloadSVG(svg)
+                      }}
+                      onCopyPNG={() => {
+                        if (!svg) return false
+                        return copyPNGToClipboard(svg, settings.pngScale)
+                      }}
+                      onCopyTypst={() => copyToClipboard(code)}
+                      onDownloadTypst={() => downloadText(code, 'formula.typ')}
+                      onCopySVG={() => {
+                        if (!svg) return false
+                        return copyToClipboard(svg)
+                      }}
+                      onCopyHTML={() => {
+                        if (!svg) return false
+                        return copyToClipboard(buildFormulaImageHtml(svg))
+                      }}
+                      onDownloadHTML={() => {
+                        if (svg) downloadText(buildFormulaDocumentHtml(svg), 'formula.html', 'text/html')
+                      }}
+                      onCopyShareLink={() => copyToClipboard(generateShareUrl(code, settings.simplifiedFormulaMode))}
+                    />
+                  )}
                 </div>
               </section>
             </div>

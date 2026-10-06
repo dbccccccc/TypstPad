@@ -1,6 +1,6 @@
 {
   "name": "typstpad",
-  "version": "0.15.2",
+  "version": "0.16.0",
   "type": "module",
   "description": "A simple and elegant online Typst formula editor with real-time preview",
   "engines": {
@@ -34,7 +34,8 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "shiki": "^3.21.0",
-    "tailwind-merge": "^3.4.0"
+    "tailwind-merge": "^3.4.0",
+    "typlet": "^0.1.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",

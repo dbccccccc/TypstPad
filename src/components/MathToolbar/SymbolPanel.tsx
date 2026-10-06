@@ -5,7 +5,9 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { FloatingMenu, useMenuGroup } from '@/components/ui/floating-menu'
 import type { MathSymbol } from '@/data/mathSymbols'
 import { mathPickerGroups, type MathPickerGroup } from '@/data/mathPicker'
+import type { Renderer } from '@/components/SettingsDialog/SettingsDialog'
 import SymbolPreview from './SymbolPreview'
+import TypletSymbolPreview from './TypletSymbolPreview'
 import { useI18n } from '@/i18n'
 import { translateMathTooltip } from '@/i18n/mathTooltips'
 
@@ -14,9 +16,10 @@ const groupIcons = { symbols: Sigma, structures: Brackets, functions: ArrowRight
 interface SymbolPanelProps {
   group: MathPickerGroup
   onInsertSymbol: (symbol: MathSymbol) => void
+  renderer: Renderer
 }
 
-export default function SymbolPanel({ group, onInsertSymbol }: SymbolPanelProps) {
+export default function SymbolPanel({ group, onInsertSymbol, renderer }: SymbolPanelProps) {
   const { t, locale } = useI18n()
   const { closeMenu } = useMenuGroup()
   const [query, setQuery] = useState('')
@@ -174,7 +177,11 @@ export default function SymbolPanel({ group, onInsertSymbol }: SymbolPanelProps)
                                 )}
                               >
                                 <span className={cn('flex w-full min-w-0 items-center justify-center overflow-hidden', showGlyph ? 'h-8 font-serif text-2xl' : showTemplate ? 'h-20 px-2 [&_img]:max-h-20' : 'h-12 [&_img]:max-h-12')}>
-                                  {showGlyph ? symbol.display : <SymbolPreview code={symbol.code} fallback={symbol.display} />}
+                                  {showGlyph
+                                    ? symbol.display
+                                    : renderer === 'typlet'
+                                      ? <TypletSymbolPreview code={symbol.code} fallback={symbol.display} />
+                                      : <SymbolPreview code={symbol.code} fallback={symbol.display} />}
                                 </span>
                                 <span className={cn('w-full truncate text-center text-muted-foreground group-hover:text-foreground', showTemplate ? 'text-xs font-medium' : 'text-[10px]')}>
                                   {title}
