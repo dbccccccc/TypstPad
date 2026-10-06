@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - **Picker Symbols** - Use the symbol names that Typst 0.15 keeps, `inter`, `chevron.l`, and `chevron.r`, which also work in typst.ts
 - **Fonts** - Show the Fonts button with the typst.ts renderer, the only one that uses custom fonts
+- **Dependencies** - Update source-map-js to fix a security advisory
 
 ### Fixed
 - **Big Operators** - The big union, intersection, direct sum, and tensor product picker entries insert the n-ary operators `union.big`, `inter.big`, `plus.o.big`, and `times.o.big` instead of the binary ones
