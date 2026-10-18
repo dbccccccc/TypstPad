@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- **Cloudflare Workers Deployment** - Build and deploy the official website to Cloudflare Workers static assets with `npm run build:cloudflare` and Wrangler, with the same routes, redirects, and response headers as the Nginx image; releases deploy to typstpad.com after validation
+- **Split Typst Compiler** - Store the 28 MB Typst compiler as parts under Cloudflare's 25 MiB asset limit, joined into one file by a Worker that runs only for that URL
+
 ## [0.16.0] - 2026-10-05
 
 ### Added

@@ -45,3 +45,6 @@ coverage
 *.test.tsx
 *.spec.ts
 *.spec.tsx
+
+# Wrangler
+.wrangler

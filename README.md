@@ -132,12 +132,14 @@ Open the local URL printed by Vite, usually [http://localhost:5173](http://local
 | `npm run dev` | Start the development server |
 | `npm run build` | Type-check, build, and pre-render domain-neutral production files into `dist/` |
 | `npm run build:site` | Build the official typstpad.com website |
+| `npm run build:cloudflare` | Build the official website and prepare `dist/` for Cloudflare Workers |
+| `npm run wrangler` | Run the pinned Wrangler CLI for Cloudflare |
 | `npm run preview` | Preview the production build locally |
 | `npm test` | Run the existing Vitest tests |
 | `npm run lint` | Run ESLint |
 | `npm run test:seo` | Check a domain-neutral build's HTML, metadata, routes, and indexing files |
 
-The editor, Guide, and About page are available at `/`, `/guide`, and `/about`. These pages are pre-rendered from the same React components used by the browser. Informational pages do not load Monaco or the Typst compiler on a direct visit. The previous export and image guide URLs permanently redirect to `/guide` in Vite and Nginx.
+The editor, Guide, and About page are available at `/`, `/guide`, and `/about`. These pages are pre-rendered from the same React components used by the browser. Informational pages do not load Monaco or the Typst compiler on a direct visit. The previous export and image guide URLs permanently redirect to `/guide` in Vite, Nginx, and Cloudflare.
 
 ## Deployment
 
@@ -190,6 +192,22 @@ services:
 
 Then run `docker compose up -d`.
 
+### Cloudflare Workers
+
+The official website runs on Cloudflare Workers static assets. [wrangler.jsonc](wrangler.jsonc) serves `dist/` with the same routes, redirects, and response headers as the Nginx image: `scripts/prepare-cloudflare.mjs` generates `_headers` from [nginx-security-headers.conf](nginx-security-headers.conf) and copies [cloudflare/_redirects](cloudflare/_redirects).
+
+Workers accept assets of up to 25 MiB, so the build splits the 28 MB Typst compiler into parts. [cloudflare/worker.js](cloudflare/worker.js) runs only for the compiler's URL and streams the parts back as one file. Every other request is served without running Worker code, which keeps the site within the Workers Free plan.
+
+```bash
+npm run build:cloudflare
+npm run wrangler -- dev     # http://localhost:8787
+npm run wrangler -- deploy  # typstpad.com
+```
+
+Sign in with `npm run wrangler -- login`, or set `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`. The production deployment adds Worker routes for `typstpad.com/*` and `www.typstpad.com/*` on the zone's existing proxied DNS records; removing the routes sends traffic back to the origin those records point to. For another domain, change `routes` and build with its `SITE_URL`.
+
+After validation, published releases deploy to typstpad.com through the [Cloudflare deploy workflow](.github/workflows/cloudflare-deploy.yml). It needs the `CLOUDFLARE_API_TOKEN` repository secret, created from the *Edit Cloudflare Workers* token template, and `CLOUDFLARE_ACCOUNT_ID`. Run the workflow manually to redeploy the current branch.
+
 ### Static hosting
 
 Serve the complete `dist/` output, including nested page directories, bundled fonts, and recognition assets. Resolve `/about` to `/about/index.html` and `/guide` to `/guide/index.html`. Configure HTTP **301** redirects from `/guides/typst-to-png-svg` and `/guides/image-to-typst` (including trailing-slash and `/index.html` variants) to `/guide`; the build includes instant HTML redirects as a fallback for static hosts. Unknown paths must return HTTP **404**; use `404.html` as the error body while preserving that status. Do not fall back to the homepage for unknown paths. Include these cross-origin isolation headers:
@@ -212,7 +230,7 @@ npm run build:site
 npm run test:seo -- --site-url https://typstpad.com
 ```
 
-For a custom domain, pass that same origin to `test:seo`. Add `--noindex` when testing a build with indexing disabled. CI verifies both variants and checks real HTTP responses from the Docker image, including missing paths and the cross-origin isolation headers.
+For a custom domain, pass that same origin to `test:seo`. Add `--noindex` when testing a build with indexing disabled. CI verifies both variants and checks real HTTP responses from the Docker image and from `wrangler dev` (`--server cloudflare`), including missing paths and the cross-origin isolation headers.
 
 After deploying the official build, verify the domain in Google Search Console, submit `https://typstpad.com/sitemap.xml`, and inspect the rendered homepage, Guide, and About page. Track impressions and clicks by page and search query. Shared formula query strings are not sitemap entries; the editor's canonical stays `/`.
 
@@ -228,6 +246,7 @@ After deploying the official build, verify the domain in Google Search Console, 
 | `src/pages/`, `src/navigation/` | Guide, About, not-found page, and crawlable navigation |
 | `src/seo/`, `scripts/build.mjs` | Page metadata and static HTML/sitemap generation |
 | `public/` | Fonts, recognition assets, and asset caching |
+| `cloudflare/`, `wrangler.jsonc` | Cloudflare Workers deployment of the official website |
 
 The interface uses React, TypeScript, Vite, Tailwind CSS, Radix UI, and Lucide icons. Monaco and Shiki provide editing and highlighting; Typlet renders formulas, and typst.ts provides the legacy browser compiler.
 

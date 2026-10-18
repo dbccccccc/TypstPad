@@ -132,12 +132,14 @@ npm run dev
 | `npm run dev` | 启动开发服务器 |
 | `npm run build` | 检查类型、构建并预渲染不绑定域名的生产文件到 `dist/` |
 | `npm run build:site` | 构建 typstpad.com 官方网站版本 |
+| `npm run build:cloudflare` | 构建官方网站，并将 `dist/` 整理为 Cloudflare Workers 可部署的形式 |
+| `npm run wrangler` | 运行固定版本的 Cloudflare Wrangler 命令行工具 |
 | `npm run preview` | 在本地预览生产构建 |
 | `npm test` | 运行现有 Vitest 测试 |
 | `npm run lint` | 运行 ESLint |
 | `npm run test:seo` | 检查不绑定域名构建的 HTML、元数据、路由和索引文件 |
 
-编辑器、使用指南与关于页面分别位于 `/`、`/guide` 和 `/about`。这些页面使用与浏览器相同的 React 组件进行预渲染。直接访问介绍和指南页面时，不会加载 Monaco 或 Typst 编译器。Vite 和 Nginx 会将原来的导出指南与图片识别指南网址永久重定向到 `/guide`。
+编辑器、使用指南与关于页面分别位于 `/`、`/guide` 和 `/about`。这些页面使用与浏览器相同的 React 组件进行预渲染。直接访问介绍和指南页面时，不会加载 Monaco 或 Typst 编译器。Vite、Nginx 和 Cloudflare 会将原来的导出指南与图片识别指南网址永久重定向到 `/guide`。
 
 ## 部署
 
@@ -190,6 +192,22 @@ services:
 
 然后运行 `docker compose up -d`。
 
+### Cloudflare Workers
+
+官方网站运行在 Cloudflare Workers 静态资源上。[wrangler.jsonc](wrangler.jsonc) 以与 Nginx 镜像相同的路由、重定向和响应头托管 `dist/`：`scripts/prepare-cloudflare.mjs` 根据 [nginx-security-headers.conf](nginx-security-headers.conf) 生成 `_headers`，并复制 [cloudflare/_redirects](cloudflare/_redirects)。
+
+Workers 单个静态资源最大为 25 MiB，因此构建时会将 28 MB 的 Typst 编译器拆分为多个部分。[cloudflare/worker.js](cloudflare/worker.js) 只处理编译器的网址，将各部分按顺序拼接后以单个文件返回。其他请求均直接返回静态资源，不运行 Worker 代码，因此网站可在 Workers 免费计划内运行。
+
+```bash
+npm run build:cloudflare
+npm run wrangler -- dev     # http://localhost:8787
+npm run wrangler -- deploy  # typstpad.com
+```
+
+使用 `npm run wrangler -- login` 登录，或设置 `CLOUDFLARE_API_TOKEN` 和 `CLOUDFLARE_ACCOUNT_ID`。正式部署会在该域名已有的代理 DNS 记录上添加 `typstpad.com/*` 和 `www.typstpad.com/*` 的 Worker 路由；删除这些路由后，流量会回到 DNS 记录指向的源站。使用其他域名时，请修改 `routes`，并以对应的 `SITE_URL` 构建。
+
+GitHub Release 发布并通过验证后，[Cloudflare 部署工作流](.github/workflows/cloudflare-deploy.yml)会将其部署到 typstpad.com。该工作流需要仓库密钥 `CLOUDFLARE_API_TOKEN`（使用 *Edit Cloudflare Workers* 令牌模板创建）和 `CLOUDFLARE_ACCOUNT_ID`。也可手动运行该工作流，重新部署当前分支。
+
 ### 静态托管
 
 托管完整的 `dist/` 输出，包括页面子目录、内置字体和识别资源。将 `/about` 解析为 `/about/index.html`，将 `/guide` 解析为 `/guide/index.html`。为 `/guides/typst-to-png-svg` 和 `/guides/image-to-typst`（含结尾斜杠及 `/index.html` 形式）配置到 `/guide` 的 HTTP **301** 重定向；构建也包含即时 HTML 重定向，供静态托管回退使用。未知路径必须返回 HTTP **404**，可使用 `404.html` 作为错误页面，但需保留 404 状态码。请勿将未知路径回退到首页。添加以下跨源隔离响应头：
@@ -212,7 +230,7 @@ npm run build:site
 npm run test:seo -- --site-url https://typstpad.com
 ```
 
-自定义域名请向 `test:seo` 传入相同的地址。关闭索引的构建需额外添加 `--noindex`。CI 会验证两种构建，并通过 Docker 检查实际 HTTP 响应，包括未知路径及跨源隔离响应头。
+自定义域名请向 `test:seo` 传入相同的地址。关闭索引的构建需额外添加 `--noindex`。CI 会验证两种构建，并通过 Docker 镜像和 `wrangler dev`（`--server cloudflare`）检查实际 HTTP 响应，包括未知路径及跨源隔离响应头。
 
 部署官方网站后，在 Google Search Console 中验证域名，提交 `https://typstpad.com/sitemap.xml`，并检查首页、关于页面和指南的渲染结果。按页面和搜索词观察展示次数与点击次数。分享公式的查询参数不会加入站点地图，编辑器的规范网址保持为 `/`。
 
@@ -228,6 +246,7 @@ npm run test:seo -- --site-url https://typstpad.com
 | `src/pages/`、`src/navigation/` | 关于、指南、未找到页面及可抓取的导航 |
 | `src/seo/`、`scripts/build.mjs` | 页面元数据与静态 HTML、站点地图生成 |
 | `public/` | 字体、识别资源和静态资源缓存 |
+| `cloudflare/`、`wrangler.jsonc` | 官方网站的 Cloudflare Workers 部署 |
 
 界面使用 React、TypeScript、Vite、Tailwind CSS、Radix UI 和 Lucide 图标；Monaco 与 Shiki 提供编辑和高亮能力，Typlet 负责公式渲染，typst.ts 提供旧版浏览器端编译器。
 

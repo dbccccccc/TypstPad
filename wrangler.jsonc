@@ -1,0 +1,25 @@
+// Cloudflare Workers deployment of the official website. Build with
+// `npm run build:cloudflare`, then deploy with `npm run wrangler -- deploy`.
+{
+  "name": "typstpad",
+  "compatibility_date": "2026-09-30",
+  // Joins files that scripts/prepare-cloudflare.mjs split; nothing else runs it.
+  "main": "cloudflare/worker.js",
+  "assets": {
+    "directory": "dist",
+    "binding": "ASSETS",
+    // Serve /guide from guide/index.html, matching the canonical URLs.
+    "html_handling": "drop-trailing-slash",
+    "not_found_handling": "404-page",
+    // Keep in sync with SPLIT_FILES in scripts/prepare-cloudflare.mjs.
+    "run_worker_first": ["/assets/typst_ts_web_compiler_bg-*.wasm"]
+  },
+  // Routes on the existing proxied DNS records: removing them sends traffic
+  // back to the previous origin server.
+  "routes": [
+    { "pattern": "typstpad.com/*", "zone_name": "typstpad.com" },
+    { "pattern": "www.typstpad.com/*", "zone_name": "typstpad.com" }
+  ],
+  "workers_dev": false,
+  "preview_urls": false
+}

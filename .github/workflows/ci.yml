@@ -8,7 +8,9 @@ on:
   workflow_call:
 
 concurrency:
-  group: ci-${{ github.ref }}
+  # Release workflows call this one with the same ref; github.workflow names the
+  # caller, so they do not cancel each other.
+  group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -59,3 +61,13 @@ jobs:
           trap 'docker rm -f typstpad-seo-check' EXIT
           docker exec typstpad-seo-check nginx -t
           npm run test:seo -- --site-url https://typstpad.com --base-url http://127.0.0.1:8080
+
+      - name: Check Cloudflare routing and headers
+        env:
+          WRANGLER_SEND_METRICS: 'false'
+        run: |
+          # Turns the official website build above into the Cloudflare upload.
+          node scripts/prepare-cloudflare.mjs
+          npm run wrangler -- dev --port 8787 --ip 127.0.0.1 --show-interactive-dev-session=false > wrangler.log 2>&1 &
+          trap 'status=$?; kill $! 2>/dev/null; [ "$status" -eq 0 ] || cat wrangler.log' EXIT
+          npm run test:seo -- --site-url https://typstpad.com --base-url http://127.0.0.1:8787 --server cloudflare

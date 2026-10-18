@@ -1,0 +1,7 @@
+# Preserve links to the guides consolidated into /guide (see nginx.conf).
+/guides/typst-to-png-svg /guide 301
+/guides/typst-to-png-svg/ /guide 301
+/guides/typst-to-png-svg/index.html /guide 301
+/guides/image-to-typst /guide 301
+/guides/image-to-typst/ /guide 301
+/guides/image-to-typst/index.html /guide 301

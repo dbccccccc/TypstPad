@@ -10,6 +10,7 @@ export default [
       'dist/**',
       'node_modules/**',
       '.vite/**',
+      '.wrangler/**',
       'public/monaco-editor/**',
       'public/im2typst/**',
     ],
@@ -36,6 +37,12 @@ export default [
     files: ['public/sw.js'],
     languageOptions: {
       globals: globals.serviceworker,
+    },
+  },
+  {
+    files: ['cloudflare/**/*.js'],
+    languageOptions: {
+      globals: { FixedLengthStream: 'readonly' },
     },
   },
   {

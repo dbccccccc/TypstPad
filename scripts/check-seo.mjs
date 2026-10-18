@@ -1,14 +1,18 @@
 import assert from 'node:assert/strict'
-import { access, readFile } from 'node:fs/promises'
+import { access, readdir, readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { parseArgs } from 'node:util'
 
 const { values } = parseArgs({ options: {
   'site-url': { type: 'string', default: '' },
   'base-url': { type: 'string' },
+  // The server at --base-url: the Docker image, or `wrangler dev` after build:cloudflare.
+  server: { type: 'string', default: 'nginx' },
   noindex: { type: 'boolean', default: false },
 } })
 const siteUrl = values['site-url'].replace(/\/$/, '')
+const server = values.server
+assert.ok(['nginx', 'cloudflare'].includes(server), '--server must be nginx or cloudflare')
 const routes = ['/', '/about', '/guide']
 const retiredGuides = ['/guides/typst-to-png-svg', '/guides/image-to-typst']
 const titles = new Set()
@@ -96,13 +100,16 @@ if (siteUrl && !values.noindex) {
 
 if (values['base-url']) {
   const base = values['base-url']
-  for (let attempt = 0; ; attempt++) {
+  // Cloudflare has no health endpoint; wrangler dev may also still be starting.
+  const readyPath = server === 'nginx' ? '/health' : '/robots.txt'
+  const readyBy = Date.now() + 60_000
+  for (;;) {
     try {
-      const response = await fetch(`${base}/health`, { signal: AbortSignal.timeout(2000) })
+      const response = await fetch(base + readyPath, { signal: AbortSignal.timeout(2000) })
       assert.equal(response.status, 200)
       break
     } catch (error) {
-      if (attempt === 19) throw error
+      if (Date.now() > readyBy) throw error
       await new Promise((resolve) => setTimeout(resolve, 250))
     }
   }
@@ -130,9 +137,26 @@ if (values['base-url']) {
   assert.equal(asset.status, 200, `${entryScript}: HTTP 200`)
   assertSharedHeaders(asset, entryScript)
   assert.match(asset.headers.get('cache-control') ?? '', /immutable/, `${entryScript}: long-term cache`)
-  // On-the-fly compression streams without a length; a precompressed file has one.
-  assert.equal(asset.headers.get('content-encoding'), 'br', `${entryScript}: Brotli`)
-  assert.ok(asset.headers.get('content-length'), `${entryScript}: served from the precompressed file`)
+  // Cloudflare compresses at its edge, which wrangler dev does not emulate.
+  if (server === 'nginx') {
+    // On-the-fly compression streams without a length; a precompressed file has one.
+    assert.equal(asset.headers.get('content-encoding'), 'br', `${entryScript}: Brotli`)
+    assert.ok(asset.headers.get('content-length'), `${entryScript}: served from the precompressed file`)
+  }
+  // The Cloudflare build stores the compiler as parts that cloudflare/worker.js joins.
+  const compilerFiles = (await readdir('dist/assets')).filter((name) => name.startsWith('typst_ts_web_compiler_bg-'))
+  const compilerName = compilerFiles.map((name) => name.match(/^[\w-]+\.wasm/)?.[0]).find(Boolean)
+  assert.ok(compilerName, 'The build includes the Typst compiler')
+  const compilerPath = path.join('dist/assets', compilerName)
+  const expected = compilerFiles.includes(compilerName)
+    ? await readFile(compilerPath)
+    : Buffer.concat(await Promise.all(JSON.parse(await readFile(`${compilerPath}.parts.json`, 'utf8')).sizes
+      .map((_, index) => readFile(`${compilerPath}.part${index}`))))
+  const compiler = await fetch(`${base}/assets/${compilerName}`)
+  assert.equal(compiler.status, 200, `${compilerName}: HTTP 200`)
+  assert.equal(compiler.headers.get('content-type'), 'application/wasm', `${compilerName}: content type`)
+  assert.match(compiler.headers.get('cache-control') ?? '', /immutable/, `${compilerName}: long-term cache`)
+  assert.ok(Buffer.from(await compiler.arrayBuffer()).equals(expected), `${compilerName}: complete and unchanged`)
   // nginx's bundled MIME table lacks these; module scripts must have a JavaScript type.
   for (const [file, type] of [
     ['/im2typst/ort/ort-wasm-simd-threaded.mjs', /^text\/javascript/],
@@ -154,4 +178,4 @@ if (values['base-url']) {
     assert.equal(response.status, 404, `${route}: real HTTP 404`)
   }
 }
-console.log(`SEO checks passed for ${routes.length} pages, 404, robots, sitemap, metadata, and asset links${values['base-url'] ? ', including Nginx HTTP responses' : ''}.`)
+console.log(`SEO checks passed for ${routes.length} pages, 404, robots, sitemap, metadata, and asset links${values['base-url'] ? `, including ${server === 'nginx' ? 'Nginx' : 'Cloudflare'} HTTP responses` : ''}.`)

@@ -10,6 +10,8 @@
     "dev": "vite",
     "build": "tsc && tsc -p tsconfig.node.json && node scripts/build.mjs",
     "build:site": "npm run build -- --mode site",
+    "build:cloudflare": "npm run build:site && node scripts/prepare-cloudflare.mjs",
+    "wrangler": "npx --yes wrangler@4.147.0",
     "preview": "vite preview",
     "test": "vitest run",
     "test:seo": "node scripts/check-seo.mjs",

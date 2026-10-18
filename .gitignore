@@ -27,3 +27,6 @@ npm-debug.log*
 # Claude Code
 .claude
 nul
+
+# Wrangler
+.wrangler
