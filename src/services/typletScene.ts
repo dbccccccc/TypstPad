@@ -15,6 +15,11 @@ export interface GlyphRun {
   /** The font size, relative to the formula's. */
   size: number
   bold: boolean
+  /**
+   * Whether the browser draws the glyphs with a serif of its own: characters,
+   * such as Chinese, Japanese and Korean, that the math font lacks.
+   */
+  browser: boolean
   color: SceneColor
   /** Glyphs that follow one another at their advances. */
   text: string
@@ -207,6 +212,7 @@ function frameItems(frame: Element, x: number, y: number): SceneItem[] {
         y: y + (em(style.get('top')) + 1) * size,
         size,
         bold: hasClass(child, 'b'),
+        browser: hasClass(child, 'c'),
         color: style.get('color') ?? 'currentColor',
         text: textOf(child),
       })

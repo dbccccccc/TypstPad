@@ -1,7 +1,7 @@
 // Formula rendering with Typlet, a JavaScript renderer of Typst math that needs no
 // WebAssembly or compiler. It draws a formula as HTML laid out like Typst's own
 // output, with MathML for screen readers, and refuses what it can't render yet.
-import { renderToString, TypletError, version as typletVersion, type ErrorKind, type RenderOptions, type TypletWarning } from 'typlet'
+import { renderToResult, renderToString, TypletError, version as typletVersion, type ErrorKind, type RenderOptions, type RenderResult } from 'typlet'
 import type { DiagnosticInfo } from './typstDiagnostics'
 import { typletSource, type DocumentIssue, type TypletFormula } from './typletDocument'
 
@@ -20,8 +20,15 @@ export type TypletResult =
   | { status: 'error'; kind: ErrorKind; diagnostics: DiagnosticInfo[] }
   | { status: 'unsupportedDocument'; issue: DocumentIssue }
 
-// Typlet's warning when its HTML can't draw a formula and it shows MathML instead.
+// The end of Typlet's warning when its HTML can't draw a formula and it shows MathML instead.
 const MATHML_FALLBACK = '; drawn as MathML'
+
+/** Why Typlet drew a formula as MathML instead of its own layout, or null if it didn't. */
+function mathmlReason(result: RenderResult): string | null {
+  if (result.drawnAs !== 'mathml') return null
+  const message = result.warnings.find(warning => warning.kind === 'fallback')?.message ?? ''
+  return message.endsWith(MATHML_FALLBACK) ? message.slice(0, -MATHML_FALLBACK.length) : message
+}
 
 /**
  * TypstPad typesets formulas in 24pt text, as it does with typst.ts. Typlet lays
@@ -72,24 +79,14 @@ export function renderTyplet(code: string, simplifiedFormulaMode: boolean): Typl
       }
   }
 
-  const warnings: TypletWarning[] = []
   try {
-    const html = renderToString(source.formula.formula, sizedOptions(source.formula, {
-      // Like the typst.ts preview, the preview shows errors but not warnings.
-      strict: (warning) => {
-        warnings.push(warning)
-        return 'ignore'
-      },
-    }))
-    const fallback = warnings.find(warning => warning.message.endsWith(MATHML_FALLBACK))
-    const drawnAsMathml = !html.includes('class="typlet-html"')
+    // Like the typst.ts preview, the preview shows errors but not warnings.
+    const result = renderToResult(source.formula.formula, sizedOptions(source.formula, { strict: 'ignore' }))
     return {
       status: 'rendered',
       formula: source.formula,
-      html,
-      mathmlReason: drawnAsMathml
-        ? fallback?.message.slice(0, -MATHML_FALLBACK.length) ?? ''
-        : null,
+      html: result.markup,
+      mathmlReason: mathmlReason(result),
     }
   } catch (error) {
     if (error instanceof TypletError) {
@@ -104,7 +101,13 @@ export function renderTyplet(code: string, simplifiedFormulaMode: boolean): Typl
  * lengths in ems of 11pt. Throws a `TypletError` if Typlet can't draw it.
  */
 export function typletLayoutHtml(formula: TypletFormula): string {
-  return renderToString(formula.formula, sizedOptions(formula, { output: 'html', strict: 'ignore' }))
+  const result = renderToResult(formula.formula, sizedOptions(formula, { output: 'html', strict: 'ignore' }))
+  // The HTML output falls back to MathML, which has no layout to draw.
+  const reason = mathmlReason(result)
+  if (reason !== null) {
+    throw new TypletError('unsupported', [{ severity: 'error', message: reason, hints: [], span: null, in: 'formula' }], formula.formula)
+  }
+  return result.markup
 }
 
 /** The formula's `<math>` element, which follows Typst's HTML export. */

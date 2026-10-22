@@ -102,7 +102,7 @@ Use **Export Image** or **Export Code** to choose a format:
 
 Settings includes a 1×–4× export scale for raster images.
 
-With Typlet, image exports are drawn from Typlet's layout and are experimental. Images keep the size of typst.ts images: 24pt text with a pixel per point. SVG embeds the parts of Typlet's font that the formula uses, so it shows correctly in browsers but not in every editor or office application. A formula that Typlet draws as MathML, such as one with text in a script its font lacks, can only be exported with typst.ts.
+With Typlet, image exports are drawn from Typlet's layout and are experimental. Images keep the size of typst.ts images: 24pt text with a pixel per point. SVG embeds the parts of Typlet's font that the formula uses, so it shows correctly in browsers but not in every editor or office application. Chinese, Japanese, and Korean text, which Typlet's font lacks, is drawn in the system's serif font, as in the preview. A formula that Typlet draws as MathML, such as one with Cyrillic or Hebrew text, can only be exported with typst.ts.
 
 **Share** creates a URL containing the formula source and its formula mode, so it renders the same in Simplified Formula Mode and plain Typst mode. Anyone with the link can read it. The link does not include your formula library, renderer, custom fonts, or other settings; the recipient may need the same fonts to reproduce the result. Opening a link replaces the editor content and keeps the previous draft in your collection.
 

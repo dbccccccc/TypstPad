@@ -17,7 +17,7 @@ function svgSize(svg: string): [number, number] {
 
 describe('placeGlyphs', () => {
   it('places each glyph of a run at the advances before it, in the run’s size', () => {
-    const run = { type: 'glyphs' as const, x: 1, y: 2, size: 0.5, bold: false, color: 'currentColor', text: '(𝑥)' }
+    const run = { type: 'glyphs' as const, x: 1, y: 2, size: 0.5, bold: false, browser: false, color: 'currentColor', text: '(𝑥)' }
     expect(placeGlyphs(run, metrics)).toEqual([
       { char: '(', x: 1 },
       { char: '𝑥', x: 1.25 },
@@ -48,6 +48,13 @@ describe('sceneToSvg', () => {
     expect(svg).toContain('font-size="24"')
     expect(svg).toContain('>𝑎</text>')
     expect(svg.match(/<rect /g)).toHaveLength(1)
+  })
+
+  it('draws characters Typlet’s font lacks in a serif, as Typlet’s stylesheet does', () => {
+    const svg = sceneToSvg(scene('"文字" x'), metrics, '')
+    expect(svg).toContain('text.c{font-family:serif}</style>')
+    expect(svg).toContain('font-size="24" class="c" font-family="serif">文</text>')
+    expect(sceneToSvg(scene('x'), metrics, '')).not.toContain('text.c')
   })
 
   it('rotates rules about the middle of their left edge', () => {

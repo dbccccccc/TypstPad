@@ -26,17 +26,28 @@ describe('renderTyplet', () => {
   })
 
   it('marks what Typlet refuses as unsupported, so typst.ts can render it', () => {
-    expect(renderTyplet('#show math.equation: set text(red)\n$ x $', false)).toMatchObject({ status: 'error', kind: 'unsupported' })
+    expect(renderTyplet('#show math.equation: it => box(it)\n$ x $', false)).toMatchObject({ status: 'error', kind: 'unsupported' })
     expect(renderTyplet('Text and $ x $', false)).toEqual({ status: 'unsupportedDocument', issue: 'content' })
     expect(renderTyplet('  ', true)).toEqual({ status: 'empty' })
   })
 
+  it('applies show-set rules for equations', () => {
+    expect(renderTyplet('#show math.equation: set text(red)\n$ x $', false)).toMatchObject({ status: 'rendered', mathmlReason: null })
+  })
+
   it('reports formulas Typlet draws as MathML', () => {
-    const result = renderTyplet('"文字"', true)
+    const result = renderTyplet('"Привет"', true)
     expect(result).toMatchObject({ status: 'rendered' })
     if (result.status !== 'rendered') return
-    expect(result.mathmlReason).toContain('New Computer Modern Math has no glyph')
-    expect(() => typletLayoutHtml(result.formula)).toThrow()
+    expect(result.mathmlReason).toMatch(/New Computer Modern Math has no glyph for it$/)
+    expect(() => typletLayoutHtml(result.formula)).toThrow(expect.objectContaining({ kind: 'unsupported', message: result.mathmlReason }))
+  })
+
+  it('lays out Chinese, Japanese and Korean text with the browser’s fonts', () => {
+    const result = renderTyplet('"文字"', true)
+    expect(result).toMatchObject({ status: 'rendered', mathmlReason: null })
+    if (result.status !== 'rendered') return
+    expect(typletLayoutHtml(result.formula)).toContain('class="typlet-html"')
   })
 })
 

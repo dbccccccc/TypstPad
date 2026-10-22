@@ -15,11 +15,15 @@ describe('parseTypletLayout', () => {
     expect(height).toBeCloseTo(0.8388)
     const [base, exponent] = runs(items)
     // Baselines are 1em below each run's top, in the run's own font size.
-    expect(base).toMatchObject({ x: 0, size: 1, bold: false, color: 'currentColor', text: '𝑥' })
+    expect(base).toMatchObject({ x: 0, size: 1, bold: false, browser: false, color: 'currentColor', text: '𝑥' })
     expect(base.y).toBeCloseTo(0.8278)
     expect(exponent.size).toBeCloseTo(0.7)
     expect(exponent.x).toBeCloseTo(0.8171 * 0.7)
     expect(exponent.y).toBeCloseTo((-0.336 + 1) * 0.7)
+  })
+
+  it('marks runs the browser draws with its own fonts', () => {
+    expect(runs(scene('"文字" x').items).map(run => [run.text, run.browser])).toEqual([['文字', true], ['𝑥', false]])
   })
 
   it('reads rules, rotated or not', () => {

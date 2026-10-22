@@ -13,11 +13,16 @@ export const EXPORT_EM_PX = TYPLET_EM_PX
 export const EXPORT_MARGIN_PX = TEXT_SIZE_PX / 2
 
 const FONT_FAMILY = 'Typlet NewCM Math'
+// Typlet's stylesheet hands the characters its font lacks to the browser's serif.
+const BROWSER_FONT_FAMILY = 'serif'
 const BLACK = '#000000'
+
+/** The face a run's glyphs are drawn in. */
+export type GlyphFace = Pick<GlyphRun, 'bold' | 'browser'>
 
 export interface GlyphMetrics {
   /** A glyph's advance, in ems of its font size. */
-  advance(char: string, bold: boolean): number
+  advance(char: string, face: GlyphFace): number
 }
 
 /** Where each glyph of a run starts: glyphs follow one another at their advances. */
@@ -26,7 +31,7 @@ export function placeGlyphs(run: GlyphRun, metrics: GlyphMetrics): Array<{ char:
   let x = run.x
   for (const char of run.text) {
     glyphs.push({ char, x })
-    x += metrics.advance(char, run.bold) * run.size
+    x += metrics.advance(char, run) * run.size
   }
   return glyphs
 }
@@ -168,7 +173,8 @@ function svgBox(box: Box, view: Viewport): string {
 
 function svgGlyphs(run: GlyphRun, metrics: GlyphMetrics, view: Viewport): string {
   const size = format(run.size * view.scale)
-  const attributes = `${run.bold ? ' font-weight="bold"' : ''}${run.color === 'currentColor' ? '' : svgPaint('fill', run.color)}`
+  const attributes = `${run.browser ? ` class="c" font-family="${BROWSER_FONT_FAMILY}"` : ''}`
+    + `${run.bold ? ' font-weight="bold"' : ''}${run.color === 'currentColor' ? '' : svgPaint('fill', run.color)}`
   const y = format(toPixels(run.y, view))
   // One element per glyph places each at its advance in every application.
   return placeGlyphs(run, metrics)
@@ -191,8 +197,9 @@ export function sceneToSvg(scene: Scene, metrics: GlyphMetrics, fontCss: string)
         return svgBox(item, view)
     }
   }).join('')
+  const browserCss = glyphRuns(scene).some(run => run.browser) ? `text.c{font-family:${BROWSER_FONT_FAMILY}}` : ''
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${format(width)}" height="${format(height)}" viewBox="0 0 ${format(width)} ${format(height)}">`
-    + `<style>${fontCss}text{font-family:"${FONT_FAMILY}";white-space:pre}</style>`
+    + `<style>${fontCss}text{font-family:"${FONT_FAMILY}";white-space:pre}${browserCss}</style>`
     + `<g fill="${BLACK}" font-family="'${FONT_FAMILY}'">${body}</g></svg>`
 }
 
@@ -200,7 +207,7 @@ function drawScene(context: CanvasRenderingContext2D, scene: Scene, metrics: Gly
   for (const item of scene.items) {
     context.save()
     if (item.type === 'glyphs') {
-      context.font = `${item.bold ? 'bold ' : ''}${item.size * view.scale}px "${FONT_FAMILY}"`
+      context.font = fontSpec(item, item.size * view.scale)
       context.fillStyle = cssColor(item.color)
       const y = toPixels(item.y, view)
       for (const glyph of placeGlyphs(item, metrics)) {
@@ -333,6 +340,7 @@ async function embeddedFontCss(scene: Scene): Promise<string> {
   const covers = (face: TypletFontFace, codePoint: number) => face.ranges.some(([start, end]) => codePoint >= start && codePoint <= end)
   const needed = new Set<TypletFontFace>()
   for (const run of glyphRuns(scene)) {
+    if (run.browser) continue
     for (const char of run.text) {
       const codePoint = char.codePointAt(0)!
       // Browsers make bold from the regular face when no bold face has the glyph.
@@ -348,24 +356,26 @@ async function embeddedFontCss(scene: Scene): Promise<string> {
   return rules.join('')
 }
 
-const fontSpec = (bold: boolean, size: number) => `${bold ? 'bold ' : ''}${size}px "${FONT_FAMILY}"`
+function fontSpec(face: GlyphFace, size: number): string {
+  return `${face.bold ? 'bold ' : ''}${size}px ${face.browser ? BROWSER_FONT_FAMILY : `"${FONT_FAMILY}"`}`
+}
 
 /** Loads the font files a scene needs and measures its glyphs with them. */
 async function loadGlyphMetrics(scene: Scene): Promise<GlyphMetrics> {
-  const runs = glyphRuns(scene)
+  const runs = glyphRuns(scene).filter(run => !run.browser)
   await Promise.all([false, true].map((bold) => {
     const text = runs.filter(run => run.bold === bold).map(run => run.text).join('')
-    return text ? document.fonts.load(fontSpec(bold, 32), text) : null
+    return text ? document.fonts.load(fontSpec({ bold, browser: false }, 32), text) : null
   }))
   const context = document.createElement('canvas').getContext('2d')
   if (!context) throw new Error('Canvas is not available.')
   const advances = new Map<string, number>()
   return {
-    advance(char, bold) {
-      const key = `${bold ? 'b' : 'r'}${char}`
+    advance(char, face) {
+      const key = `${face.bold ? 'b' : 'r'}${face.browser ? 'c' : ''}${char}`
       let advance = advances.get(key)
       if (advance === undefined) {
-        context.font = fontSpec(bold, 100)
+        context.font = fontSpec(face, 100)
         advance = context.measureText(char).width / 100
         advances.set(key, advance)
       }
