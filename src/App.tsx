@@ -1,5 +1,6 @@
-import { useState, useCallback, useDeferredValue, useEffect, useMemo, useRef } from 'react'
-import Editor, { EditorRef } from './components/Editor/Editor'
+import { lazy, Suspense, useState, useCallback, useDeferredValue, useEffect, useMemo, useRef } from 'react'
+import type { EditorRef } from './components/Editor/Editor'
+import EditorLoading from './components/Editor/EditorLoading'
 import MathToolbar from './components/MathToolbar'
 import type { MathSymbol } from './data/mathSymbols'
 import Preview from './components/Preview/Preview'
@@ -32,9 +33,9 @@ import { APP_PAGE_PATHS, resolveAppPage, type AppPage, type NavigablePage } from
 import { EditorIntro } from './components/HomeContent'
 import GuidePage from './pages/GuidePage'
 import { usePageMetadata } from './seo/usePageMetadata'
-import { configureMonacoLoader } from './utils/monacoConfig'
 
-configureMonacoLoader()
+// Monaco downloads in its own chunk while the rest of the editor page renders.
+const Editor = lazy(() => import('./components/Editor/Editor'))
 
 function readStorageItem(key: string): string | null {
   if (typeof window === 'undefined') return null
@@ -408,16 +409,18 @@ function App() {
                   }`}
                   style={settings.layoutMode === 'side-by-side' ? undefined : { height: `${editorHeight}px` }}
                 >
-                  <Editor
-                    ref={editorRef}
-                    value={code}
-                    onChange={setCode}
-                    fontSize={settings.fontSize}
-                    theme={theme}
-                    showLineNumbers={settings.showLineNumbers}
-                    enableAutoComplete={settings.enableAutoComplete}
-                    simplifiedFormulaMode={settings.simplifiedFormulaMode}
-                  />
+                  <Suspense fallback={<EditorLoading theme={theme} />}>
+                    <Editor
+                      ref={editorRef}
+                      value={code}
+                      onChange={setCode}
+                      fontSize={settings.fontSize}
+                      theme={theme}
+                      showLineNumbers={settings.showLineNumbers}
+                      enableAutoComplete={settings.enableAutoComplete}
+                      simplifiedFormulaMode={settings.simplifiedFormulaMode}
+                    />
+                  </Suspense>
                 </div>
                 {settings.layoutMode !== 'side-by-side' && (
                   <button

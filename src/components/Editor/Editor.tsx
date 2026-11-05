@@ -2,9 +2,9 @@ import { useRef, useImperativeHandle, forwardRef, useEffect } from 'react'
 import { Editor as MonacoEditor, useMonaco } from '@monaco-editor/react'
 import type { editor } from 'monaco-editor'
 import type * as Monaco from 'monaco-editor'
-import { setupShikiForMonaco, getShikiInitPromise } from '../../utils/shikiSetup'
-import { Loader2 } from 'lucide-react'
-import { useI18n } from '@/i18n'
+import './monaco'
+import EditorLoading from './EditorLoading'
+import { setupShikiForMonaco } from '../../utils/shikiSetup'
 
 interface EditorProps {
   value: string
@@ -22,22 +22,6 @@ export interface EditorRef {
 
 interface SnippetController extends editor.IEditorContribution {
   insert: (template: string) => void
-}
-
-// Custom loading component that matches the theme
-function EditorLoading({ theme }: { theme: 'light' | 'dark' }) {
-  const { t } = useI18n()
-
-  return (
-    <div className={`w-full h-full flex items-center justify-center ${
-      theme === 'dark' ? 'bg-[hsl(0,0%,4%)]' : 'bg-white'
-    }`}>
-      <div className="flex items-center gap-2 text-muted-foreground">
-        <Loader2 className="h-4 w-4 animate-spin" />
-        <span className="text-sm">{t('editor.loading')}</span>
-      </div>
-    </div>
-  )
 }
 
 const Editor = forwardRef<EditorRef, EditorProps>(({
@@ -58,11 +42,9 @@ const Editor = forwardRef<EditorRef, EditorProps>(({
     if (!monaco) return
 
     const applyTheme = async () => {
-      // Wait for Shiki initialization to complete
-      const initPromise = getShikiInitPromise()
-      if (initPromise) {
-        await initPromise
-      }
+      // Shiki defines the themes. Monaco is bundled, so it is ready before the
+      // editor's beforeMount runs; start the setup here too and wait for it.
+      await setupShikiForMonaco(monaco)
       const themeName = theme === 'dark' ? 'vitesse-dark' : 'vitesse-light'
       monaco.editor.setTheme(themeName)
     }

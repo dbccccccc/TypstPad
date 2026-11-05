@@ -46,7 +46,3 @@ export async function setupShikiForMonaco(monaco: typeof Monaco) {
 
   return initPromise
 }
-
-export function getShikiInitPromise() {
-  return initPromise
-}

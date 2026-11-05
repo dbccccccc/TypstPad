@@ -11,7 +11,6 @@ export default [
       'node_modules/**',
       '.vite/**',
       '.wrangler/**',
-      'public/monaco-editor/**',
       'public/im2typst/**',
     ],
   },
