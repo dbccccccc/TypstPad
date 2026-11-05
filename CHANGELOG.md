@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - **Typlet 0.2.0** - Update Typlet from 0.1.0. Equation show-set rules such as `#show math.equation: set text(fill: blue)` now render with Typlet, and text in Latin letters beyond Western European ones, such as `"Erdős"`, and in Chinese, Japanese, and Korean is laid out by Typlet instead of drawn as MathML
 - **CJK Image Exports with Typlet** - Export formulas with Chinese, Japanese, or Korean text as PNG, JPG, SVG, and HTML from Typlet's layout, with those characters in the system's serif font as in the preview
+- **Dependencies** - Update Vite, Vitest, minimatch, and DOMPurify to releases that clear the moderate-or-higher CI audit gate
 
 ## [0.16.0] - 2026-10-05
 
